@@ -1,0 +1,157 @@
+ND-occupancy-NAME=Occupancy
+ND-occupancy-ICON=MotionSensor
+ST-occupancy-ST-NAME=Occupied
+
+ND-EcobeeC-NAME = Ecobee Thermostat (C)
+ND-EcobeeC-ICON = Thermostat
+ND-EcobeeF-NAME = Ecobee Thermostat (F)
+ND-EcobeeF-ICON = Thermostat
+ND-EcobeeSensorC-NAME = Ecobee Sensor (C)
+ND-EcobeeSensorC-ICON = TempSensor
+ND-EcobeeSensorF-NAME = Ecobee Sensor (F)
+ND-EcobeeSensorF-ICON = TempSensor
+ND-EcobeeWeatherC-NAME = Ecobee Weather (C)
+ND-EcobeeWeatherC-ICON = Weather
+ND-EcobeeWeatherF-NAME = Ecobee Weather (F)
+ND-EcobeeWeatherF-ICON = Weather
+
+ST-140E-ST-NAME = Temperature
+ST-140E-GV1-NAME = Humidification Setpoint
+ST-140E-GV3-NAME = Climate Type
+ST-140E-GV4-NAME = Fan On Time
+ST-140E-GV5-NAME = Dehumidification Setpoint
+ST-140E-GV6-NAME = Smart Home-Away
+ST-140E-GV7-NAME = Follow Me
+CMD-140E-GV3-NAME = Climate Type
+CMD-140E-GV4-NAME = Fan On Time
+CMD-140E-GV6-NAME = Smart Home-Away
+CMD-140E-GV7-NAME = Follow Me
+CMD-140E-BRT-NAME = Setpoint Up
+CMD-140E-DIM-NAME = Setpoint Down
+PGM-CMD-140E-GV3-FMT = //${c}/to ${v}/ /HoldType//, Hold Type ${v}/
+CMDP-I_TSTAT_ECO_SCHED_OPT-HoldType-NAME = Hold Type
+ST-140ES-ST-NAME = Temperature
+ST-140ES-GV1-NAME = Occupancy
+ST-140EW-ST-NAME = Temperature
+ST-140EW-GV1-NAME = Humidity
+ST-140EW-GV2-NAME = POP
+ST-140EW-GV3-NAME = High Temp
+ST-140EW-GV4-NAME = Low Temp
+ST-140EW-GV5-NAME = Wind Speed
+ST-140EW-GV6-NAME = Wind Direction
+ST-140EW-GV7-NAME = Sky
+ST-140EW-GV8-NAME = Symbol
+ST-140EW-GV9-NAME = Weather
+
+EN_WIND_DIRECTION-0 = N/A
+EN_WIND_DIRECTION-1 = N
+EN_WIND_DIRECTION-2 = NE
+EN_WIND_DIRECTION-3 = E
+EN_WIND_DIRECTION-4 = SE
+EN_WIND_DIRECTION-5 = S
+EN_WIND_DIRECTION-6 = SW
+EN_WIND_DIRECTION-7 = W
+EN_WIND_DIRECTION-8 = NW
+
+EN_SKY-0 = N/A
+EN_SKY-1 = Sunny
+EN_SKY-2 = Clear
+EN_SKY-3 = Mostly Sunny
+EN_SKY-4 = Mostly Clear
+EN_SKY-5 = Hazy Sunshine
+EN_SKY-6 = Haze
+EN_SKY-7 = Passing Clouds
+EN_SKY-8 = More Sun than Clouds
+EN_SKY-9 = Scattered Clouds
+EN_SKY-10 = Partly Cloudy
+EN_SKY-11 = A Mixture of Sun and CLouds
+EN_SKY-12 = High Level Clouds
+EN_SKY-13 = More Clouds than Sun
+EN_SKY-14 = Partly Sunny
+EN_SKY-15 = Broken Clouds
+EN_SKY-16 = Mostly Cloudy
+EN_SKY-17 = Cloudy
+EN_SKY-18 = Overcast
+EN_SKY-19 = Low Clouds
+EN_SKY-20 = Light Fog
+EN_SKY-21 = Fog
+EN_SKY-22 = Dense Fog
+EN_SKY-23 = Ice Fog
+EN_SKY-24 = Sandstorm
+EN_SKY-25 = Duststorm
+EN_SKY-26 = Increasing Cloudiness
+EN_SKY-27 = Decreasing Cloudiness
+EN_SKY-28 = Clearing Skies
+EN_SKY-29 = Breaks of Sun Late
+EN_SKY-30 = Early Fog Followed by Sunny Skies
+EN_SKY-31 = Afternoon Clouds
+EN_SKY-32 = Morning Couds
+EN_SKY-33 = Smoke
+EN_SKY-34 = Low Level Haze
+
+EN_SYMBOL-0 = Sunny
+EN_SYMBOL-1 = Few Clouds
+EN_SYMBOL-2 = Partly Cloudy
+EN_SYMBOL-3 = Mostly Cloudy
+EN_SYMBOL-4 = Overcast
+EN_SYMBOL-5 = Drizzle
+EN_SYMBOL-6 = Rain
+EN_SYMBOL-7 = Freezing Rain
+EN_SYMBOL-8 = Showers
+EN_SYMBOL-9 = Hail
+EN_SYMBOL-10 = Snow
+EN_SYMBOL-11 = Flurries
+EN_SYMBOL-12 = Freezing Snow
+EN_SYMBOL-13 = Blizzard
+EN_SYMBOL-14 = Pellets
+EN_SYMBOL-15 = Thunderstorm
+EN_SYMBOL-16 = Windy
+EN_SYMBOL-17 = Tornado
+EN_SYMBOL-18 = Fog
+EN_SYMBOL-19 = Haze
+EN_SYMBOL-20 = Smoke
+EN_SYMBOL-21 = Dust
+
+EN_PM-0 = Manual
+EN_PM-1 = Running
+
+EN_PM2-0 = Running
+EN_PM2-1 = Hold Next
+EN_PM2-2 = Hold
+
+EN_BOOL-0 = No
+EN_BOOL-1 = Yes
+
+EN_ENABLED-0 = Disabled
+EN_ENABLED-1 = Enabled
+
+EN_ALERT-0 = OK
+EN_ALERT-1 = Alert
+
+EN_LOC-0 = Home
+EN_LOC-1 = Away
+
+EN_ECOHCS-0 = Idle
+EN_ECOHCS-1 = Heat
+EN_ECOHCS-2 = Cool
+EN_ECOHCS-3 = Heat2
+EN_ECOHCS-4 = Heat3
+EN_ECOHCS-5 = Cool2
+EN_ECOHCS-6 = AuxHeat
+EN_ECOHCS-7 = AuxHeat2
+EN_ECOHCS-8 = AuxHeat3
+
+EN_ECOSCH-0 = Away
+EN_ECOSCH-1 = Home
+EN_ECOSCH-2 = Sleep
+EN_ECOSCH-3 = Custom 1
+EN_ECOSCH-4 = Custom 2
+EN_ECOSCH-5 = Custom 3
+EN_ECOSCH-6 = Custom 4
+EN_ECOSCH-7 = Custom 5
+EN_ECOSCH-8 = Custom 6
+EN_ECOSCH-9 = Custom 7
+EN_ECOSCH-10 = N/A
+
+EN_ECOSCH_OPT-0 = Permanent
+EN_ECOSCH_OPT-1 = Transition
