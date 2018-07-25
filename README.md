@@ -1,4 +1,4 @@
-# MyNodeServer
+# Ecobee Poly
 
 #### Installation
 
