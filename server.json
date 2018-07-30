@@ -6,8 +6,9 @@
     "install": "install.sh",
     "description": "Ecobee NodeServer",
     "notice": "Not affiliated with Ecobee",
-    "shortPoll": "5",
-    "longPoll": "60",
+    "shortPoll": "60",
+    "longPoll": "180",
+    "api_key": "19j5o2QheoDIYeuwPGOCWV80hI07lbDC",
     "credits": [
         {
             "title": "ecobee: Polyglot NodeServer for Ecobee",

@@ -1,7 +1,4 @@
 <editors>
-  <editor id="PRESENCE">
-    <range uom="2" subset="0-1" />
-  </editor>
   <editor id="BOOL">
     <range uom="2" subset="0,1" />
   </editor>
@@ -101,7 +98,7 @@
     <range uom="25" subset="0-34" nls="EN_SKY" />
   </editor>
   <editor id="I_WIND_DIRECTION">
-    <range uom="25" subset="0-8" nls="EN_WIND_DIRECTION" />
+    <range uom="25" subset="0-16" nls="EN_WIND_DIRECTION" />
   </editor>
   <editor id="I_WIND_C">
     <range uom="32" subset="0-500" />

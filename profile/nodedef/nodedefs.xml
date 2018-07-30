@@ -1,4 +1,16 @@
 <nodeDefs>
+  <nodeDef id="ECO_CTR" nls="ECTR">
+    <editors />
+    <sts>
+      <st id="ST" editor="BOOL" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="DISCOVER" />
+      </accepts>
+    </cmds>
+  </nodeDef>
   <!-- Ecobee Thermostat io_guy models -->
   <nodeDef id="EcobeeF" nodeType="140" nls="140E" >
     <sts>
