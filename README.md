@@ -16,4 +16,7 @@ the integration, restart the nodeserver within 10 minutes of
 being given the PIN. 
 
 Your thermostat will be added to ISY, along with nodes for any sensors,
-a node for the current weather, and a node for the forecast. 
+a node for the current weather, and a node for the forecast.
+
+After the first run. It will refresh any changes every 3 minutes. This is 
+a limitation imposed by Ecobee.

@@ -29,6 +29,7 @@ class Controller(polyinterface.Controller):
         self.pinRun = False
 
     def start(self):
+        self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         if os.path.isfile('.pinData'):
             with open('.pinData') as sf:
