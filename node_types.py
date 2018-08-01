@@ -15,13 +15,13 @@ climateMap = {
   'away': 0,
   'home': 1,
   'sleep': 2,
-  'custom1': 3,
-  'custom2': 4,
-  'custom3': 5,
-  'custom4': 6,
-  'custom5': 7,
-  'custom6': 8,
-  'custom7': 9,
+  'smart1': 3,
+  'smart2': 4,
+  'smart3': 5,
+  'smart4': 6,
+  'smart5': 7,
+  'smart6': 8,
+  'smart7': 9,
   'unknown': 10
 }
 

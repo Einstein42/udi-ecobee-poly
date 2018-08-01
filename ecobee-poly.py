@@ -169,6 +169,8 @@ class Controller(polyinterface.Controller):
 
     def updateThermostats(self):
         thermostats = self.getThermostats()
+        if not isinstance(thermostats, dict):
+            return
         for thermostatId, thermostat in thermostats.items():
             if self.checkRev(thermostat):
                 if thermostatId in self.nodes:
