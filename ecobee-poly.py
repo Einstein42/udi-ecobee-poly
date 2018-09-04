@@ -35,9 +35,12 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         if 'tokenData' in self.polyConfig['customData']:
-            self.tokenData = deepcopy(self.polyConfig['customData'])
-            self._checkTokens()
-            self.discover()
+            self.tokenData = self.polyConfig['customData']
+            self.auth_token = data['access_token']
+            self.token_type = data['token_type']
+            if self._checkTokens():
+                LOGGER.debug('Running Discovery')
+                self.discover()
         else:
             self._getPin()
 
