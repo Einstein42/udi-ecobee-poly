@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-import polyinterface
+try:
+    import polyinterface
+except ImportError:
+    import pgc_interface as polyinterface
 import sys
 import json
 import time
@@ -31,12 +34,9 @@ class Controller(polyinterface.Controller):
     def start(self):
         self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
-        if os.path.isfile('.pinData'):
-            with open('.pinData') as sf:
-                pinData = json.load(sf)
-                sf.close()
-            if self._getTokens(pinData):
-                os.remove('.pinData')
+        if 'pinData' in self.polyConfig['customData']:
+            pinData = self.polyConfig['customData']['pinData']
+            self._getTokens(pinData):
         elif 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
@@ -156,10 +156,10 @@ class Controller(polyinterface.Controller):
         auth_conn.close()
         LOGGER.debug(data)
         if 'ecobeePin' in data:
-            self.addNotice('Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this and restart the nodeserver.'.format(data['ecobeePin']))
-            with open('.pinData', 'w') as wf:
-                json.dump(data, wf)
-                wf.close()
+            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this and restart the nodeserver.'.format(data['ecobeePin'])})
+            cust_data = deepcopy(self.polyConfig['customData'])
+            cust_data['pinData'] = data
+            self.saveCustomData(cust_data)
 
     def shortPoll(self):
         pass

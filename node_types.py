@@ -1,5 +1,8 @@
 import sys
-import polyinterface
+try:
+    import polyinterface
+except ImportError:
+    import pgc_interface as polyinterface
 from copy import deepcopy
 
 LOGGER = polyinterface.LOGGER
