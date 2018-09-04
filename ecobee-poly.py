@@ -34,19 +34,12 @@ class Controller(polyinterface.Controller):
     def start(self):
         self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
-        if 'pinData' in self.polyConfig['customData']:
-            pinData = self.polyConfig['customData']['pinData']
-            self._getTokens(pinData)
-        elif 'tokenData' in self.polyConfig['customData']:
-            self.tokenData = self.polyConfig['customData']['tokenData']
-            self.auth_token = self.tokenData['access_token']
-            self.token_type = self.tokenData['token_type']
+        if 'tokenData' in self.polyConfig['customData']:
+            self.tokenData = deepcopy(self.polyConfig['customData'])
             self._checkTokens()
-        else:
-            self.pinRun = True
-            self._getPin()
-        if not self.pinRun:
             self.discover()
+        else:
+            self._getPin()
 
     def _checkTokens(self):
         while self.refreshingTokens:
@@ -156,10 +149,19 @@ class Controller(polyinterface.Controller):
         auth_conn.close()
         LOGGER.debug(data)
         if 'ecobeePin' in data:
-            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this and restart the nodeserver.'.format(data['ecobeePin'])})
-            cust_data = deepcopy(self.polyConfig['customData'])
-            cust_data['pinData'] = data
-            self.saveCustomData(cust_data)
+            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(data['ecobeePin'])})
+            # cust_data = deepcopy(self.polyConfig['customData'])
+            # cust_data['pinData'] = data
+            # self.saveCustomData(cust_data)
+            waitingOnPin = True
+            while waitingOnPin:
+                if self._getTokens(data):
+                    waitingOnPin = False
+                    self.discover()
+                else:
+                    time.sleep(60)                    
+                
+
 
     def shortPoll(self):
         pass
