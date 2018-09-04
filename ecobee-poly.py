@@ -35,10 +35,12 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         if 'tokenData' in self.polyConfig['customData']:
+            LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!HERE')
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
             self.token_type = self.tokenData['token_type']
             if self._checkTokens():
+                LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!WHERE')
                 LOGGER.debug('Running Discovery')
                 self.discover()
         else:
@@ -207,6 +209,7 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Discovering Ecobee Thermostats')
         if self.auth_token is None:
             return False
+        LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!DISCOVERY')
         self.discovery = True
         thermostats = self.getThermostats()
         self.revData = deepcopy(thermostats)
