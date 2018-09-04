@@ -155,13 +155,10 @@ class Controller(polyinterface.Controller):
             # self.saveCustomData(cust_data)
             waitingOnPin = True
             while waitingOnPin:
+                time.sleep(60)
                 if self._getTokens(data):
                     waitingOnPin = False
                     self.discover()
-                else:
-                    time.sleep(60)                    
-                
-
 
     def shortPoll(self):
         pass
@@ -217,6 +214,7 @@ class Controller(polyinterface.Controller):
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
                     self.addNode(Thermostat(self, address, address, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
+                    time.sleep(3)
                     if 'remoteSensors' in tstat:
                         for sensor in tstat['remoteSensors']:
                             if 'code' in sensor and 'name' in sensor:
