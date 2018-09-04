@@ -36,7 +36,7 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Started Ecobee v2 NodeServer')
         if 'pinData' in self.polyConfig['customData']:
             pinData = self.polyConfig['customData']['pinData']
-            self._getTokens(pinData):
+            self._getTokens(pinData)
         elif 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
