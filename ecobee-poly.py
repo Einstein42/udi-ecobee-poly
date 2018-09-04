@@ -347,7 +347,6 @@ class Controller(polyinterface.Controller):
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
 
 
-
 if __name__ == "__main__":
     try:
         polyglot = polyinterface.Interface('Ecobee')

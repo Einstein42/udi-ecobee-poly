@@ -160,7 +160,7 @@ class Thermostat(polyinterface.Node):
         self.useCelsius = useCelsius
         self.type = 'thermostat'
         self.id = 'EcobeeC' if self.useCelsius else 'EcobeeF'
-        self.drivers = driversMap[self.id]
+        self.drivers = self._convertDrivers(driversMap[self.id])
         self.revData = revData
         self.fullData = fullData
         
@@ -371,7 +371,7 @@ class Sensor(polyinterface.Node):
       self.code = code
       self.useCelsius = useCelsius
       self.id = 'EcobeeSensorC' if self.useCelsius else 'EcobeeSensorF'
-      self.drivers = driversMap[self.id]
+      self.drivers = self._convertDrivers(driversMap[self.id])
         
     def start(self):
       pass
@@ -399,7 +399,7 @@ class Weather(polyinterface.Node):
         self.forecastNum = 1 if forecast else 0
         self.useCelsius = useCelsius
         self.id = 'EcobeeWeatherC' if self.useCelsius else 'EcobeeWeatherF'
-        self.drivers = driversMap[self.id]
+        self.drivers = self._convertDrivers(driversMap[self.id])
         
     def start(self):
         pass
