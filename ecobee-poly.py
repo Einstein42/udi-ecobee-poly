@@ -45,6 +45,7 @@ class Controller(polyinterface.Controller):
             self._getPin()
 
     def _checkTokens(self):
+        self.refreshing
         while self.refreshingTokens:
             time.sleep(.1)
         if 'access_token' in self.tokenData:
