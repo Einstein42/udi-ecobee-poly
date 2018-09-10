@@ -35,12 +35,10 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         if 'tokenData' in self.polyConfig['customData']:
-            LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!HERE')
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
             self.token_type = self.tokenData['token_type']
             if self._checkTokens():
-                LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!WHERE')
                 LOGGER.debug('Running Discovery')
                 self.discover()
         else:
@@ -174,6 +172,7 @@ class Controller(polyinterface.Controller):
     def updateThermostats(self):
         thermostats = self.getThermostats()
         if not isinstance(thermostats, dict):
+            LOGGER.error('Thermostats instance wasn\'t dictionary. Skipping...')
             return
         for thermostatId, thermostat in thermostats.items():
             if self.checkRev(thermostat):
@@ -184,6 +183,8 @@ class Controller(polyinterface.Controller):
                         self.nodes[thermostatId].update(thermostat, fullData)
                     else:
                         LOGGER.error('Failed to get updated data for thermostat: {}({})'.format(thermostat['name'], thermostatId))
+            else:
+                LOGGER.info('No thermostat update detected.')
 
     def checkRev(self, tstat):
         if tstat['thermostatId'] in self.revData:
@@ -208,7 +209,6 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Discovering Ecobee Thermostats')
         if self.auth_token is None:
             return False
-        LOGGER.debug('!!!!!!!!!!!!!!!!!!!!!!!!!!!!DISCOVERY')
         self.discovery = True
         thermostats = self.getThermostats()
         self.revData = deepcopy(thermostats)

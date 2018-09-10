@@ -347,9 +347,8 @@ class Thermostat(polyinterface.Node):
             self.setDriver(driver, newTemp)
 
     def getDriver(self, driver):
-      for item in self.drivers:
-        if item['driver'] == driver:
-          return item['value']
+      if driver in self.drivers:
+        return self.drivers[driver]['value']
 
     commands = { 'QUERY': query,
                 'CLISPH': cmdSetPoint,
@@ -390,7 +389,7 @@ class Sensor(polyinterface.Node):
     def query(self, command=None):
       self.reportDrivers()
 
-    commands = {}
+    commands = {'QUERY': query, 'STATUS': query}
 
 class Weather(polyinterface.Node):
     def __init__(self, controller, primary, address, name, useCelsius, forecast):
@@ -437,4 +436,4 @@ class Weather(polyinterface.Node):
     def query(self, command=None):
         self.reportDrivers()
 
-    commands = {}
+    commands = {'QUERY': query, 'STATUS': query}
