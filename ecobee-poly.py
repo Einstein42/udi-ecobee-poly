@@ -35,8 +35,9 @@ class Controller(polyinterface.Controller):
         self.pinRun = False
 
     def start(self):
-        self.removeNoticesAll()
+        #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
+        LOGGER.debug(self.polygConfig['customData'])
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
