@@ -37,7 +37,7 @@ class Controller(polyinterface.Controller):
     def start(self):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
-        LOGGER.debug(self.polygConfig['customData'])
+        LOGGER.debug(self.polyConfig['customData'])
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
