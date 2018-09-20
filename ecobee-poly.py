@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+CLOUD = False
+
 try:
     import polyinterface
 except ImportError:
     import pgc_interface as polyinterface
+    CLOUD = True
 import sys
 import json
 import time
@@ -152,7 +155,10 @@ class Controller(polyinterface.Controller):
         auth_conn.close()
         LOGGER.debug(data)
         if 'ecobeePin' in data:
-            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(data['ecobeePin'])})
+            if CLOUD:
+                self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(data['ecobeePin'])})
+            else:
+                self.addNotice('Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(data['ecobeePin']))
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
             # self.saveCustomData(cust_data)
