@@ -376,7 +376,10 @@ class Sensor(polyinterface.Node):
       pass
 
     def update(self, sensor):
-      tempCurrent = int(sensor['capability'][0]['value']) / 10 if int(sensor['capability'][0]['value']) != 0 else 0
+      try:
+        tempCurrent = int(sensor['capability'][0]['value']) / 10 if int(sensor['capability'][0]['value']) != 0 else 0
+      except ValueError as e:
+        tempCurrent = 0
       if self.useCelsius:
         tempCurrent = toC(tempCurrent)
       updates = {
