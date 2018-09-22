@@ -1,4 +1,5 @@
 import sys
+import re
 try:
     import polyinterface
 except ImportError:
