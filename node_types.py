@@ -213,8 +213,10 @@ class Thermostat(polyinterface.Node):
       for address, node in self.controller.nodes.items():
         if node.primary == self.address and node.type == 'sensor':
           for sensor in self.tstat['remoteSensors']:
-            if 'code' in sensor and node.code == sensor['code']:
-              node.update(sensor)
+            if 'id' in sensor:
+              sensorId = re.sub('\:', '', sensor['id']).lower()[:12]
+              if node.address == sensorId:
+                node.update(sensor)
         if node.primary == self.address and (node.type == 'weather' or node.type == 'forecast'):
           weather = self.tstat['weather']
           if weather:
@@ -364,10 +366,10 @@ class Thermostat(polyinterface.Node):
                  }
 
 class Sensor(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, code, useCelsius):
+    def __init__(self, controller, primary, address, name, useCelsius):
       super().__init__(controller, primary, address, name)
       self.type = 'sensor'
-      self.code = code
+      # self.code = code
       self.useCelsius = useCelsius
       self.id = 'EcobeeSensorC' if self.useCelsius else 'EcobeeSensorF'
       self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])

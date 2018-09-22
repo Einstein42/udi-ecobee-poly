@@ -15,6 +15,7 @@ import urllib.parse
 import datetime
 import os
 import os.path
+import re
 from copy import deepcopy
 
 from node_types import Thermostat, Sensor, Weather
@@ -228,11 +229,12 @@ class Controller(polyinterface.Controller):
                     time.sleep(3)
                     if 'remoteSensors' in tstat:
                         for sensor in tstat['remoteSensors']:
-                            if 'code' in sensor and 'name' in sensor:
-                                sensorAddress = 's{}'.format(sensor['code'].lower())
+                            if 'id' in sensor and 'name' in sensor:
+                                sensorAddress = re.sub('\:', '', sensor['id']).lower()[:12]
+                                # sensorAddress = 's{}'.format(sensor['code'].lower())
                                 if not sensorAddress in self.nodes:
                                     sensorName = '{} Sensor - {}'.format(thermostat['name'], sensor['name'])
-                                    self.addNode(Sensor(self, address, sensorAddress, sensorName, sensor['code'], useCelsius))
+                                    self.addNode(Sensor(self, address, sensorAddress, sensorName, useCelsius))
                     if 'weather' in tstat:
                         weatherAddress = 'w{}'.format(address)
                         weatherName = '{} - Current Weather'.format(thermostat['name'])
