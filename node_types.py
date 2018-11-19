@@ -215,7 +215,12 @@ class Thermostat(polyinterface.Node):
         if node.primary == self.address and node.type == 'sensor':
           for sensor in self.tstat['remoteSensors']:
             if 'id' in sensor:
-              sensorId = re.sub('\:', '', sensor['id']).lower()[:12]
+              if sensor['type'] == 'thermostat':
+                sensorId = 's{}'.format(self.tstat['identifier'])
+              else:
+                sensorId = re.sub('\:', '', sensor['id']).lower()[:12]
+                sensorId = '{}_{}'.format(sensorId, sensor['code'].lower())
+
               if node.address == sensorId:
                 node.update(sensor)
         if node.primary == self.address and (node.type == 'weather' or node.type == 'forecast'):
