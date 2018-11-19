@@ -230,8 +230,12 @@ class Controller(polyinterface.Controller):
                     if 'remoteSensors' in tstat:
                         for sensor in tstat['remoteSensors']:
                             if 'id' in sensor and 'name' in sensor:
-                                sensorAddress = re.sub('\:', '', sensor['id']).lower()[:12]
-                                # sensorAddress = 's{}'.format(sensor['code'].lower())
+                                if sensor['type'] == 'thermostat':
+                                    sensorAddress = 's{}'.format(thermostatId)
+                                else:
+                                    sensorAddress = re.sub('\:', '', sensor['id']).lower()[:12]
+                                    sensorAddress = '{}_{}'.format(sensorAddress, sensor['code'].lower())
+
                                 if not sensorAddress in self.nodes:
                                     sensorName = '{} Sensor - {}'.format(thermostat['name'], sensor['name'])
                                     self.addNode(Sensor(self, address, sensorAddress, sensorName, useCelsius))
