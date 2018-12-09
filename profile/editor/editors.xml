@@ -9,7 +9,7 @@
     <range uom="4" min="-50" max="75" step="0.5" prec="1" />
   </editor>
   <editor id="I_TEMP_F">
-    <range uom="17" min="-50" max="150" step="1" prec="0" />
+    <range uom="17" min="-50" max="150" step="0.5" prec="1" />
   </editor>
   <editor id="I_SETTEMP_C">
     <range uom="4" min="0" max="10" step="0.5" prec="1" />
