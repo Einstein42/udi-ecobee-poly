@@ -40,6 +40,7 @@ class Controller(polyinterface.Controller):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         LOGGER.debug(self.polyConfig['customData'])
+        self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
@@ -105,7 +106,7 @@ class Controller(polyinterface.Controller):
             if 'error' in data:
                 LOGGER.error('{} :: {}'.format(data['error'], data['error_description']))
                 self.auth_token = None
-                self.refreshingTokens = False                
+                self.refreshingTokens = False
                 return False
             elif 'access_token' in data:
                 self._saveTokens(data)
@@ -226,6 +227,7 @@ class Controller(polyinterface.Controller):
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
                     self.addNode(Thermostat(self, address, address, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
+                    # TODO: Adding remoteSensors and weather should be done inside thermostat so we know it was created since it's the parent
                     time.sleep(3)
                     if 'remoteSensors' in tstat:
                         for sensor in tstat['remoteSensors']:
@@ -244,6 +246,33 @@ class Controller(polyinterface.Controller):
                         self.addNode(Weather(self, address, forecastAddress, forecastName, useCelsius, True))
         self.discovery = False
         return True
+
+    def get_profile_info(self):
+        pvf = 'profile/version.txt'
+        try:
+            with open(pvf) as f:
+                pv = f.read().replace('\n', '')
+                f.close()
+        except Exception as err:
+            LOGGER.error('get_profile_info: failed to read  file {0}: {1}'.format(pvf,err), exc_info=True)
+            pv = 0
+        return { 'version': pv }
+
+    def check_profile(self):
+        self.profile_info = self.get_profile_info()
+        # Set Default profile version if not Found
+        cdata = deepcopy(self.polyConfig['customData'])
+        LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
+        if not 'profile_info' in cdata:
+            cdata['profile_info'] = { 'version': 0 }
+        if self.profile_info['version'] == cdata['profile_info']['version']:
+            self.update_profile = False
+        else:
+            self.update_profile = True
+            self.poly.installprofile()
+        LOGGER.info('check_profile: update_profile={}'.format(self.update_profile))
+        cdata['profile_info'] = self.profile_info
+        self.saveCustomData(cdata)
 
     def getThermostats(self):
         if not self._checkTokens():
