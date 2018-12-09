@@ -33,7 +33,7 @@ a limitation imposed by Ecobee.
 
 # Release Notes
 
-- 2.0.6: JimBoCA
+- 2.0.6: JimBo
   - [Fix lookup for setting Mode](https://github.com/Einstein42/udi-ecobee-poly/issues/4)
   - [Fix crash when changing schedule mode](https://github.com/Einstein42/udi-ecobee-poly/issues/5)
   - Fix "Climate Type" initialization when there is a manual change
