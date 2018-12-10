@@ -6,7 +6,7 @@ except ImportError:
     import pgc_interface as polyinterface
 from copy import deepcopy
 # For debugging only
-#import json
+import json
 
 LOGGER = polyinterface.LOGGER
 
@@ -168,6 +168,30 @@ class Thermostat(polyinterface.Node):
         super(Thermostat, self).__init__(controller, primary, address, name)
 
     def start(self):
+        if 'remoteSensors' in self.tstat:
+            #LOGGER.debug("remoteSensors={}".format(json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
+            for sensor in self.tstat['remoteSensors']:
+                if 'id' in sensor and 'name' in sensor:
+                    sensorAddressOld = self.getSensorAddressOld(sensor)
+                    sensorAddress = self.getSensorAddress(sensor)
+                    # Delete the old one if it exists
+                    fnode = self.controller.poly.getNode(sensorAddressOld)
+                    LOGGER.debug("fnode={}".format(fnode))
+                    if fnode is not False:
+                        self.controller.addNotice({fnode['address']: "Deleting old sensor with address {} but this is broken in current version of polyglot, so you may have to delete it in the Polyglot UI.".format(fnode['address'])})
+                        self.controller.delNode(fnode['address'])
+                    #else:
+                    #    self.controller.removeNotice(fnode['address'])
+                    if sensorAddress is not None and not sensorAddress in self.controller.nodes:
+                        sensorName = '{} Sensor - {}'.format(self.name, sensor['name'])
+                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress, sensorName, self.useCelsius))
+        if 'weather' in self.tstat:
+            weatherAddress = 'w{}'.format(self.address)
+            weatherName = '{} - Current Weather'.format(self.name)
+            self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
+            forecastAddress = 'f{}'.format(self.address)
+            forecastName = '{} - Forecast'.format(self.name)
+            self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
 
     def update(self, revData, fullData):
@@ -236,14 +260,27 @@ class Thermostat(polyinterface.Node):
       for address, node in self.controller.nodes.items():
         if node.primary == self.address and node.type == 'sensor':
           for sensor in self.tstat['remoteSensors']:
-            if 'id' in sensor:
-              sensorId = re.sub('\:', '', sensor['id']).lower()[:12]
-              if node.address == sensorId:
-                node.update(sensor)
+            if node.address == self.getSensorAddress(sensor):
+              node.update(sensor)
         if node.primary == self.address and (node.type == 'weather' or node.type == 'forecast'):
           weather = self.tstat['weather']
           if weather:
             node.update(weather)
+
+    def getSensorAddressOld(self,sdata):
+      # return the sensor address from the ecobee api data for one sensor
+      if 'id' in sdata:
+          return re.sub('\:', '', sdata['id']).lower()[:12]
+      return None
+
+    def getSensorAddress(self,sdata):
+      if sdata['type'] == 'thermostat':
+        sensorId = 's{}'.format(self.tstat['identifier'])
+      else:
+        sensorId = re.sub('\:', '', sdata['id']).lower()[:12]
+        sensorId = '{}_{}'.format(sensorId, sdata['code'].lower())
+      LOGGER.debug("sensorAddressNew={}".format(sensorId))
+      return sensorId
 
     def query(self, command=None):
       self.reportDrivers()

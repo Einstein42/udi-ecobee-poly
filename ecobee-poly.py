@@ -40,6 +40,7 @@ class Controller(polyinterface.Controller):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         LOGGER.debug(self.polyConfig['customData'])
+        self.removeNoticesAll()
         self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
@@ -227,23 +228,7 @@ class Controller(polyinterface.Controller):
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
                     self.addNode(Thermostat(self, address, address, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
-                    # TODO: Adding remoteSensors and weather should be done inside thermostat so we know it was created since it's the parent
-                    time.sleep(3)
-                    if 'remoteSensors' in tstat:
-                        for sensor in tstat['remoteSensors']:
-                            if 'id' in sensor and 'name' in sensor:
-                                sensorAddress = re.sub('\:', '', sensor['id']).lower()[:12]
-                                # sensorAddress = 's{}'.format(sensor['code'].lower())
-                                if not sensorAddress in self.nodes:
-                                    sensorName = '{} Sensor - {}'.format(thermostat['name'], sensor['name'])
-                                    self.addNode(Sensor(self, address, sensorAddress, sensorName, useCelsius))
-                    if 'weather' in tstat:
-                        weatherAddress = 'w{}'.format(address)
-                        weatherName = '{} - Current Weather'.format(thermostat['name'])
-                        self.addNode(Weather(self, address, weatherAddress, weatherName, useCelsius, False))
-                        forecastAddress = 'f{}'.format(address)
-                        forecastName = '{} - Forecast'.format(thermostat['name'])
-                        self.addNode(Weather(self, address, forecastAddress, forecastName, useCelsius, True))
+
         self.discovery = False
         return True
 
