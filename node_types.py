@@ -147,9 +147,10 @@ def toF(tempC):
 """
  Address scheme:
  Devices: n<profile>_t<thermostatId> e.g. n003_t511892759243
- Sensors: n<profile>_s<sensor code> e.g. n003_sr6dr
+ Thermostat Sensor: n<profile>_s<thermostatId> e.g. n003_s511892759243
  Current Weather: n<profile>_w<thermostatId> e.g. n003_w511892759243
  Forecast Weather: n<profile>_f<thermostatId> e.g. n003_f511892759243
+ Sensors: n<profile>_s<sensor code> e.g. n003_rs_r6dr
 """
 
 class Thermostat(polyinterface.Node):
@@ -274,12 +275,12 @@ class Thermostat(polyinterface.Node):
       return None
 
     def getSensorAddress(self,sdata):
+      # Is it the sensor in the thermostat?
       if sdata['type'] == 'thermostat':
-        sensorId = 's{}'.format(self.tstat['identifier'])
-      else:
-        sensorId = re.sub('\:', '', sdata['id']).lower()[:12]
-        sensorId = '{}_{}'.format(sensorId, sdata['code'].lower())
-      return sensorId
+        # Yes, use the thermostat id
+        return 's{}'.format(self.tstat['identifier'])
+      # No, use the remote sensor code
+      return 'rs_{}'.format(sdata['code'].lower())
 
     def query(self, command=None):
       self.reportDrivers()
