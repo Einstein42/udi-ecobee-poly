@@ -6,7 +6,7 @@ except ImportError:
     import pgc_interface as polyinterface
 from copy import deepcopy
 # For debugging only
-import json
+#import json
 
 LOGGER = polyinterface.LOGGER
 
@@ -279,7 +279,6 @@ class Thermostat(polyinterface.Node):
       else:
         sensorId = re.sub('\:', '', sdata['id']).lower()[:12]
         sensorId = '{}_{}'.format(sensorId, sdata['code'].lower())
-      LOGGER.debug("sensorAddressNew={}".format(sensorId))
       return sensorId
 
     def query(self, command=None):
