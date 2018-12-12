@@ -212,7 +212,7 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       if climateType in climateMap:
           climateIndex = climateMap[climateType]
-      else
+      else:
           LOGGER.error("Unknown climateType='{}'")
           climateIndex = 0
       updates = {
