@@ -249,23 +249,37 @@ class Thermostat(polyinterface.Node):
       self.reportDrivers()
 
     def cmdSetPoint(self, cmd):
-      if cmd['cmd'] == 'CLISPH':
+      driver = cmd['cmd']
+      if driver == 'CLISPH':
         cmdtype = 'heatTemp'
-        driver = 'CLISPH'
       else:
         cmdtype = 'coolTemp'
-        driver = 'CLISPC'
       LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
-      currentProgram = deepcopy(self.program)
-      for climate in currentProgram['climates']:
-        if climate['climateRef'] == currentProgram['currentClimateRef']:
-          if self.useCelsius:
-              climate[cmdtype] = toF(float(cmd['value'])) * 10
-          else:
-            climate[cmdtype] = int(cmd['value']) * 10
-          if self.controller.ecobeePost(self.address, {'thermostat': {'program': currentProgram}}):
-            self.setDriver(driver, cmd['value'])
-      LOGGER.debug("getDriver({})={}".format(driver,self.getDriver(driver)))
+      if self.controller.ecobeePost(self.address,
+        {
+          "functions": [
+            {
+              "type":"setHold",
+              "params": {
+                "holdType":"nextTransition",
+                "heatHoldTemp":700,
+                "coolHoldTemp":700
+              }
+            }
+          ]
+        })
+        self.setDriver(driver, cmd['value'])
+      # This was the old way which changed the setpoint of the current running program.
+      #currentProgram = deepcopy(self.program)
+      #for climate in currentProgram['climates']:
+        #if climate['climateRef'] == currentProgram['currentClimateRef']:
+        #  if self.useCelsius:
+        #      climate[cmdtype] = toF(float(cmd['value'])) * 10
+        #  else:
+        #    climate[cmdtype] = int(cmd['value']) * 10
+        #  if self.controller.ecobeePost(self.address, {'thermostat': {'program': currentProgram}}):
+        #    self.setDriver(driver, cmd['value'])
+      #LOGGER.debug("getDriver({})={}".format(driver,self.getDriver(driver)))
 
     def getMapName(self,map,val):
       for name in map:
