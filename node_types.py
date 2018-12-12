@@ -257,9 +257,11 @@ class Thermostat(polyinterface.Node):
       # TODO: Need to check that mode is auto,
       driver = cmd['cmd']
       if driver == 'CLISPH':
+        cmdtype  = "Heat"
         heatTemp = cmd['value']
         coolTemp = self.getDriver('CLISPC')
       else:
+        cmdtype  = "Cool"
         coolTemp = cmd['value']
         heatTemp = self.getDriver('CLISPH')
       LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
