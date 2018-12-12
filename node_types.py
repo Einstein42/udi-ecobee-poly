@@ -272,8 +272,8 @@ class Thermostat(polyinterface.Node):
               "type":"setHold",
               "params": {
                 "holdType":"nextTransition",
-                "heatHoldTemp":heatTemp,
-                "coolHoldTemp":coolTemp,
+                "heatHoldTemp":heatTemp * 10,
+                "coolHoldTemp":coolTemp * 10,
               }
             }
           ]
