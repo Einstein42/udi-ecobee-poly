@@ -271,7 +271,7 @@ class Thermostat(polyinterface.Node):
               }
             }
           ]
-        })
+        }):
         self.setDriver(driver, cmd['value'])
       # This was the old way which changed the setpoint of the current running program.
       #currentProgram = deepcopy(self.program)
