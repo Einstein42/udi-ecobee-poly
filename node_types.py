@@ -253,11 +253,15 @@ class Thermostat(polyinterface.Node):
       self.reportDrivers()
 
     def cmdSetPoint(self, cmd):
+      # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
+      # TODO: Need to check that mode is auto,
       driver = cmd['cmd']
       if driver == 'CLISPH':
-        cmdtype = 'heatTemp'
+        heatTemp = cmd['value']
+        coolTemp = self.getDriver('CLISPC')
       else:
-        cmdtype = 'coolTemp'
+        coolTemp = cmd['value']
+        heatTemp = self.getDriver('CLISPH')
       LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
       if self.controller.ecobeePost(self.address,
         {
@@ -266,8 +270,8 @@ class Thermostat(polyinterface.Node):
               "type":"setHold",
               "params": {
                 "holdType":"nextTransition",
-                "heatHoldTemp":700,
-                "coolHoldTemp":700
+                "heatHoldTemp":heatTemp,
+                "coolHoldTemp":coolTemp,
               }
             }
           ]

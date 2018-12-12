@@ -358,7 +358,7 @@ class Controller(polyinterface.Controller):
             LOGGER.error('ecobeePost failed. Tokens not available.')
             return False
         LOGGER.info('Posting Update Data for Thermostat {}'.format(thermostatId))
-        # LOGGER.debug('Post Data : {}'.format(json.dumps(postData)))
+        LOGGER.debug('Post Data : {}'.format(json.dumps(postData,sort_keys=True, indent=2)))
         postData['selection'] = {
             'selectionType': 'thermostats',
             'selectionMatch': thermostatId
