@@ -210,7 +210,11 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
-
+      if climateType in climateMap:
+          climateIndex = climateMap[climateType]
+      else
+          LOGGER.error("Unknown climateType='{}'")
+          climateIndex = 0
       updates = {
         'ST': tempCurrent,
         'CLISPH': tempHeat,
@@ -226,7 +230,7 @@ class Thermostat(polyinterface.Node):
         # thought it would work, but still has issues...
         #'GV3': climateMap[self.program['climates'][-1]['climateRef']],
         #'GV3': climateMap[self.program['climates'][-1]['climateRef']],
-        'GV3': climateMap[climateType],
+        'GV3': climateIndex,
         'GV5': runtime['desiredDehumidity'],
         'GV6': 1 if self.settings['autoAway'] else 0,
         'GV7': 1 if self.settings['followMeComfort'] else 0
