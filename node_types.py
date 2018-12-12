@@ -258,11 +258,11 @@ class Thermostat(polyinterface.Node):
       driver = cmd['cmd']
       if driver == 'CLISPH':
         cmdtype  = "Heat"
-        heatTemp = cmd['value']
+        heatTemp = int(cmd['value'])
         coolTemp = int(self.getDriver('CLISPC'))
       else:
         cmdtype  = "Cool"
-        coolTemp = cmd['value']
+        coolTemp = int(cmd['value'])
         heatTemp = int(self.getDriver('CLISPH'))
       LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
       if self.controller.ecobeePost(self.address,
