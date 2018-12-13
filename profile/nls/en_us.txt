@@ -127,7 +127,7 @@ EN_PM-1 = Running
 
 EN_PM2-0 = Running
 EN_PM2-1 = Hold Next
-EN_PM2-2 = Hold
+EN_PM2-2 = Hold Indefinite
 
 EN_BOOL-0 = No
 EN_BOOL-1 = Yes
