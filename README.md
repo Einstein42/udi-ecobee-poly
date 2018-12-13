@@ -1,38 +1,49 @@
 # Ecobee Poly
 
-#### Installation
+## Installation
 
 Install through the NodeServer Store
 
-#### Requirements
+### Initial setup
 
-On first start up you will be given a PIN.
-
-Login to the Ecobee web page, click on your profile, then
-click 'My Apps' > 'Add Application'.
-
-You will be prompted to enter the PIN provided.
-
-The nodeserver will check every 60 seconds that you have completed the approval
-so do not restart the nodeserver. You can monitor the log to see when the
-approval is recognized.
-
-Your thermostat will be added to ISY, along with nodes for any sensors,
-a node for the current weather, and a node for the forecast.
+1. On first start up you will be given a PIN.
+1. Login to the Ecobee web page, click on your profile, then click 'My Apps' > 'Add Application'.
+1. You will be prompted to enter the PIN provided.
+1. The nodeserver will check every 60 seconds that you have completed the approval so do not restart the nodeserver. You can monitor the log to see when the approval is recognized.
+1. Your thermostat will be added to ISY, along with nodes for any sensors, a node for the current weather, and a node for the forecast.
 
 After the first run. It will refresh any changes every 3 minutes. This is
 a limitation imposed by Ecobee.
 
-# Upgrading
+## Settings
+
+- The "Schedule Mode" is one of
+  1. Running
+  1. Hold Next
+  1. Hold Indefinite
+  If this is changed to either Hold settings then the current Cool/Heat and Fan modes are sent with that Hold type.  If Running is selected then any Holds are cancelled.
+
+## Upgrading
 
 1. Open the Polyglot web page
-  1. Go to nodeserver store and click "Update" for "Ecobee".
+  1. Go to nodeserver store and click "Update" for "Ecobee"
+  1. Wait for the update completed notice
   1. Go to the dashboard, select Details for the Ecobee Nodeserver
   1. Click Restart
 1. If the release has a (Profile Change) then the profile will be updated automatically but if you had the Admin Console open, you will need to close and open it again.
 
-# Release Notes
+## Release Notes
 
+- 2.0.7: JimBo
+  - [Changing setpoint when program running changes the actual "comfort setting"](https://github.com/Einstein42/udi-ecobee-poly/issues/6)
+    - See Notes above in Settings for "Schedule Mode"
+  - [Schedule Mode crash ValueError: invalid literal for int() with base 10](https://github.com/Einstein42/udi-ecobee-poly/issues/10)
+  - [Setting 'Climate Type' sets hold as indefinite, should it use nextTransition?](https://github.com/Einstein42/udi-ecobee-poly/issues/9)
+    - It will now use the current set "Schedule Mode"
+  - [Move creating Thermostat child nodes into Thermostat](https://github.com/Einstein42/udi-ecobee-poly/issues/7)
+  - [Sensor ID's are not unique when you have multiple thermostats](https://github.com/Einstein42/udi-ecobee-poly/issues/2)
+    - The new sensor nodes will be created when the nodeserver is restarted.
+    - IMPORTANT: Please delete the nodes from within the Polyglot UI after changing any programs that may reference the old ones.
 - 2.0.6: JimBo
   - [Fix lookup for setting Mode](https://github.com/Einstein42/udi-ecobee-poly/issues/4)
   - [Fix crash when changing schedule mode](https://github.com/Einstein42/udi-ecobee-poly/issues/5)
