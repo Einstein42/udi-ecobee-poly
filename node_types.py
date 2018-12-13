@@ -6,7 +6,7 @@ except ImportError:
     import pgc_interface as polyinterface
 from copy import deepcopy
 # For debugging only
-#import json
+import json
 
 LOGGER = polyinterface.LOGGER
 
@@ -194,7 +194,7 @@ class Thermostat(polyinterface.Node):
       if len(events) > 0 and events[0]['type'] == 'hold' and events[0]['running']:
         clismd = 1 if self.settings['holdAction'] == 'nextPeriod' else 2
         climateType = events[0]['holdClimateRef']
-      LOGGER.debug("clismd={} climateType={}".format(clismd,climateType))
+      LOGGER.debug("holdAction={} clismd={} climateType={}".format(self.settings['holdAction'],clismd,climateType))
       tempCurrent = runtime['actualTemperature'] / 10 if runtime['actualTemperature'] != 0 else 0
       tempHeat = runtime['desiredHeat'] / 10
       tempCool = runtime['desiredCool'] / 10
@@ -204,8 +204,8 @@ class Thermostat(polyinterface.Node):
         tempCool = toC(tempCool)
       else:
         # F set points must be integer
-        tempHeat = int(tempHeat)
-        tempCool = int(tempCool)
+        tempHeat = int(float(tempHeat))
+        tempCool = int(float(tempCool))
 
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
@@ -255,6 +255,9 @@ class Thermostat(polyinterface.Node):
     def cmdSetPoint(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
       # TODO: Need to check that mode is auto,
+      events = self.tstat['events']
+      LOGGER.debug("events={}".format(json.dumps(events, sort_keys=True, indent=2)))
+      LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       driver = cmd['cmd']
       if driver == 'CLISPH':
         cmdtype  = "Heat"
@@ -271,7 +274,7 @@ class Thermostat(polyinterface.Node):
             {
               "type":"setHold",
               "params": {
-                "holdType":"nextTransition",
+                "holdType":  self.getHoldType(),
                 "heatHoldTemp":heatTemp * 10,
                 "coolHoldTemp":coolTemp * 10,
               }
@@ -279,17 +282,7 @@ class Thermostat(polyinterface.Node):
           ]
         }):
         self.setDriver(driver, cmd['value'])
-      # This was the old way which changed the setpoint of the current running program.
-      #currentProgram = deepcopy(self.program)
-      #for climate in currentProgram['climates']:
-        #if climate['climateRef'] == currentProgram['currentClimateRef']:
-        #  if self.useCelsius:
-        #      climate[cmdtype] = toF(float(cmd['value'])) * 10
-        #  else:
-        #    climate[cmdtype] = int(cmd['value']) * 10
-        #  if self.controller.ecobeePost(self.address, {'thermostat': {'program': currentProgram}}):
-        #    self.setDriver(driver, cmd['value'])
-      #LOGGER.debug("getDriver({})={}".format(driver,self.getDriver(driver)))
+        self.controller.updateThermostats()
 
     def getMapName(self,map,val):
       for name in map:
@@ -335,17 +328,23 @@ class Thermostat(polyinterface.Node):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetClimate: {}={} already set to {}".format(cmd['cmd'],int(self.getDriver(cmd['cmd'])),int(cmd['value'])))
       else:
+
         command = {
           'functions': [{
             'type': 'setHold',
             'params': {
-              'holdType': 'indefinite',
+              'holdType': self.getHoldType(),
               'holdClimateRef': self.getMapName(climateMap,int(cmd['value']))
             }
           }]
         }
         if self.controller.ecobeePost(self.address, command):
           self.setDriver(cmd['cmd'], cmd['value'])
+
+    def getHoldType(self):
+      # Return the current holdType name, if set to Hold, return indefinite
+      # Otherwise return nextTransition
+      return 'indefinite' if int(self.getDriver('CLISMD')) == 2 else 'nextTransition'
 
     def cmdSetFanOnTime(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
