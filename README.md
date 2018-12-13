@@ -37,6 +37,13 @@ a limitation imposed by Ecobee.
 - 2.0.7: JimBo
   - [Changing setpoint when program running changes the actual "comfort setting"](https://github.com/Einstein42/udi-ecobee-poly/issues/6)
     - See Notes above in Settings for "Schedule Mode"
+  - [Schedule Mode crash ValueError: invalid literal for int() with base 10](https://github.com/Einstein42/udi-ecobee-poly/issues/10)
+  - [Setting 'Climate Type' sets hold as indefinite, should it use nextTransition?](https://github.com/Einstein42/udi-ecobee-poly/issues/9)
+    - It will now use the current set "Schedule Mode"
+  - [Move creating Thermostat child nodes into Thermostat](https://github.com/Einstein42/udi-ecobee-poly/issues/7)
+  - [Sensor ID's are not unique when you have multiple thermostats](https://github.com/Einstein42/udi-ecobee-poly/issues/2)
+    - The new sensor nodes will be created when the nodeserver is restarted.
+    - IMPORTANT: Please delete the nodes from within the Polyglot UI after changing any programs that may reference the old ones.
 - 2.0.6: JimBo
   - [Fix lookup for setting Mode](https://github.com/Einstein42/udi-ecobee-poly/issues/4)
   - [Fix crash when changing schedule mode](https://github.com/Einstein42/udi-ecobee-poly/issues/5)
