@@ -34,6 +34,9 @@ a limitation imposed by Ecobee.
 
 ## Release Notes
 
+- 2.0.8: JimBo
+  - Shortend names of Sensor, Weather, and Forcast nodes.
+    - Existing will have to delete the current nodes in the Polyglot UI to get the new names, or just rename them yourself.
 - 2.0.7: JimBo
   - [Changing setpoint when program running changes the actual "comfort setting"](https://github.com/Einstein42/udi-ecobee-poly/issues/6)
     - See Notes above in Settings for "Schedule Mode"

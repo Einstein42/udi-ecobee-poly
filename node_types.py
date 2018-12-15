@@ -184,14 +184,14 @@ class Thermostat(polyinterface.Node):
                     #else:
                     #    self.controller.removeNotice(fnode['address'])
                     if sensorAddress is not None and not sensorAddress in self.controller.nodes:
-                        sensorName = '{} Sensor - {}'.format(self.name, sensor['name'])
+                        sensorName = 'Ecobee - {}'.format(sensor['name'])
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress, sensorName, self.useCelsius))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.address)
-            weatherName = '{} - Current Weather'.format(self.name)
+            weatherName = 'Ecobee - Weather'
             self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
             forecastAddress = 'f{}'.format(self.address)
-            forecastName = '{} - Forecast'.format(self.name)
+            forecastName = 'Ecobee - Forecast'
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
 
