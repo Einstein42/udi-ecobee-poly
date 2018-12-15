@@ -32,11 +32,19 @@ a limitation imposed by Ecobee.
   1. Click Restart
 1. If the release has a (Profile Change) then the profile will be updated automatically but if you had the Admin Console open, you will need to close and open it again.
 
+### Manual Upgrade
+
+If you already have it installed and want the update before it's in the store.
+1. cd ~/.polyglot/nodeservers/Ecobee
+1. git pull
+1. Go to the polyglot dashboard, select Details for the Ecobee Nodeserver
+1. Click Restart
+
 ## Release Notes
 
 - 2.0.8: JimBo
   - Shortend names of Sensor, Weather, and Forcast nodes.
-    - Existing will have to delete the current nodes in the Polyglot UI to get the new names, or just rename them yourself.
+    - Existing users will have to delete the current nodes in the Polyglot UI to get the new names, or just rename them yourself.
 - 2.0.7: JimBo
   - [Changing setpoint when program running changes the actual "comfort setting"](https://github.com/Einstein42/udi-ecobee-poly/issues/6)
     - See Notes above in Settings for "Schedule Mode"
