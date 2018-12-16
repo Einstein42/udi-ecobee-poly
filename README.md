@@ -42,6 +42,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.10: JimBo
+  - Changed setpoint up/down (BRT/DIM) to change as a hold nextTransition instead of changing the program setpoint
+  - Better trapping of issues when Ecobee servers are not responding
 - 2.0.9: JimBo
   - Should now be properly tracking all status when going in and out of holds.
 - 2.0.8: JimBo

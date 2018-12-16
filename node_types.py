@@ -196,10 +196,13 @@ class Thermostat(polyinterface.Node):
         self.update(self.revData, self.fullData)
 
     def update(self, revData, fullData):
-      self.revData = revData
-      self.fullData = fullData
       #LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
       #LOGGER.debug("revData={}".format(json.dumps(revData, sort_keys=True, indent=2)))
+      if not 'thermostatList' in fullData:
+        LOGGER.error("No thermostatList in fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
+        return False
+      self.revData = revData
+      self.fullData = fullData
       self.tstat = fullData['thermostatList'][0]
       self.settings = self.tstat['settings']
       self.program  = self.tstat['program']
@@ -297,6 +300,11 @@ class Thermostat(polyinterface.Node):
 
     def query(self, command=None):
       self.reportDrivers()
+
+    def tempToE(self,temp):
+      if self.useCelsius:
+        return(toF(float(temp)) * 10)
+      return(int(temp) * 10)
 
     def cmdSetPoint(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
@@ -444,29 +452,43 @@ class Thermostat(polyinterface.Node):
 
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
-      currentProgram = deepcopy(self.program)
-      for climate in currentProgram['climates']:
-        if climate['climateRef'] == currentProgram['currentClimateRef']:
-          cmdtype = 'coolTemp'
-          driver = 'CLISPC'
-          value = 1
-          if self.settings['hvacMode'] == 'heat' or self.settings['hvacMode'] == 'auto':
-            cmdtype = 'heatTemp'
-            driver = 'CLISPH'
-          currentValue = float(self.getDriver(driver))
-          if 'value' in cmd:
-            value = float(cmd['value'])
-          if cmd['cmd'] == 'BRT':
-            newTemp = currentValue + value
-          else:
-            newTemp = currentValue - value
-          if self.useCelsius:
-              climate[cmdtype] = toF(float(newTemp)) * 10
-          else:
-            climate[cmdtype] = int(newTemp) * 10
-          LOGGER.debug('{} {} {} {} {}'.format(cmdtype, driver, self.getDriver(driver), newTemp, climate[cmdtype]))
-          if self.controller.ecobeePost(self.address, {'thermostat': {'program': currentProgram}}):
-            self.setDriver(driver, newTemp)
+      coolTemp = float(self.getDriver('CLISPC'))
+      heatTemp = float(self.getDriver('CLISPH'))
+      if 'value' in cmd:
+        value = float(cmd['value'])
+      else:
+        value = 1
+      if cmd['cmd'] == 'DIM':
+          value = value * -1
+
+      if self.settings['hvacMode'] == 'heat' or self.settings['hvacMode'] == 'auto':
+        cmdtype = 'heatTemp'
+        driver = 'CLISPH'
+        heatTemp += value
+        newTemp = heatTemp
+      else:
+        cmdtype = 'coolTemp'
+        driver = 'CLISPC'
+        coolTemp += value
+        newTemp = coolTemp
+      LOGGER.debug('{} {} {} {}'.format(cmdtype, driver, self.getDriver(driver), newTemp))
+      #LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
+      if self.controller.ecobeePost(self.address,
+        {
+          "functions": [
+            {
+              "type":"setHold",
+              "params": {
+                "holdType":  self.getHoldType(),
+                "heatHoldTemp":self.tempToE(heatTemp),
+                "coolHoldTemp":self.tempToE(coolTemp),
+              }
+            }
+          ]
+        }):
+        self.setDriver(driver, newTemp)
+        self.setDriver('CLISMD',transitionMap[self.getHoldType()])
+
 
     commands = { 'QUERY': query,
                 'CLISPH': cmdSetPoint,

@@ -31,7 +31,8 @@ class Controller(polyinterface.Controller):
         self.auth_token = None
         self.token_type = None
         self.tokenData = {}
-        self.discovery = False
+        self.in_discover = False
+        self.discover_st = False
         self.refreshingTokens = False
         self.pinRun = False
         self._cloud = CLOUD
@@ -175,6 +176,9 @@ class Controller(polyinterface.Controller):
         pass
 
     def longPoll(self):
+        # Call discovery if it failed on startup
+        if self.discover_st is None:
+            self.discovery()
         self.updateThermostats()
 
     def updateThermostats(self):
@@ -213,13 +217,18 @@ class Controller(polyinterface.Controller):
         LOGGER.debug('NodeServer stopped.')
 
     def discover(self, *args, **kwargs):
-        if self.discovery:
+        # True means we are in dsocvery
+        if self.in_discover:
             return True
+        self.in_discover = True
+        self.discover_st = False
         LOGGER.info('Discovering Ecobee Thermostats')
         if self.auth_token is None:
             return False
-        self.discovery = True
         thermostats = self.getThermostats()
+        if thermostats is False:
+            LOGGER.error("Discover Failed, No thermostats returned!  Will try again on next long poll")
+            return False
         self.revData = deepcopy(thermostats)
         for thermostatId, thermostat in thermostats.items():
             address = '{}'.format(thermostatId)
@@ -229,8 +238,8 @@ class Controller(polyinterface.Controller):
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
                     self.addNode(Thermostat(self, address, address, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
-
-        self.discovery = False
+        self.discover_st = True
+        self.in_discover = False
         return True
 
     def get_profile_info(self):
