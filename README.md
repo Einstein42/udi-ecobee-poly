@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.9: JimBo
+  - Should now be properly tracking all status when going in and out of holds.
 - 2.0.8: JimBo
   - Shortend names of Sensor, Weather, and Forcast nodes.
     - Existing users will have to delete the current nodes in the Polyglot UI to get the new names, or just rename them yourself.

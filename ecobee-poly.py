@@ -205,6 +205,7 @@ class Controller(polyinterface.Controller):
         return False
 
     def query(self):
+        self.updateThermostats()
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 

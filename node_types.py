@@ -201,25 +201,34 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
       #LOGGER.debug("revData={}".format(json.dumps(revData, sort_keys=True, indent=2)))
       self.tstat = fullData['thermostatList'][0]
-      self.program = self.tstat['program']
-      events = self.tstat['events']
-      equipmentStatus = self.tstat['equipmentStatus'].split(',')
       self.settings = self.tstat['settings']
-      #LOGGER.debug("update: settings={}".format(self.settings))
+      self.program  = self.tstat['program']
+      self.events   = self.tstat['events']
+      self._update()
+
+    def _update(self):
+      #LOGGER.debug("events={}".format(json.dumps(events, sort_keys=True, indent=2)))
+      equipmentStatus = self.tstat['equipmentStatus'].split(',')
+      #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       runtime = self.tstat['runtime']
       clihcs = 0
       for status in equipmentStatus:
         if status in equipmentStatusMap:
           clihcs = equipmentStatusMap[status]
           break
-      # This seems to be what the schedule says should be enabled.
+      # This is what the schedule says should be enabled.
       climateType = self.program['currentClimateRef']
       # And the default mode, unless there is an event
       clismd = 0
-      if len(events) > 0 and events[0]['type'] == 'hold' and events[0]['running']:
-        clismd = 1 if self.settings['holdAction'] == 'nextPeriod' else 2
-        climateType = events[0]['holdClimateRef']
-      LOGGER.debug("holdAction={} clismd={} climateType={}".format(self.settings['holdAction'],clismd,climateType))
+      # Is there an active event?
+      if len(self.events) > 0 and self.events[0]['type'] == 'hold' and self.events[0]['running']:
+        # This seems to mean an indefinite hold
+        #  "endDate": "2035-01-01", "endTime": "00:00:00",
+        if self.events[0]['endTime'] == '00:00:00':
+            clismd = transitionMap['indefinite']
+        else:
+            clismd = transitionMap['nextTransition']
+        climateType = self.events[0]['holdClimateRef']
       tempCurrent = runtime['actualTemperature'] / 10 if runtime['actualTemperature'] != 0 else 0
       tempHeat = runtime['desiredHeat'] / 10
       tempCool = runtime['desiredCool'] / 10
@@ -235,11 +244,7 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
-      if climateType in climateMap:
-          climateIndex = climateMap[climateType]
-      else:
-          LOGGER.error("Unknown climateType='{}'")
-          climateIndex = 0
+      self.getClimateIndex(climateType)
       updates = {
         'ST': tempCurrent,
         'CLISPH': tempHeat,
@@ -251,11 +256,7 @@ class Thermostat(polyinterface.Node):
         'GV1': runtime['desiredHumidity'],
         'CLISMD': clismd,
         'GV4': self.settings['fanMinOnTime'],
-        # This assumes our climate is in the last hash in the array
-        # thought it would work, but still has issues...
-        #'GV3': climateMap[self.program['climates'][-1]['climateRef']],
-        #'GV3': climateMap[self.program['climates'][-1]['climateRef']],
-        'GV3': climateIndex,
+        'GV3': self.getClimateIndex(climateType),
         'GV5': runtime['desiredDehumidity'],
         'GV6': 1 if self.settings['autoAway'] else 0,
         'GV7': 1 if self.settings['followMeComfort'] else 0
@@ -271,6 +272,14 @@ class Thermostat(polyinterface.Node):
           weather = self.tstat['weather']
           if weather:
             node.update(weather)
+
+    def getClimateIndex(self,name):
+      if name in climateMap:
+          climateIndex = climateMap[name]
+      else:
+          LOGGER.error("Unknown climateType='{}'".format(name))
+          climateIndex = climateMap['unknown']
+      return climateIndex
 
     def getSensorAddressOld(self,sdata):
       # return the sensor address from the ecobee api data for one sensor
@@ -292,9 +301,8 @@ class Thermostat(polyinterface.Node):
     def cmdSetPoint(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
       # TODO: Need to check that mode is auto,
-      events = self.tstat['events']
-      LOGGER.debug("events={}".format(json.dumps(events, sort_keys=True, indent=2)))
-      LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
+      #LOGGER.debug("self.events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+      #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       driver = cmd['cmd']
       if driver == 'CLISPH':
         cmdtype  = "Heat"
@@ -319,7 +327,7 @@ class Thermostat(polyinterface.Node):
           ]
         }):
         self.setDriver(driver, cmd['value'])
-        self.controller.updateThermostats()
+        self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
     def getMapName(self,map,val):
       for name in map:
@@ -328,7 +336,7 @@ class Thermostat(polyinterface.Node):
 
     def cmdSetMode(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
+        LOGGER.debug("cmdSetMode: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         name = self.getMapName(modeMap,int(cmd['value']))
         LOGGER.info('Setting Thermostat {} to mode: {} (value={})'.format(self.name, name, cmd['value']))
@@ -338,34 +346,39 @@ class Thermostat(polyinterface.Node):
 
     def cmdSetScheduleMode(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
+        LOGGER.debug("cmdSetScheduleMode: {}={} already set to {}".format(cmd['cmd'],self.getDriver(cmd['cmd']),cmd['value']))
       else:
+        resume = False
         func = {}
         if int(cmd['value']) == 0:
           func['type'] = 'resumeProgram'
           func['params'] = {
             'resumeAll': False
           }
+          resume = True
         else:
           func['type'] = 'setHold'
-          heatHoldTemp = int(self.getDriver('CLISPH'))
-          coolHoldTemp = int(self.getDriver('CLISPC'))
+          heatHoldTemp = int(float(self.getDriver('CLISPH')))
+          coolHoldTemp = int(float(self.getDriver('CLISPC')))
           if self.useCelsius:
             headHoldTemp = toF(heatHoldTemp)
             coolHoldTemp = toF(coolHoldTemp)
           func['params'] = {
-            'holdType': 'nextTransition' if int(cmd['value']) == 1 else 'indefinite',
+            'holdType': self.getHoldType(cmd['value']),
             'heatHoldTemp': heatHoldTemp * 10,
             'coolHoldTemp': coolHoldTemp * 10
           }
         if self.controller.ecobeePost(self.address, {'functions': [func]}):
           self.setDriver('CLISMD', int(cmd['value']))
+          # Update climate back to schdule when we resume
+          if resume:
+              self.events = list()
+              self._update()
 
     def cmdSetClimate(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetClimate: {}={} already set to {}".format(cmd['cmd'],int(self.getDriver(cmd['cmd'])),int(cmd['value'])))
       else:
-
         command = {
           'functions': [{
             'type': 'setHold',
@@ -377,15 +390,19 @@ class Thermostat(polyinterface.Node):
         }
         if self.controller.ecobeePost(self.address, command):
           self.setDriver(cmd['cmd'], cmd['value'])
+          self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
-    def getHoldType(self):
-      # Return the current holdType name, if set to Hold, return indefinite
+    def getHoldType(self,val=None):
+      if val is None:
+          # They want the current value
+          val = self.getDriver('CLISMD')
+      # Return the holdType name, if set to Hold, return indefinite
       # Otherwise return nextTransition
-      return 'indefinite' if int(self.getDriver('CLISMD')) == 2 else 'nextTransition'
+      return self.getMapName(transitionMap,2) if int(val) == 2 else self.getMapName(transitionMap,1)
 
     def cmdSetFanOnTime(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
+        LOGGER.debug("cmdSetFanOnTime: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
           'thermostat': {
@@ -399,7 +416,7 @@ class Thermostat(polyinterface.Node):
 
     def cmdSmartHome(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
+        LOGGER.debug("cmdSetSmartHome: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
           'thermostat': {
@@ -413,7 +430,7 @@ class Thermostat(polyinterface.Node):
 
     def cmdFollowMe(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
+        LOGGER.debug("cmdFollowMe: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
           'thermostat': {
