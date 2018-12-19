@@ -244,7 +244,7 @@ class Controller(polyinterface.Controller):
         self.in_discover = False
         return True
 
-    def get_server_data(logger):
+    def get_server_data(self,logger):
         # Read the SERVER info from the json.
         try:
             with open('server.json') as data:
