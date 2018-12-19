@@ -176,8 +176,12 @@ class Thermostat(polyinterface.Node):
                     sensorAddressOld = self.getSensorAddressOld(sensor)
                     sensorAddress = self.getSensorAddress(sensor)
                     # Delete the old one if it exists
-                    fnode = self.controller.poly.getNode(sensorAddressOld)
-                    LOGGER.debug("fnode={}".format(fnode))
+                    try:
+                      fnode = self.controller.poly.getNode(sensorAddressOld)
+                      LOGGER.debug("fnode={}".format(fnode))
+                    except TypeError:
+                      fnode = False
+                      LOGGER.debug("fnode not found")
                     if fnode is not False:
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                         self.controller.delNode(fnode['address'])
