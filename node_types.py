@@ -181,7 +181,7 @@ class Thermostat(polyinterface.Node):
                       LOGGER.debug("fnode={}".format(fnode))
                     except TypeError:
                       fnode = False
-                      LOGGER.debug("fnode not found")
+                      LOGGER.debug("caught fnode fail, assuming old node not found")
                     if fnode is not False:
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                         self.controller.delNode(fnode['address'])
