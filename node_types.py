@@ -178,7 +178,6 @@ class Thermostat(polyinterface.Node):
                     # Delete the old one if it exists
                     try:
                       fnode = self.controller.poly.getNode(sensorAddressOld)
-                      LOGGER.debug("fnode={}".format(fnode))
                     except TypeError:
                       fnode = False
                       LOGGER.debug("caught fnode fail, assuming old node not found")
