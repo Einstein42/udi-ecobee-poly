@@ -144,6 +144,12 @@ def toF(tempC):
   # Round to nearest whole degree
   return int(round(tempC * 1.8) + 32)
 
+def getMapName(map,val):
+  val = int(val)
+  for name in map:
+    if int(map[name]) == val:
+      return name
+
 """
  Address scheme:
  Devices: n<profile>_t<thermostatId> e.g. n003_t511892759243
@@ -177,7 +183,6 @@ class Thermostat(polyinterface.Node):
                     sensorAddress = self.getSensorAddress(sensor)
                     # Delete the old one if it exists
                     fnode = self.controller.poly.getNode(sensorAddressOld)
-                    LOGGER.debug("fnode={}".format(fnode))
                     if fnode is not False:
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                         self.controller.delNode(fnode['address'])
@@ -225,13 +230,15 @@ class Thermostat(polyinterface.Node):
       clismd = 0
       # Is there an active event?
       if len(self.events) > 0 and self.events[0]['type'] == 'hold' and self.events[0]['running']:
+        LOGGER.debug("events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
         # This seems to mean an indefinite hold
         #  "endDate": "2035-01-01", "endTime": "00:00:00",
         if self.events[0]['endTime'] == '00:00:00':
             clismd = transitionMap['indefinite']
         else:
             clismd = transitionMap['nextTransition']
-        climateType = self.events[0]['holdClimateRef']
+        if self.events[0]['holdClimateRef'] != '':
+          climateType = self.events[0]['holdClimateRef']
       tempCurrent = runtime['actualTemperature'] / 10 if runtime['actualTemperature'] != 0 else 0
       tempHeat = runtime['desiredHeat'] / 10
       tempCool = runtime['desiredCool'] / 10
@@ -247,7 +254,6 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
-      self.getClimateIndex(climateType)
       updates = {
         'ST': tempCurrent,
         'CLISPH': tempHeat,
@@ -306,6 +312,47 @@ class Thermostat(polyinterface.Node):
         return(toF(float(temp)) * 10)
       return(int(temp) * 10)
 
+    def getHoldType(self,val=None):
+      if val is None:
+          # They want the current value
+          val = self.getDriver('CLISMD')
+      # Return the holdType name, if set to Hold, return indefinite
+      # Otherwise return nextTransition
+      return getMapName(transitionMap,2) if int(val) == 2 else getMapName(transitionMap,1)
+
+    def pushHold(self):
+      #
+      # Push the current hold info to the thermostat
+      # If there is nothing to hold, then cancel it and resume
+      #
+      push = False
+      params = dict()
+      params = {
+        'holdType': self.getHoldType(),
+      }
+      # This is what the schedule says should be enabled.
+      climateType = self.program['currentClimateRef']
+      # This is what is desired
+      gv3 = self.getDriver('GV3')
+      climateTypeR = getMapName(climateMap,gv3)
+      LOGGER.debug("pushHold: climateType={} GV3={}={}".format(climateType,gv3,climateTypeR))
+      if climateTypeR == None:
+        LOGGER.debug("pushHold: Unknwon climateType index {}".format(gv3))
+      elif climateTypeR != climateType:
+        params['holdClimateRef'] = climateTypeR
+        push = True
+      if push:
+        command = {
+          'functions': [{
+            'type': 'setHold',
+            'params': params,
+          }]
+        }
+        if self.controller.ecobeePost(self.address, command):
+          self.setDriver('CLISMD',transitionMap[self.getHoldType()])
+      else:
+        LOGGER.debug("pushHold: Nothing to push")
+
     def cmdSetPoint(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
       # TODO: Need to check that mode is auto,
@@ -337,16 +384,11 @@ class Thermostat(polyinterface.Node):
         self.setDriver(driver, cmd['value'])
         self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
-    def getMapName(self,map,val):
-      for name in map:
-        if map[name] == val:
-          return name
-
     def cmdSetMode(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetMode: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
-        name = self.getMapName(modeMap,int(cmd['value']))
+        name = getMapName(modeMap,int(cmd['value']))
         LOGGER.info('Setting Thermostat {} to mode: {} (value={})'.format(self.name, name, cmd['value']))
         if self.controller.ecobeePost(self.address, {'thermostat': {'settings': {'hvacMode': name}}}):
           self.setDriver(cmd['cmd'], cmd['value'])
@@ -384,29 +426,8 @@ class Thermostat(polyinterface.Node):
               self._update()
 
     def cmdSetClimate(self, cmd):
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetClimate: {}={} already set to {}".format(cmd['cmd'],int(self.getDriver(cmd['cmd'])),int(cmd['value'])))
-      else:
-        command = {
-          'functions': [{
-            'type': 'setHold',
-            'params': {
-              'holdType': self.getHoldType(),
-              'holdClimateRef': self.getMapName(climateMap,int(cmd['value']))
-            }
-          }]
-        }
-        if self.controller.ecobeePost(self.address, command):
-          self.setDriver(cmd['cmd'], cmd['value'])
-          self.setDriver('CLISMD',transitionMap[self.getHoldType()])
-
-    def getHoldType(self,val=None):
-      if val is None:
-          # They want the current value
-          val = self.getDriver('CLISMD')
-      # Return the holdType name, if set to Hold, return indefinite
-      # Otherwise return nextTransition
-      return self.getMapName(transitionMap,2) if int(val) == 2 else self.getMapName(transitionMap,1)
+      self.setDriver(cmd['cmd'], cmd['value'])
+      self.pushHold()
 
     def cmdSetFanOnTime(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
