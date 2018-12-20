@@ -191,10 +191,10 @@ class Thermostat(polyinterface.Node):
                         sensorName = 'Ecobee - {}'.format(sensor['name'])
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress, sensorName, self.useCelsius))
         if 'weather' in self.tstat:
-            weatherAddress = 'w{}'.format(self.address)
+            weatherAddress = 'w{}'.format(self.address[1:])
             weatherName = 'Ecobee - Weather'
             self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
-            forecastAddress = 'f{}'.format(self.address)
+            forecastAddress = 'f{}'.format(self.address[1:])
             forecastName = 'Ecobee - Forecast'
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
