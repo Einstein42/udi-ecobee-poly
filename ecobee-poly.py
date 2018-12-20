@@ -233,7 +233,7 @@ class Controller(polyinterface.Controller):
             return False
         self.revData = deepcopy(thermostats)
         for thermostatId, thermostat in thermostats.items():
-            address = '{}'.format(thermostatId)
+            address = 't{}'.format(thermostatId)
             if not address in self.nodes:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
