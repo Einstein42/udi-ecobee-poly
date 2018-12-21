@@ -40,7 +40,9 @@ class Controller(polyinterface.Controller):
     def start(self):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
-        LOGGER.debug(self.polyConfig['customData'])
+        #LOGGER.debug(self.polyConfig['customData'])
+        self.serverdata = self.get_server_data(LOGGER)
+        LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
         self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
@@ -231,7 +233,7 @@ class Controller(polyinterface.Controller):
             return False
         self.revData = deepcopy(thermostats)
         for thermostatId, thermostat in thermostats.items():
-            address = '{}'.format(thermostatId)
+            address = 't{}'.format(thermostatId)
             if not address in self.nodes:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
@@ -241,6 +243,38 @@ class Controller(polyinterface.Controller):
         self.discover_st = True
         self.in_discover = False
         return True
+
+    def get_server_data(self,logger):
+        # Read the SERVER info from the json.
+        try:
+            with open('server.json') as data:
+                serverdata = json.load(data)
+        except Exception as err:
+            logger.error('get_server_data: failed to read hubs file {0}: {1}'.format('server.json',err), exc_info=True)
+            return False
+        data.close()
+        # Get the version info
+        try:
+            version = serverdata['credits'][0]['version']
+        except (KeyError, ValueError):
+            logger.info('Version not found in server.json.')
+            version = '0.0.0.0'
+        # Split version into two floats.
+        sv = version.split(".");
+        v1 = 0;
+        v2 = 0;
+        if len(sv) == 1:
+            v1 = int(v1[0])
+        elif len(sv) > 1:
+            v1 = float("%s.%s" % (sv[0],str(sv[1])))
+            if len(sv) == 3:
+                v2 = int(sv[2])
+            else:
+                v2 = float("%s.%s" % (sv[2],str(sv[3])))
+        serverdata['version'] = version
+        serverdata['version_major'] = v1
+        serverdata['version_minor'] = v2
+        return serverdata
 
     def get_profile_info(self):
         pvf = 'profile/version.txt'

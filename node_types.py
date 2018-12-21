@@ -185,17 +185,14 @@ class Thermostat(polyinterface.Node):
                     fnode = self.controller.poly.getNode(sensorAddressOld)
                     if fnode is not False:
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
-                        self.controller.delNode(fnode['address'])
-                    #else:
-                    #    self.controller.removeNotice(fnode['address'])
                     if sensorAddress is not None and not sensorAddress in self.controller.nodes:
                         sensorName = 'Ecobee - {}'.format(sensor['name'])
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress, sensorName, self.useCelsius))
         if 'weather' in self.tstat:
-            weatherAddress = 'w{}'.format(self.address)
+            weatherAddress = 'w{}'.format(self.address[1:])
             weatherName = 'Ecobee - Weather'
             self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
-            forecastAddress = 'f{}'.format(self.address)
+            forecastAddress = 'f{}'.format(self.address[1:])
             forecastName = 'Ecobee - Forecast'
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
@@ -335,7 +332,7 @@ class Thermostat(polyinterface.Node):
       # This is what is desired
       gv3 = self.getDriver('GV3')
       climateTypeR = getMapName(climateMap,gv3)
-      LOGGER.debug("pushHold: climateType={} GV3={}={}".format(climateType,gv3,climateTypeR))
+      LOGGER.debug("{}:pushHold: climateType={} GV3={}={}".format(self.address,climateType,gv3,climateTypeR))
       if climateTypeR == None:
         LOGGER.debug("pushHold: Unknwon climateType index {}".format(gv3))
       elif climateTypeR != climateType:
