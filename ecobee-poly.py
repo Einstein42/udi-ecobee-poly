@@ -42,7 +42,7 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Started Ecobee v2 NodeServer')
         #LOGGER.debug(self.polyConfig['customData'])
         self.serverdata = self.get_server_data(LOGGER)
-        LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
+        LOGGER.info('Ecobee NodeServer Version {}a'.format(self.serverdata['version']))
         self.removeNoticesAll()
         self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
@@ -179,11 +179,13 @@ class Controller(polyinterface.Controller):
 
     def longPoll(self):
         # Call discovery if it failed on startup
+        LOGGER.debug("{}:longPoll".format(self.address))
         if self.discover_st is None:
             self.discovery()
         self.updateThermostats()
 
     def updateThermostats(self):
+        LOGGER.debug("{}:updateThermostats:".format(self.address))
         thermostats = self.getThermostats()
         if not isinstance(thermostats, dict):
             LOGGER.error('Thermostats instance wasn\'t dictionary. Skipping...')
@@ -211,6 +213,7 @@ class Controller(polyinterface.Controller):
         return False
 
     def query(self):
+        LOGGER.debug("{}:query".format(self.address))
         self.updateThermostats()
         for node in self.nodes:
             self.nodes[node].reportDrivers()
