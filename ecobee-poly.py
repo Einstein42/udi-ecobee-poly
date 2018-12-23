@@ -108,9 +108,16 @@ class Controller(polyinterface.Controller):
             data = json.loads(res.read().decode('utf-8'))
             auth_conn.close()
             if 'error' in data:
-                LOGGER.error('{} :: {}'.format(data['error'], data['error_description']))
+                LOGGER.error('Requesting Auth: {} :: {}'.format(data['error'], data['error_description']))
                 self.auth_token = None
                 self.refreshingTokens = False
+                if data['error'] == 'invalid_grant':
+                    # Need to re-auth!
+                    LOGGER.error('Found {}, need to re-authorize'.format(data['error']))
+                    cust_data = deepcopy(self.polyConfig['customData'])
+                    del cust_data['tokenData']
+                    self.saveCustomData(cust_data)
+                    self._getPin()
                 return False
             elif 'access_token' in data:
                 self._saveTokens(data)

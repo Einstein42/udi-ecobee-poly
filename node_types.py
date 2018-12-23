@@ -320,7 +320,7 @@ class Thermostat(polyinterface.Node):
     def pushHold(self):
       #
       # Push the current hold info to the thermostat
-      # If there is nothing to hold, then cancel it and resume
+      # If there is nothing to hold, then cancel it and resume?
       #
       push = False
       params = dict()
@@ -336,6 +336,7 @@ class Thermostat(polyinterface.Node):
       if climateTypeR == None:
         LOGGER.debug("pushHold: Unknwon climateType index {}".format(gv3))
       elif climateTypeR != climateType:
+        LOGGER.debug("pushHold: Off scheudle climateType {}".format(gv3))
         params['holdClimateRef'] = climateTypeR
         push = True
       if push:
