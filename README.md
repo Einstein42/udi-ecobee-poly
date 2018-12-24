@@ -42,6 +42,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.12: JimBo
+  - Fix for polling not working
+  - Many changes to how hold's are handled, should be more reliable
 - 2.0.11: JimBo
   - Thermostat address starts with 't', existing users will need to delete the old node after fixing their programs to reference the new one.
 - 2.0.10: JimBo
