@@ -191,21 +191,25 @@ class Controller(polyinterface.Controller):
         self.updateThermostats()
 
     def updateThermostats(self):
+        LOGGER.debug('updateThermostats:')
         thermostats = self.getThermostats()
         if not isinstance(thermostats, dict):
             LOGGER.error('Thermostats instance wasn\'t dictionary. Skipping...')
             return
         for thermostatId, thermostat in thermostats.items():
             if self.checkRev(thermostat):
-                if thermostatId in self.nodes:
-                    LOGGER.debug('Update detected in thermostat {}({}) doing full update.'.format(thermostat['name'], thermostatId))
+                address = self.thermostatIdToAddress(thermostatId)
+                if address in self.nodes:
+                    LOGGER.debug('Update detected in thermostat {}({}) doing full update.'.format(thermostat['name'], address))
                     fullData = self.getThermostatFull(thermostatId)
                     if fullData is not False:
-                        self.nodes[thermostatId].update(thermostat, fullData)
+                        self.nodes[address].update(thermostat, fullData)
                     else:
                         LOGGER.error('Failed to get updated data for thermostat: {}({})'.format(thermostat['name'], thermostatId))
+                else:
+                    LOGGER.error('Thermostat is not in our node list: '.format(address))
             else:
-                LOGGER.info('No thermostat update detected.')
+                LOGGER.info("No {} '{}' update detected".format(thermostatId,thermostat['name']))
 
     def checkRev(self, tstat):
         if tstat['thermostatId'] in self.revData:
@@ -225,6 +229,9 @@ class Controller(polyinterface.Controller):
     def stop(self):
         LOGGER.debug('NodeServer stopped.')
 
+    def thermostatIdToAddress(self,tid):
+        return 't{}'.format(tid)
+
     def discover(self, *args, **kwargs):
         # True means we are in dsocvery
         if self.in_discover:
@@ -240,13 +247,13 @@ class Controller(polyinterface.Controller):
             return False
         self.revData = deepcopy(thermostats)
         for thermostatId, thermostat in thermostats.items():
-            address = 't{}'.format(thermostatId)
+            address = self.thermostatIdToAddress(thermostatId)
             if not address in self.nodes:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
-                    self.addNode(Thermostat(self, address, address, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
+                    self.addNode(Thermostat(self, address, address, thermostatId, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
         self.discover_st = True
         self.in_discover = False
         return True
@@ -394,11 +401,11 @@ class Controller(polyinterface.Controller):
             LOGGER.error('ecobeePost failed. Tokens not available.')
             return False
         LOGGER.info('Posting Update Data for Thermostat {}'.format(thermostatId))
-        LOGGER.debug('Post Data : {}'.format(json.dumps(postData,sort_keys=True, indent=2)))
         postData['selection'] = {
             'selectionType': 'thermostats',
             'selectionMatch': thermostatId
         }
+        LOGGER.debug('Post Data : {}'.format(json.dumps(postData,sort_keys=True, indent=2)))
         data = json.dumps(postData)
         headers = {
             'Content-Type': 'application/json',
@@ -415,10 +422,17 @@ class Controller(polyinterface.Controller):
         res = auth_conn.getresponse()
         data = json.loads(res.read().decode('utf-8'))
         auth_conn.close()
+        #LOGGER.debug('Got : {}'.format(json.dumps(data,sort_keys=True, indent=2)))
         if 'error' in data:
             LOGGER.error('{} :: {}'.format(data['error'], data['error_description']))
             return False
-        return True
+        if 'status' in data:
+            if 'code' in data['status']:
+                if data['status']['code'] == 0:
+                    return True
+                else:
+                    LOGGER.error('Bad return code {}:{}'.format(data['status']['code'],data['status']['message']))
+        return False
 
     id = 'ECO_CTR'
     commands = {'DISCOVER': discover}
