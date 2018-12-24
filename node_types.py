@@ -214,7 +214,7 @@ class Thermostat(polyinterface.Node):
         self.update(self.revData, self.fullData)
 
     def update(self, revData, fullData):
-      LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
+      #LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
       #LOGGER.debug("revData={}".format(json.dumps(revData, sort_keys=True, indent=2)))
       if not 'thermostatList' in fullData:
         LOGGER.error("No thermostatList in fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
