@@ -241,16 +241,13 @@ class Thermostat(polyinterface.Node):
             self.clismd = transitionMap['nextTransition']
         if self.events[0]['holdClimateRef'] != '':
           climateType = self.events[0]['holdClimateRef']
-      tempCurrent = self.tempToDriver(self.runtime['actualTemperature'],True,False)
-      tempHeat = self.tempToDriver(self.runtime['desiredHeat'],True)
-      tempCool = self.tempToDriver(self.runtime['desiredCool'],True)
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       updates = {
-        'ST': tempCurrent,
-        'CLISPH': tempHeat,
-        'CLISPC': tempCool,
+        'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
+        'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
+        'CLISPC': self.tempToDriver(self.runtime['desiredCool'],True),
         'CLIMD': modeMap[self.settings['hvacMode']],
         'CLIHUM': self.runtime['actualHumidity'],
         'CLIHCS': clihcs,
@@ -408,7 +405,7 @@ class Thermostat(polyinterface.Node):
       return(int(temp) * 10)
 
     # Convert Temperature for driver
-    # FromE converts from Ecobee API value
+    # FromE converts from Ecobee API value, and to C if necessary
     # By default F values are converted to int, but for ambiant temp we
     # allow one decimal.
     def tempToDriver(self,temp,fromE=False,FtoInt=True):
@@ -417,7 +414,9 @@ class Thermostat(polyinterface.Node):
       if fromE and temp != 0:
           temp = temp / 10
       if self.useCelsius:
-        return(toC(temp))
+        if fromE:
+          temp = toC(temp)
+        return(temp)
       else:
         if FtoInt:
           return(int(temp))
@@ -430,7 +429,7 @@ class Thermostat(polyinterface.Node):
       self.setDriver('CLISPC',dval)
 
     def setHeat(self,val,fromE=False,FtoInt=True):
-      dval = self.tempToDriver(val)
+      dval = self.tempToDriver(val,fromE,FtoInt)
       LOGGER.debug('{}:setHeat: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
       self.setDriver('CLISPH',dval)
 
