@@ -7,7 +7,7 @@ except ImportError:
 from copy import deepcopy
 # For debugging only
 import json
-from node_funcs import get_valid_node_name
+from node_funcs import *
 
 LOGGER = polyinterface.LOGGER
 
@@ -137,27 +137,6 @@ driversMap = {
   ],
 }
 
-def toC(tempF):
-  # Round to the nearest .5
-  return round(((tempF - 32) / 1.8) * 2) / 2
-
-def toF(tempC):
-  # Round to nearest whole degree
-  return int(round(tempC * 1.8) + 32)
-
-def getMapName(map,val):
-  val = int(val)
-  for name in map:
-    if int(map[name]) == val:
-      return name
-
-def is_int(s):
-    try:
-        int(s)
-        return True
-    except ValueError:
-        return False
-
 """
  Address scheme:
  Devices: n<profile>_t<thermostatId> e.g. n003_t511892759243
@@ -262,9 +241,9 @@ class Thermostat(polyinterface.Node):
             self.clismd = transitionMap['nextTransition']
         if self.events[0]['holdClimateRef'] != '':
           climateType = self.events[0]['holdClimateRef']
-      tempCurrent = self.tempToD(self.runtime['actualTemperature'],True)
-      tempHeat = self.tempToD(self.runtime['desiredHeat'],True)
-      tempCool = self.tempToD(self.runtime['desiredCool'],True)
+      tempCurrent = self.tempToDriver(self.runtime['actualTemperature'],True,False)
+      tempHeat = self.tempToDriver(self.runtime['desiredHeat'],True)
+      tempCool = self.tempToDriver(self.runtime['desiredCool'],True)
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
@@ -331,32 +310,6 @@ class Thermostat(polyinterface.Node):
     def query(self, command=None):
       self.reportDrivers()
 
-    # Tempearture to Ecobee API value
-    def tempToE(self,temp):
-      if self.useCelsius:
-        return(toF(float(temp)) * 10)
-      return(int(temp) * 10)
-
-    # Format Temperature for driver
-    # FromE converts from Ecobee API value
-    def tempToD(self,temp,fromE=False):
-      if self.useCelsius:
-        if fromE:
-            if float(temp) == 0:
-                return(float(temp))
-            else:
-                return(float(temp) / 10)
-        else:
-          return(float(temp))
-      else:
-        if fromE:
-          if int(temp) == 0:
-            return int(temp)
-          else:
-            return(int(float(temp) / 10))
-        else:
-          return(int(float(temp)))
-
     def getHoldType(self,val=None):
       if val is None:
           # They want the current value
@@ -392,8 +345,8 @@ class Thermostat(polyinterface.Node):
       # Set to what the current schedule says
       self.setClimateType(climateName)
       cdict = self.getClimateDict(climateName)
-      self.setCool(self.tempToD(cdict['coolTemp'],True))
-      self.setHeat(self.tempToD(cdict['heatTemp'],True))
+      self.setCool(cdict['coolTemp'],True)
+      self.setHeat(cdict['heatTemp'],True)
 
     def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None):
       LOGGER.debug("pushScheduleMode: clismd={} coolTemp={} heatTemp={}".format(clismd,coolTemp,heatTemp))
@@ -411,8 +364,8 @@ class Thermostat(polyinterface.Node):
         'type': 'setHold',
         'params': {
           'holdType': clismd_name,
-          'heatHoldTemp': self.tempToE(heatTemp),
-          'coolHoldTemp': self.tempToE(coolTemp)          }
+          'heatHoldTemp': self.tempToEcobee(heatTemp),
+          'coolHoldTemp': self.tempToEcobee(coolTemp)          }
         }
       if self.ecobeePost({'functions': [func]}):
         self.setScheduleMode(clismd_name)
@@ -448,28 +401,38 @@ class Thermostat(polyinterface.Node):
           return False
       self.setDriver('GV3',int(val))
 
-    def setCool(self,val):
-      dval = self.tempToD(val)
-      LOGGER.debug('{}:setCool: {}={}'.format(self.address,val,dval))
+    # Convert Tempearture used by ISY to Ecobee API value
+    def tempToEcobee(self,temp):
+      if self.useCelsius:
+        return(toF(float(temp)) * 10)
+      return(int(temp) * 10)
+
+    # Convert Temperature for driver
+    # FromE converts from Ecobee API value
+    # By default F values are converted to int, but for ambiant temp we
+    # allow one decimal.
+    def tempToDriver(self,temp,fromE=False,FtoInt=True):
+      temp = float(temp)
+      # Convert from Ecobee value, unless it's already 0.
+      if fromE and temp != 0:
+          temp = temp / 10
+      if self.useCelsius:
+        return(toC(temp))
+      else:
+        if FtoInt:
+          return(int(temp))
+        else:
+          return(temp)
+
+    def setCool(self,val,fromE=False,FtoInt=True):
+      dval = self.tempToDriver(val,fromE,FtoInt)
+      LOGGER.debug('{}:setCool: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
       self.setDriver('CLISPC',dval)
 
-    def setHeat(self,val):
-      dval = self.tempToD(val)
-      LOGGER.debug('{}:setHeat: {}={}'.format(self.address,val,dval))
+    def setHeat(self,val,fromE=False,FtoInt=True):
+      dval = self.tempToDriver(val)
+      LOGGER.debug('{}:setHeat: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
       self.setDriver('CLISPH',dval)
-
-    #
-    # These are used by many to set the driver and push or cancel a hold
-    #
-    def cmdSetDriverI(self, cmd):
-      LOGGER.debug("cmdSetDriverI: {} to {}".format(cmd['cmd'],int(cmd['value'])))
-      self.setDriver(cmd['cmd'], int(cmd['value']))
-      self.pushHold()
-
-    def cmdSetDriverF(self, cmd):
-      LOGGER.debug("cmdSetDriverF: {} to {}".format(cmd['cmd'],float(cmd['value'])))
-      self.setDriver(cmd['cmd'], float(cmd['value']))
-      self.pushHold()
 
     def cmdSetPoint(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
@@ -565,8 +528,8 @@ class Thermostat(polyinterface.Node):
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
-      coolTemp = self.tempToD(self.getDriver('CLISPC'))
-      heatTemp = self.tempToD(self.getDriver('CLISPH'))
+      coolTemp = self.tempToDriver(self.getDriver('CLISPC'))
+      heatTemp = self.tempToDriver(self.getDriver('CLISPH'))
       if 'value' in cmd:
         value = float(cmd['value'])
       else:
@@ -593,8 +556,8 @@ class Thermostat(polyinterface.Node):
               "type":"setHold",
               "params": {
                 "holdType":  self.getHoldType(),
-                "heatHoldTemp":self.tempToE(heatTemp),
-                "coolHoldTemp":self.tempToE(coolTemp),
+                "heatHoldTemp":self.tempToEcobee(heatTemp),
+                "coolHoldTemp":self.tempToEcobee(coolTemp),
               }
             }
           ]

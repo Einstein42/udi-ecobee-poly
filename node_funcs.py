@@ -8,3 +8,24 @@ def get_valid_node_name(name):
     name = bytes(name, 'utf-8').decode('utf-8','ignore')
     # Remove <>`~!@#$%^&*(){}[]?/\;:"'` characters from name
     return re.sub(r"[<>`~!@#$%^&*(){}[\]?/\\;:\"']+", "", name)
+
+def toC(tempF):
+  # Round to the nearest .5
+  return round(((tempF - 32) / 1.8) * 2) / 2
+
+def toF(tempC):
+  # Round to nearest whole degree
+  return int(round(tempC * 1.8) + 32)
+
+def getMapName(map,val):
+  val = int(val)
+  for name in map:
+    if int(map[name]) == val:
+      return name
+
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
