@@ -42,6 +42,11 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.13: JimBo
+  - Reorganize hold functions for changing setpoints, climate type, ...
+  - Fix Illegal node names
+  - More trapping of bad return data from Ecobee servers
+  - More debugging info to find issues
 - 2.0.12: JimBo
   - Fix for polling not working
   - Many changes to how hold's are handled, should be more reliable

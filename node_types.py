@@ -7,6 +7,7 @@ except ImportError:
 from copy import deepcopy
 # For debugging only
 import json
+from node_funcs import get_valid_node_name
 
 LOGGER = polyinterface.LOGGER
 
@@ -150,6 +151,13 @@ def getMapName(map,val):
     if int(map[name]) == val:
       return name
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 """
  Address scheme:
  Devices: n<profile>_t<thermostatId> e.g. n003_t511892759243
@@ -203,17 +211,19 @@ class Thermostat(polyinterface.Node):
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                     if sensorAddress is not None and not sensorAddress in self.controller.nodes:
                         sensorName = 'Ecobee - {}'.format(sensor['name'])
-                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress, sensorName, self.useCelsius))
+                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
+                                                       get_valid_node_name(sensorName), self.useCelsius))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
-            weatherName = 'Ecobee - Weather'
+            weatherName = get_valid_node_name('Ecobee - Weather')
             self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
             forecastAddress = 'f{}'.format(self.thermostatId)
-            forecastName = 'Ecobee - Forecast'
+            forecastName = get_valid_node_name('Ecobee - Forecast')
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
 
     def update(self, revData, fullData):
+      LOGGER.debug("{}:update: ".format(self.address))
       #LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
       #LOGGER.debug("revData={}".format(json.dumps(revData, sort_keys=True, indent=2)))
       if not 'thermostatList' in fullData:
@@ -243,7 +253,7 @@ class Thermostat(polyinterface.Node):
       self.clismd = 0
       # Is there an active event?
       if len(self.events) > 0 and self.events[0]['type'] == 'hold' and self.events[0]['running']:
-        LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+        #LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
         # This seems to mean an indefinite hold
         #  "endDate": "2035-01-01", "endTime": "00:00:00",
         if self.events[0]['endTime'] == '00:00:00':
@@ -358,122 +368,84 @@ class Thermostat(polyinterface.Node):
     def ecobeePost(self,command):
         return self.controller.ecobeePost(self.thermostatId, command)
 
-    def pushHold(self,forceCancel=False):
-      #
-      # Push the current hold info to the thermostat
-      #  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
-      # If there is nothing to hold, then cancel it and resume?
-      #
-      push = False
-      climateChange = False
-      clismd = int(self.getDriver('CLISMD'))
-      # This is what the stat is currently set to
-      coolTempS = self.tempToD(self.runtime['desiredCool'],True)
-      heatTempS = self.tempToD(self.runtime['desiredHeat'],True)
-      # This is what the current climate type says it should be
-      cdict = self.getCurrentClimateDict()
-      coolTempC = self.tempToD(cdict['coolTemp'],True)
-      heatTempC = self.tempToD(cdict['heatTemp'],True)
-      # This is what the schedule says should be enabled.
-      climateTypeSName = self.program['currentClimateRef']
-      if climateTypeSName in climateMap:
-        climateTypeSIndex = climateMap[climateTypeSName]
-      else:
-        LOGGER.error("Unknown climate name {}".format(climateTypeSName))
-        climateTypeSIndex = None
-      if not forceCancel:
-        #
-        # See if we need to hold
-        #
-        params = dict()
-        params = {
-          'holdType': self.getHoldType(),
+    def pushResume(self):
+      LOGGER.debug('{}:setResume: Cancelling hold'.format(self.address))
+      func = {
+        'type': 'resumeProgram',
+        'params': {
+          'resumeAll': False
         }
-        # If not desired running mode then always push
-        if clismd != 0:
-            push = True
-        # Check for climate type GV3
-        # This is what is desired
-        climateTypeRIndex = self.getDriver('GV3')
-        climateTypeRName = getMapName(climateMap,climateTypeRIndex)
-        LOGGER.debug("{}:pushHold: climateTypeSet={}={} climateTypeReq={}={}".format(self.address,climateTypeSIndex,climateTypeSName,climateTypeRIndex,climateTypeRName))
-        if climateTypeRName == None:
-          LOGGER.debug("{}:pushHold: Unknwon climateTypeSName index {}".format(self.address,climateTypeRIndex))
-        elif climateTypeRName != climateTypeSName:
-          LOGGER.debug("{}:pushHold: Off scheudle climateTypeSName {}={}".format(self.address,climateTypeRIndex,climateTypeSName))
-          params['holdClimateRef'] = climateTypeRName
-          climateChange = True
-        # Check for Temp set point changes
-        coolTemp = self.tempToD(self.getDriver('CLISPC'))
-        LOGGER.debug("{}:pushHold: Cool: Schedule {} Set {}".format(self.address,coolTempS,coolTemp))
-        heatTemp = self.tempToD(self.getDriver('CLISPH'))
-        LOGGER.debug("{}:pushHold: Heat: Schedule {} Set {} ()".format(self.address,heatTempS,heatTemp,self.runtime['desiredHeat']))
-        # If pushing and no climateChange, then must push current set temps
-        # and if we push one temp you have to push both.
-        pushTemp = push and not climateChange
-        LOGGER.debug('{}:pushHold: force pushTemp={}'.format(self.address,pushTemp))
-        if pushTemp or (coolTemp != coolTempS or heatTemp != heatTempS):
-          params['coolHoldTemp'] = self.tempToE(coolTemp)
-          LOGGER.debug("{}:pushHold: Push Cool: {}".format(self.address,params['coolHoldTemp']))
-          params['heatHoldTemp'] = self.tempToE(heatTemp)
-          LOGGER.debug("{}:pushHold: Push Heat: {}".format(self.address,params['heatHoldTemp']))
-          push = True
-      #
-      # Anything to Push?
-      #
-      if push:
-        # We have a change to push, must move to hold if not in one
-        if clismd == 0:
-            # Default is temp hold
-            clismd = 1
-            params['holdType'] = self.getHoldType(clismd)
-        # The command to change
-        command = {
-          'functions': [{
-            'type': 'setHold',
-            'params': params,
-          }]
+      }
+      if self.ecobeePost( {'functions': [func]}):
+        # All cancelled, restore settings to program
+        self.setScheduleMode(0)
+        # This is what the current climate type says it should be
+        self.setClimateSettings()
+        self.events = list()
+        return True
+      LOGGER.error('{}:setResume: Post failed?'.format(self.address))
+      return False
+
+    def setClimateSettings(self,climateName=None):
+      if climateName is None:
+          climateName = self.program['currentClimateRef']
+      # Set to what the current schedule says
+      self.setClimateType(climateName)
+      cdict = self.getClimateDict(climateName)
+      self.setCool(self.tempToD(cdict['coolTemp'],True))
+      self.setHeat(self.tempToD(cdict['heatTemp'],True))
+
+    def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None):
+      LOGGER.debug("pushScheduleMode: clismd={} coolTemp={} heatTemp={}".format(clismd,coolTemp,heatTemp))
+      if clismd is None:
+          clismd = int(self.getDriver('CLISMD'))
+      elif int(clismd) == 0:
+        return self.pushResume()
+      # Get the new schedule mode, current if in a hold, or hold next
+      clismd_name = self.getHoldType(clismd)
+      if heatTemp is None:
+          heatTemp = self.getDriver('CLISPH')
+      if coolTemp is None:
+          coolTemp = self.getDriver('CLISPC')
+      func = {
+        'type': 'setHold',
+        'params': {
+          'holdType': clismd_name,
+          'heatHoldTemp': self.tempToE(heatTemp),
+          'coolHoldTemp': self.tempToE(coolTemp)          }
         }
-        if self.ecobeePost(command):
-          self.setScheduleMode(clismd)
-          self.setCool(coolTemp)
-          self.setHeat(heatTemp)
-          return True
-      else:
-        LOGGER.debug('{}:pushHold: Nothing to push for hold'.format(self.address))
-        clismd = self.getDriver('CLISMD')
-        if self.clismd == 0:
-            LOGGER.debug('{}:pushHold: And not in a hold'.format(self.address))
-        else:
-            LOGGER.debug('{}:pushHold: Cancelling hold'.format(self.address))
-            func = {
-              'type': 'resumeProgram',
-              'params': {
-                'resumeAll': False
-              }
-            }
-            if self.ecobeePost( {'functions': [func]}):
-              # All cancelled, restore settings to program
-              self.setScheduleMode(0)
-              self.setClimateType(climateTypeSIndex)
-              self.setCool(coolTempC)
-              self.setHeat(heatTempC)
-              return True
-      # IF we got here the push failed, so restore settings
-      self.setScheduleMode(self.clismd)
-      self.setCool(coolTempS)
-      self.setHeat(heatTempS)
-      if climateChange:
-        self.setSchedleMode(climateTypeSIndex)
+      if self.ecobeePost({'functions': [func]}):
+        self.setScheduleMode(clismd_name)
+        self.setCool(coolTemp)
+        self.setHeat(heatTemp)
 
     #
-    # Set Methods for drivers so they are set the same and if necessary
-    # to track current settings so that can be restored when necessary
+    # Set Methods for drivers so they are set the same way
+    #
     def setScheduleMode(self,val):
+      LOGGER.debug('{}:setScheduleMode: {}'.format(self.address,val))
+      if not is_int(val):
+          if val in transitionMap:
+            val = transitionMap[val]
+          else:
+            logger.ERROR("{}:setScheduleMode: Unknown transitionMap name {}".format(self.address,val))
+            return False
       self.setDriver('CLISMD',int(val))
       self.clismd = int(val)
 
+    # Set current climateType
+    # True = use current
+    # string = looking name
+    # int = just do it
     def setClimateType(self,val):
+      if val is True:
+        val = self.program['currentClimateRef']
+      if not is_int(val):
+        if val in climateMap:
+          val = climateMap[val]
+        else:
+          LOGGER.error("Unknown climate name {}".format(val))
+          return False
       self.setDriver('GV3',int(val))
 
     def setCool(self,val):
@@ -499,12 +471,25 @@ class Thermostat(polyinterface.Node):
       self.setDriver(cmd['cmd'], float(cmd['value']))
       self.pushHold()
 
-    def cmdSetScheduleMode(self,cmd):
-      val = int(cmd['value'])
-      LOGGER.debug("cmdSetScheduleMode: {} to {}".format(cmd['cmd'],val))
-      self.setDriver(cmd['cmd'], val)
-      # Send force cancel if schedule mode = 0
-      self.pushHold(val == 0)
+    def cmdSetPoint(self, cmd):
+      # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
+      # TODO: Need to check that mode is auto,
+      #LOGGER.debug("self.events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+      #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
+      driver = cmd['cmd']
+      if driver == 'CLISPH':
+        return self.pushScheduleMode(heatTemp=cmd['value'])
+      else:
+        return self.pushScheduleMode(coolTemp=cmd['value'])
+
+    def cmdSetScheduleMode(self, cmd):
+      '''
+        Set the Schedule Mode, like running, or a hold
+      '''
+      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
+        LOGGER.debug("cmdSetScheduleMode: {}={} already set to {}".format(cmd['cmd'],self.getDriver(cmd['cmd']),cmd['value']))
+      else:
+        self.pushScheduleMode(cmd['value'])
 
     def cmdSetMode(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
@@ -514,6 +499,26 @@ class Thermostat(polyinterface.Node):
         LOGGER.info('Setting Thermostat {} to mode: {} (value={})'.format(self.name, name, cmd['value']))
         if self.ecobeePost( {'thermostat': {'settings': {'hvacMode': name}}}):
           self.setDriver(cmd['cmd'], cmd['value'])
+
+    def cmdSetClimateType(self, cmd):
+      LOGGER.debug('{}:cmdSetClimateType: {}={}'.format(self.address,cmd['cmd'],cmd['value']))
+      # We don't check if this is already current since they may just want setpoints returned.
+      climateName = getMapName(climateMap,int(cmd['value']))
+      command = {
+        'functions': [{
+          'type': 'setHold',
+          'params': {
+            'holdType': self.getHoldType(),
+            'holdClimateRef': climateName
+          }
+        }]
+      }
+      if self.ecobeePost(command):
+        self.setDriver(cmd['cmd'], cmd['value'])
+        self.setDriver('CLISMD',transitionMap[self.getHoldType()])
+        # If we went back to current climate name that will reset temps, so reset isy
+        #if self.program['currentClimateRef'] == climateName:
+        self.setClimateSettings(climateName)
 
     def cmdSetFanOnTime(self, cmd):
       if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
@@ -560,8 +565,8 @@ class Thermostat(polyinterface.Node):
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
-      coolTemp = float(self.getDriver('CLISPC'))
-      heatTemp = float(self.getDriver('CLISPH'))
+      coolTemp = self.tempToD(self.getDriver('CLISPC'))
+      heatTemp = self.tempToD(self.getDriver('CLISPH'))
       if 'value' in cmd:
         value = float(cmd['value'])
       else:
@@ -599,11 +604,11 @@ class Thermostat(polyinterface.Node):
 
 
     commands = { 'QUERY': query,
-                'CLISPH': cmdSetDriverF,
-                'CLISPC': cmdSetDriverF,
+                'CLISPH': cmdSetPoint,
+                'CLISPC': cmdSetPoint,
                 'CLIMD': cmdSetMode,
                 'CLISMD': cmdSetScheduleMode,
-                'GV3': cmdSetDriverI,
+                'GV3': cmdSetClimateType,
                 'GV4': cmdSetFanOnTime,
                 'GV6': cmdSmartHome,
                 'GV7': cmdFollowMe,

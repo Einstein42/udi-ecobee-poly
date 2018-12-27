@@ -19,6 +19,7 @@ import re
 from copy import deepcopy
 
 from node_types import Thermostat, Sensor, Weather
+from node_funcs import get_valid_node_name
 
 LOGGER = polyinterface.LOGGER
 
@@ -42,7 +43,7 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Started Ecobee v2 NodeServer')
         #LOGGER.debug(self.polyConfig['customData'])
         self.serverdata = self.get_server_data(LOGGER)
-        LOGGER.info('Ecobee NodeServer Version {}a'.format(self.serverdata['version']))
+        LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
         self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
@@ -255,7 +256,9 @@ class Controller(polyinterface.Controller):
                 if fullData is not False:
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
-                    self.addNode(Thermostat(self, address, address, thermostatId, 'Ecobee - {}'.format(thermostat['name']), thermostat, fullData, useCelsius))
+                    self.addNode(Thermostat(self, address, address, thermostatId,
+                                            'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])), 
+                                            thermostat, fullData, useCelsius))
         self.discover_st = True
         self.in_discover = False
         return True
@@ -342,6 +345,9 @@ class Controller(polyinterface.Controller):
             auth_conn.close()
             return False
         res = auth_conn.getresponse()
+        if res is None:
+            LOGGER.error("Bad response {} from thermostatSummary".format(res))
+            return False
         data = json.loads(res.read().decode('utf-8'))
         auth_conn.close()
         thermostats = {}
