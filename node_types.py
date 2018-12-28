@@ -105,12 +105,12 @@ driversMap = {
   ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
-    { 'driver': 'CLIHUM', 'value': 0, 'uom': '22' },
+    { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
     { 'driver': 'GV1', 'value': 0, 'uom': '25' }
   ],
   'EcobeeSensorC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
-    { 'driver': 'CLIHUM', 'value': 0, 'uom': '22' },
+    { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
     { 'driver': 'GV1', 'value': 0, 'uom': '25' }
   ],
   'EcobeeWeatherF': [
