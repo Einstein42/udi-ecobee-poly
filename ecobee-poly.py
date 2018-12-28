@@ -385,7 +385,7 @@ class Controller(polyinterface.Controller):
                                includeUtility=False,
                                includeAlerts=False,
                                includeWeather=False,
-                               includeSensors=false
+                               includeSensors=False
                                ):
         if not self._checkTokens():
             LOGGER.error('getThermostat failed. Couldn\'t get tokens.')
