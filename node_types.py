@@ -176,7 +176,7 @@ class Thermostat(polyinterface.Node):
 
     def start(self):
         if 'remoteSensors' in self.tstat:
-            #LOGGER.debug("remoteSensors={}".format(json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
+            LOGGER.debug("remoteSensors={}".format(json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
             for sensor in self.tstat['remoteSensors']:
                 if 'id' in sensor and 'name' in sensor:
                     sensorAddressOld = self.getSensorAddressOld(sensor)
