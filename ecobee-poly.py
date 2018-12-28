@@ -254,7 +254,10 @@ class Controller(polyinterface.Controller):
             address = self.thermostatIdToAddress(thermostatId)
             programs = False
             if address in self.nodes:
-                programs = self.getThermostatSelection(thermostatId,includeProgram=True)
+                # Only get program data if we have the node.
+                fullData = self.getThermostatSelection(thermostatId,includeProgram=True)
+                if fullData is not False:
+                    programs = fullData['thermostatList'][0]['program']
             else:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
@@ -265,6 +268,10 @@ class Controller(polyinterface.Controller):
                                             thermostat, fullData, useCelsius))
                     programs = tstat['program']
             LOGGER.debug("discover: program={}".format(json.dumps(programs, sort_keys=True, indent=2)))
+            self.climates = list()
+            for climate in programs['climates']:
+                self.climates.append({'id':thermostatId, 'name': climate['name'], 'ref':climate['climateRef']})
+        LOGGER.debug("discover: climates={}".format(self.climates))
         self.discover_st = True
         self.in_discover = False
         return True
