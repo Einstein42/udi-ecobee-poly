@@ -198,6 +198,7 @@ class Controller(polyinterface.Controller):
         if not isinstance(thermostats, dict):
             LOGGER.error('Thermostats instance wasn\'t dictionary. Skipping...')
             return
+        self.build_profile(thermostats)
         for thermostatId, thermostat in thermostats.items():
             if self.checkRev(thermostat):
                 address = self.thermostatIdToAddress(thermostatId)
@@ -249,6 +250,7 @@ class Controller(polyinterface.Controller):
             LOGGER.error("Discover Failed, No thermostats returned!  Will try again on next long poll")
             return False
         self.revData = deepcopy(thermostats)
+        self.build_profile(thermostats)
         for thermostatId, thermostat in thermostats.items():
             address = self.thermostatIdToAddress(thermostatId)
             if not address in self.nodes:
@@ -257,11 +259,14 @@ class Controller(polyinterface.Controller):
                     tstat = fullData['thermostatList'][0]
                     useCelsius = True if tstat['settings']['useCelsius'] else False
                     self.addNode(Thermostat(self, address, address, thermostatId,
-                                            'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])), 
+                                            'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
         self.discover_st = True
         self.in_discover = False
         return True
+
+    def build_profile(self,thermostats):
+        LOGGER.debug("{}:build_profile: {}".format(self.address,thermostats))
 
     def get_server_data(self,logger):
         # Read the SERVER info from the json.
