@@ -401,7 +401,7 @@ class Controller(polyinterface.Controller):
                     'includeRuntime': includeRuntime,
                     'includeExtendedRuntime': includeExtendedRuntime,
                     'includeLocation': includeLocation,
-                    'includeEquipmentStatus': includesEquipmentStatus,
+                    'includeEquipmentStatus': includeEquipmentStatus,
                     'includeVersion': includeVersion,
                     'includeUtility': includeUtility,
                     'includeAlerts': includeAlerts,
