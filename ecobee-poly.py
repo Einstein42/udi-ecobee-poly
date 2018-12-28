@@ -371,7 +371,7 @@ class Controller(polyinterface.Controller):
         return thermostats
 
     def getThermostatFull(self, id):
-        return self.getThermostatSelection(self,id,True,True,True,True,True,True,True,True,True,True,True,True)
+        return self.getThermostatSelection(id,True,True,True,True,True,True,True,True,True,True,True,True)
 
     def getThermostatSelection(self,id,
                                includeEvents=False,
