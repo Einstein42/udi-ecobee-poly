@@ -251,7 +251,10 @@ class Controller(polyinterface.Controller):
         self.revData = deepcopy(thermostats)
         for thermostatId, thermostat in thermostats.items():
             address = self.thermostatIdToAddress(thermostatId)
-            if not address in self.nodes:
+            programs = False
+            if address in self.nodes:
+                programs = self.getThermostatSelection(thermostatId,includeProgram=True)
+            else:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
                     tstat = fullData['thermostatList'][0]
@@ -259,7 +262,8 @@ class Controller(polyinterface.Controller):
                     self.addNode(Thermostat(self, address, address, thermostatId,
                                             'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
-            LOGGER.debug("discover: {}".format(json.dumps(self.getThermostatFull(thermostatId), sort_keys=True, indent=2)))
+                    programs = tstat['program']
+            LOGGER.debug("discover: program={}".format(json.dumps(program, sort_keys=True, indent=2)))
         self.discover_st = True
         self.in_discover = False
         return True
@@ -367,6 +371,22 @@ class Controller(polyinterface.Controller):
         return thermostats
 
     def getThermostatFull(self, id):
+        return self.getThermostatSelection(self,id,True,True,True,True,True,True,True,True,True,True,True,True)
+
+    def getThermostatSelection(self,id,
+                               includeEvents=False,
+                               includeProgram=False,
+                               includeSettings=False,
+                               includeRuntime=False,
+                               includeExtendedRuntime=False,
+                               includeLocation=False,
+                               includeEquipmentStatus=False,
+                               includeVersion=False,
+                               includeUtility=False,
+                               includeAlerts=False,
+                               includeWeather=False,
+                               includeSensors=false
+                               ):
         if not self._checkTokens():
             LOGGER.error('getThermostat failed. Couldn\'t get tokens.')
             return False
@@ -375,18 +395,18 @@ class Controller(polyinterface.Controller):
                 'selection': {
                     'selectionType': 'thermostats',
                     'selectionMatch': id,
-                    'includeEvents': True,
-                    'includeProgram': True,
-                    'includeSettings': True,
-                    'includeRuntime': True,
-                    'includeExtendedRuntime': True,
-                    'includeLocation': True,
-                    'includeEquipmentStatus': True,
-                    'includeVersion': True,
-                    'includeUtility': True,
-                    'includeAlerts': True,
-                    'includeWeather': True,
-                    'includeSensors': True
+                    'includeEvents': includeEvents,
+                    'includeProgram': includeProgram,
+                    'includeSettings': includeSettings,
+                    'includeRuntime': includeRuntime,
+                    'includeExtendedRuntime': includeExtendedRuntime,
+                    'includeLocation': includeLocation,
+                    'includeEquipmentStatus': includesEquipmentStatus,
+                    'includeVersion': includeVersion,
+                    'includeUtility': includeUtility,
+                    'includeAlerts': includeAlerts,
+                    'includeWeather': includeWeather,
+                    'includeSensors': includeSensors
                 }
             }))
         auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
