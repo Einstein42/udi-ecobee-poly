@@ -238,6 +238,7 @@ class Controller(polyinterface.Controller):
     def discover(self, *args, **kwargs):
         # True means we are in dsocvery
         if self.in_discover:
+            LOGGER.info('Discovering Ecobee Thermostats already running?')
             return True
         self.in_discover = True
         self.discover_st = False
@@ -263,7 +264,7 @@ class Controller(polyinterface.Controller):
                                             'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
                     programs = tstat['program']
-            LOGGER.debug("discover: program={}".format(json.dumps(program, sort_keys=True, indent=2)))
+            LOGGER.debug("discover: program={}".format(json.dumps(programs, sort_keys=True, indent=2)))
         self.discover_st = True
         self.in_discover = False
         return True
