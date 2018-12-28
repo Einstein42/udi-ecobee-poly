@@ -609,7 +609,7 @@ class Sensor(polyinterface.Node):
                 val = 1
               elif val == "false":
                 val = 0
-              self.updates[xref[item['type']]] = val
+              updates[xref[item['type']]] = val
           else:
             LOGGER.error("{}:update: Unknown capabilty: {}".format(self.address,item))
       for key, value in updates.items():
