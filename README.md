@@ -42,6 +42,11 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.14: JimBo
+  - [When I select hold-indefinite on schedule mode, it sets the heat setpoint to 26 degrees C and holds it there indefinitely.](https://github.com/Einstein42/udi-ecobee-poly/issues/16)
+  - [Temperature is being displayed in the console in deg F (even though it says deg C)](https://github.com/Einstein42/udi-ecobee-poly/issues/17)
+  - [The Occupancy variable does change for the the satellite sensors, but not for the thermostats itself.](https://github.com/Einstein42/udi-ecobee-poly/issues/18)
+    - Also added Humidity support to sensors, which will show up after restarting the nodeserver and restarting admin console.
 - 2.0.13: JimBo
   - Reorganize hold functions for changing setpoints, climate type, ...
   - Fix Illegal node names

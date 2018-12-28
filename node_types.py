@@ -191,7 +191,7 @@ class Thermostat(polyinterface.Node):
                     if sensorAddress is not None and not sensorAddress in self.controller.nodes:
                         sensorName = 'Ecobee - {}'.format(sensor['name'])
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                       get_valid_node_name(sensorName), self.useCelsius))
+                                                       get_valid_node_name(sensorName), self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
@@ -579,12 +579,12 @@ class Thermostat(polyinterface.Node):
                  }
 
 class Sensor(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, useCelsius):
+    def __init__(self, controller, primary, address, name, parent):
       super().__init__(controller, primary, address, name)
       self.type = 'sensor'
       # self.code = code
-      self.useCelsius = useCelsius
-      self.id = 'EcobeeSensorC' if self.useCelsius else 'EcobeeSensorF'
+      self.parent = parent
+      self.id = 'EcobeeSensorC' if self.parent.useCelsius else 'EcobeeSensorF'
       self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])
 
     def start(self):
@@ -609,9 +609,12 @@ class Sensor(polyinterface.Node):
                 val = 1
               elif val == "false":
                 val = 0
+              if item['type'] == 'temperature':
+                  val = self.parent.tempToDriver(val,True,False)
               updates[xref[item['type']]] = val
           else:
             LOGGER.error("{}:update: Unknown capabilty: {}".format(self.address,item))
+      LOGGER.debug("{}:update: updates={}".format(self.address,updates))
       for key, value in updates.items():
         self.setDriver(key, value)
 
