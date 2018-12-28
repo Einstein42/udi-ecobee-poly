@@ -132,6 +132,10 @@ EN_PM2-2 = Hold Indefinite
 EN_BOOL-0 = No
 EN_BOOL-1 = Yes
 
+EN_OCC-0 = No
+EN_OCC-1 = Yes
+EN_OCC-2 = NA
+
 EN_ENABLED-0 = Disabled
 EN_ENABLED-1 = Enabled
 

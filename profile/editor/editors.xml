@@ -78,7 +78,7 @@
     <range uom="67" subset="0-3" />
   </editor>
   <editor id="I_TSTAT_OCC">
-    <range uom="25" subset="0,1" nls="EN_BOOL" />
+    <range uom="25" subset="0-2" nls="EN_OCC" />
   </editor>
   <editor id="I_TSTAT_PROG_MODE">
     <range uom="25" subset="0,1" nls="EN_PM" />

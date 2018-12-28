@@ -593,16 +593,25 @@ class Sensor(polyinterface.Node):
     def update(self, sensor):
       LOGGER.debug("{}:update:".format(self.address))
       LOGGER.debug("{}:update: sensor={}".format(self.address,sensor))
-      try:
-        tempCurrent = int(sensor['capability'][0]['value']) / 10 if int(sensor['capability'][0]['value']) != 0 else 0
-      except ValueError as e:
-        tempCurrent = 0
-      if self.useCelsius:
-        tempCurrent = toC(tempCurrent)
-      updates = {
-        'ST': tempCurrent,
-        'GV1': 1 if sensor['capability'][1]['value'] == "true" else 0
+      self.updates = {
+          'GV1': 2 # Default is N/A
       }
+      # Cross reference from sensor capabilty to driver
+      xref = {
+          'temperature': 'ST',
+          'humidity': 'CLIHUM',
+          'occupancy': 'GV1',
+      }
+      for item in sensor['capability']:
+          if item['type'] in xref:
+              val = item['value']
+              if val == "true":
+                val = 1
+              elif val == "false":
+                val = 0
+              self.updates[xref[item['type']]] = val
+          else:
+            LOGGER.error("{}:update: Unknown capabilty: {}".format(self.address,item))
       for key, value in updates.items():
         self.setDriver(key, value)
 
