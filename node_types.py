@@ -617,6 +617,8 @@ class Sensor(polyinterface.Node):
       LOGGER.debug("{}:update: updates={}".format(self.address,updates))
       for key, value in updates.items():
         self.setDriver(key, value)
+      # This shouldn't be needed, but on startup it is??
+      self.reportDrivers()
 
     def query(self, command=None):
       self.reportDrivers()
