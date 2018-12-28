@@ -259,7 +259,7 @@ class Controller(polyinterface.Controller):
                     self.addNode(Thermostat(self, address, address, thermostatId,
                                             'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
-            LOGGER.debug("discover: {}".format(son.dumps(self.getThermostatFull(thermostatId), sort_keys=True, indent=2)))
+            LOGGER.debug("discover: {}".format(json.dumps(self.getThermostatFull(thermostatId), sort_keys=True, indent=2)))
         self.discover_st = True
         self.in_discover = False
         return True
