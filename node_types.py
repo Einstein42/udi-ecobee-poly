@@ -591,6 +591,8 @@ class Sensor(polyinterface.Node):
       pass
 
     def update(self, sensor):
+      LOGGER.debug("{}:update:".format(self.address))
+      LOGGER.debug("{}:update: sensor={}".format(self.address,sensor))
       try:
         tempCurrent = int(sensor['capability'][0]['value']) / 10 if int(sensor['capability'][0]['value']) != 0 else 0
       except ValueError as e:
