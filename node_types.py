@@ -593,7 +593,7 @@ class Sensor(polyinterface.Node):
     def update(self, sensor):
       LOGGER.debug("{}:update:".format(self.address))
       LOGGER.debug("{}:update: sensor={}".format(self.address,sensor))
-      self.updates = {
+      updates = {
           'GV1': 2 # Default is N/A
       }
       # Cross reference from sensor capabilty to driver
