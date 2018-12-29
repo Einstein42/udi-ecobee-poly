@@ -5,7 +5,6 @@ try:
 except ImportError:
     import pgc_interface as polyinterface
 from copy import deepcopy
-# For debugging only
 import json
 from node_funcs import *
 
@@ -161,6 +160,7 @@ class Thermostat(polyinterface.Node):
         self.type = 'thermostat'
         self.id = 'EcobeeC' if self.useCelsius else 'EcobeeF'
         self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])
+        self.id = '{}_{}'.format(self.id,thermostatId)
         self.revData = revData
         self.fullData = fullData
         # We track our driver values because we need the value before it's been pushed.

@@ -19,7 +19,7 @@ import re
 from copy import deepcopy
 
 from node_types import Thermostat, Sensor, Weather
-from node_funcs import get_valid_node_name
+from node_funcs import get_valid_node_name,get_server_data
 
 LOGGER = polyinterface.LOGGER
 
@@ -42,16 +42,14 @@ class Controller(polyinterface.Controller):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         #LOGGER.debug(self.polyConfig['customData'])
-        self.serverdata = self.get_server_data(LOGGER)
+        self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
-        self.check_profile()
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
             self.token_type = self.tokenData['token_type']
             if self._checkTokens():
-                LOGGER.debug('Running Discovery')
                 self.discover()
         else:
             self._getPin()
@@ -269,11 +267,34 @@ class Controller(polyinterface.Controller):
                                             thermostat, fullData, useCelsius))
                     programs = tstat['program']
             LOGGER.debug("discover: program={}".format(json.dumps(programs, sort_keys=True, indent=2)))
-            self.climates[thermostatId] = list()
-            for climate in programs['climates']:
-                self.climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
+            if programs is not False:
+              self.climates[thermostatId] = list()
+              for climate in programs['climates']:
+                  self.climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
         LOGGER.debug("discover: climates={}".format(self.climates))
-        self.write_profile()
+        climates_json = 'climates.json'
+        do_update = False
+        try:
+            with open(climates_json, 'r') as f:
+              current = json.load(f)
+            for id in self.climates:
+              if id in current:
+                if len(self.climates[id]) == len(current[id]):
+                  for i in range(len(self.climates[id])):
+                    if self.climates[id][i] != self.climates[id][i]:
+                      do_update = True
+                else:
+                  do_update = True
+              else:
+                do_update = True
+        except:
+          LOGGER.error("discover: Climate check profile failed, assuming update needed")
+          do_update = True
+        if do_update:
+          self.write_profile()
+          self.poly.installprofile()
+          with open(climates_json, "w") as f:
+            json.dump(self.climates, f, indent=4, sort_keys=True)
         self.discover_st = True
         self.in_discover = False
         return True
@@ -285,87 +306,46 @@ class Controller(polyinterface.Controller):
       #
       en_us_txt = "profile/nls/en_us.txt"
       LOGGER.info("{0} Writing {1}".format(pfx,en_us_txt))
-      nls_tmpl = open("profile/nls/en_us.tmpl", "r")
+      nls_tmpl = open("template/en_us.txt", "r")
       nls      = open(en_us_txt,  "w")
       for line in nls_tmpl:
         nls.write(line)
       nls_tmpl.close()
+      # Open the nodedef custom for writing
+      nodedef_f = 'profile/nodedef/custom.xml'
+      LOGGER.info("{0} Writing {1}".format(pfx,nodedef_f))
+      nodedef_h = open(nodedef_f, "w")
+      # Open the editor custom for writing
+      editor_f = 'profile/editor/custom.xml'
+      LOGGER.info("{0} Writing {1}".format(pfx,editor_f))
+      editor_h = open(editor_f, "w")
       for id in self.climates:
-        # First write the nodedef
-        nodedefc = 'profile/nodedef/custom{}.xml'.format(id)
-        LOGGER.info("{0} Writing {1}".format(pfx,nodedefc))
-        nodedefc_o = open(nodedefc, "w")
-        nodedeft_o = open('thermostat.xml','r')
-        for line in nodedeft_o:
-            nodedefc_o.write(re.sub(r'(EN_ECOSCH_)id',r'\1{0}'.format(id),line))
-        nodedefc_o.close()
-        nodedeft_o.close()
+        # Read thermostat template to write the custom version.
+        in_h  = open('template/thermostat.xml','r')
+        for line in in_h:
+            nodedef_h.write(re.sub(r'tstatid',r'{0}'.format(id),line))
+        in_h.close()
+        # Read the editor template to write the custom version
+        in_h  = open('template/editors.xml','r')
+        for line in in_h:
+            line = re.sub(r'tstatid',r'{0}'.format(id),line)
+            line = re.sub(r'tstatcnt',r'{0}'.format(len(self.climates[id])-1),line)
+            editor_h.write(line)
+        in_h.close()
         # Then the NLS lines.
-        cnt = 0
-        for climate in self.climates[id]:
-          nls.write("EN_ECOSCH_{}-{} = {}".format(id,cnt,climate['name']))
+        nls.write("\n")
+        nls.write('ND-EcobeeC_{0}-NAME = Ecobee Thermostat {0} (C)\n'.format(id))
+        nls.write('ND-EcobeeC_{0}-ICON = Thermostat\n'.format(id))
+        nls.write('ND-EcobeeF_{0}-NAME = Ecobee Thermostat {0} (F)\n'.format(id))
+        nls.write('ND-EcobeeF_{0}-ICON = Thermostat\n'.format(id))
+        for i in range(11):
+          if i < len(self.climates[id]):
+            nls.write("EN_ECOSCH_{}-{} = {}\n".format(id,i,self.climates[id][i]['name']))
+      nodedef_h.close()
+      editor_h.close()
       nls.close()
 
       LOGGER.info("{} done".format(pfx))
-
-    def get_server_data(self,logger):
-        # Read the SERVER info from the json.
-        try:
-            with open('server.json') as data:
-                serverdata = json.load(data)
-        except Exception as err:
-            logger.error('get_server_data: failed to read hubs file {0}: {1}'.format('server.json',err), exc_info=True)
-            return False
-        data.close()
-        # Get the version info
-        try:
-            version = serverdata['credits'][0]['version']
-        except (KeyError, ValueError):
-            logger.info('Version not found in server.json.')
-            version = '0.0.0.0'
-        # Split version into two floats.
-        sv = version.split(".");
-        v1 = 0;
-        v2 = 0;
-        if len(sv) == 1:
-            v1 = int(v1[0])
-        elif len(sv) > 1:
-            v1 = float("%s.%s" % (sv[0],str(sv[1])))
-            if len(sv) == 3:
-                v2 = int(sv[2])
-            else:
-                v2 = float("%s.%s" % (sv[2],str(sv[3])))
-        serverdata['version'] = version
-        serverdata['version_major'] = v1
-        serverdata['version_minor'] = v2
-        return serverdata
-
-    def get_profile_info(self):
-        pvf = 'profile/version.txt'
-        try:
-            with open(pvf) as f:
-                pv = f.read().replace('\n', '')
-                f.close()
-        except Exception as err:
-            LOGGER.error('get_profile_info: failed to read  file {0}: {1}'.format(pvf,err), exc_info=True)
-            pv = 0
-        return { 'version': pv }
-
-    def check_profile(self):
-        self.profile_info = self.get_profile_info()
-        # Set Default profile version if not Found
-        cdata = deepcopy(self.polyConfig['customData'])
-        LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
-        if not 'profile_info' in cdata:
-            cdata['profile_info'] = { 'version': 0 }
-        if self.profile_info['version'] == cdata['profile_info']['version']:
-            self.update_profile = False
-        else:
-            self.update_profile = True
-            self.poly.installprofile()
-        LOGGER.info('check_profile: update_profile={}'.format(self.update_profile))
-        cdata['profile_info'] = self.profile_info
-        self.saveCustomData(cdata)
 
     def getThermostats(self):
         if not self._checkTokens():

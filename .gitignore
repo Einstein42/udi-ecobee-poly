@@ -72,7 +72,6 @@ target/
 #Project specific
 polyinterface
 .AppleDouble
+climates.json
 profile/*/custom*.xml
 profile/nls/en_us.txt
-EcobeeF.xml
-EcobeeC.xml

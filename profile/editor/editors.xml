@@ -41,9 +41,6 @@
   <editor id="I_TSTAT_ALERT">
     <range uom="25" subset="0,1" nls="EN_ALERT" />
   </editor>
-  <editor id="I_TSTAT_ECO_SCHED_TYPE">
-    <range uom="25" subset="0-10" nls="EN_ECOSCH" />
-  </editor>
   <editor id="I_TSTAT_ECO_SCHED_OPT">
     <range uom="25" subset="0-1" nls="EN_ECOSCH_OPT" />
   </editor>

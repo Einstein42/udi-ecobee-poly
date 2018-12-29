@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.15: JimBo
+  - [Add support for custom named climate type's](https://github.com/Einstein42/udi-ecobee-poly/issues/1)
 - 2.0.14: JimBo
   - [When I select hold-indefinite on schedule mode, it sets the heat setpoint to 26 degrees C and holds it there indefinitely.](https://github.com/Einstein42/udi-ecobee-poly/issues/16)
   - [Temperature is being displayed in the console in deg F (even though it says deg C)](https://github.com/Einstein42/udi-ecobee-poly/issues/17)
