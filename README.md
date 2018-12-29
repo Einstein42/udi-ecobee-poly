@@ -44,6 +44,7 @@ If you already have it installed and want the update before it's in the store.
 
 - 2.0.15: JimBo
   - [Add support for custom named climate type's](https://github.com/Einstein42/udi-ecobee-poly/issues/1)
+    - With this change the custom Climate Types (Comfort Settings) names you have created in the thermostat will show up on the ISY, but this means that during discover it will build custom profiles that will be loaded and will require the admin console to be closed if it's open.
 - 2.0.14: JimBo
   - [When I select hold-indefinite on schedule mode, it sets the heat setpoint to 26 degrees C and holds it there indefinitely.](https://github.com/Einstein42/udi-ecobee-poly/issues/16)
   - [Temperature is being displayed in the console in deg F (even though it says deg C)](https://github.com/Einstein42/udi-ecobee-poly/issues/17)
