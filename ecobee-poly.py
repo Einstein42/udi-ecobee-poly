@@ -250,6 +250,7 @@ class Controller(polyinterface.Controller):
             LOGGER.error("Discover Failed, No thermostats returned!  Will try again on next long poll")
             return False
         self.revData = deepcopy(thermostats)
+        self.climates = dict()
         for thermostatId, thermostat in thermostats.items():
             address = self.thermostatIdToAddress(thermostatId)
             programs = False
@@ -268,13 +269,44 @@ class Controller(polyinterface.Controller):
                                             thermostat, fullData, useCelsius))
                     programs = tstat['program']
             LOGGER.debug("discover: program={}".format(json.dumps(programs, sort_keys=True, indent=2)))
-            self.climates = list()
+            self.climates[thermostatId] = list()
             for climate in programs['climates']:
-                self.climates.append({'id':thermostatId, 'name': climate['name'], 'ref':climate['climateRef']})
+                self.climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
         LOGGER.debug("discover: climates={}".format(self.climates))
+        self.write_profile()
         self.discover_st = True
         self.in_discover = False
         return True
+
+    def write_profile(self):
+      pfx = 'write_profile:'
+      #
+      # Start the nls with the template data.
+      #
+      en_us_txt = "profile/nls/en_us.txt"
+      LOGGER.info("{0} Writing {1}".format(pfx,en_us_txt))
+      nls_tmpl = open("profile/nls/en_us.tmpl", "r")
+      nls      = open(en_us_txt,  "w")
+      for line in nls_tmpl:
+        nls.write(line)
+      nls_tmpl.close()
+      for id in self.climates:
+        # First write the nodedef
+        nodedefc = 'profile/nodedef/custom{}.xml'.format(id)
+        LOGGER.info("{0} Writing {1}".format(pfx,nodedefc))
+        nodedefc_o = open(nodedefc, "w")
+        nodedeft_o = open('thermostat.xml','r')
+        for line in nodedeft_o:
+            nodedefc_o.write(re.sub(r'(EN_ECOSCH_)id',r'\1{0}'.format(id),line))
+        nodedefc_o.close()
+        nodedeft_o.close()
+        # Then the NLS lines.
+        cnt = 0
+        for climate in self.climates[id]:
+          nls.write("EN_ECOSCH_{}-{} = {}".format(id,cnt,climate['name']))
+      nls.close()
+
+      LOGGER.info("{} done".format(pfx))
 
     def get_server_data(self,logger):
         # Read the SERVER info from the json.
