@@ -176,7 +176,7 @@ class Thermostat(polyinterface.Node):
 
     def start(self):
         if 'remoteSensors' in self.tstat:
-            LOGGER.debug("remoteSensors={}".format(json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
+            #LOGGER.debug("{}:remoteSensors={}".format(self.address,json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
             for sensor in self.tstat['remoteSensors']:
                 if 'id' in sensor and 'name' in sensor:
                     sensorAddressOld = self.getSensorAddressOld(sensor)
@@ -264,7 +264,9 @@ class Thermostat(polyinterface.Node):
       }
       for key, value in updates.items():
         self.setDriver(key, value)
-      for address, node in self.controller.nodes.items():
+      # Need to copy this because on startup the nodes can change which causes a Exception
+      tnodes = self.controller.nodes
+      for address, node in tnodes.items():
         if node.primary == self.address and node.type == 'sensor':
           for sensor in self.tstat['remoteSensors']:
             if node.address == self.getSensorAddress(sensor):

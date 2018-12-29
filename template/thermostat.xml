@@ -1,4 +1,3 @@
-<nodeDefs>
   <nodeDef id="EcobeeC_tstatid" nodeType="140" nls="140E" >
     <sts>
       <st id="ST" editor="I_TEMP_C" />
@@ -108,4 +107,3 @@
       </accepts>
     </cmds>
   </nodeDef>
-</nodeDefs>
