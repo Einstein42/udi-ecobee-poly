@@ -10,10 +10,11 @@
       <st id="GV1" editor="I_TSTAT_HUM_SET" />
       <st id="CLISMD" editor="I_TSTAT_PROG_MODE2" />
       <st id="GV4" editor="I_TSTAT_FANONTIME" />
-      <st id="GV3" editor="I_ECOSCH_tstatid" />
+      <st id="GV3" editor="CTA_tstatid" />
       <st id="GV5" editor="I_HUMIDITY" />
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
+      <st id="GV8" editor="BOOL" />
     </sts>
     <cmds>
       <accepts>
@@ -30,7 +31,7 @@
           <p id="" editor="I_TSTAT_PROG_MODE2" init="CLISMD" />
         </cmd>
         <cmd id="GV3">
-          <p id="" editor="I_ECOSCH_tstatid" init="GV3" />
+          <p id="" editor="CT_tstatid" init="GV3" />
           <p id="HoldType" editor="I_TSTAT_ECO_SCHED_OPT" init="0" optional="T" />
         </cmd>
         <cmd id="GV4">
@@ -65,10 +66,11 @@
       <st id="GV1" editor="I_TSTAT_HUM_SET" />
       <st id="CLISMD" editor="I_TSTAT_PROG_MODE2" />
       <st id="GV4" editor="I_TSTAT_FANONTIME" />
-      <st id="GV3" editor="I_ECOSCH_tstatid" />
+      <st id="GV3" editor="CTA_tstatid" />
       <st id="GV5" editor="I_HUMIDITY" />
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
+      <st id="GV8" editor="BOOL" />
     </sts>
     <cmds>
       <accepts>
@@ -85,7 +87,7 @@
           <p id="" editor="I_TSTAT_PROG_MODE2" init="CLISMD" />
         </cmd>
         <cmd id="GV3">
-          <p id="" editor="I_ECOSCH_tstatid" init="GV3" />
+          <p id="" editor="CT_tstatid" init="GV3" />
           <p id="HoldType" editor="I_TSTAT_ECO_SCHED_OPT" init="0" optional="T" />
         </cmd>
         <cmd id="GV4">

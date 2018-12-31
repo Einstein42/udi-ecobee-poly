@@ -303,7 +303,7 @@ class Controller(polyinterface.Controller):
                         if id in current:
                             if len(self.climates[id]) == len(current[id]):
                                 for i in range(len(self.climates[id])):
-                                    if self.climates[id][i] != self.climates[id][i]:
+                                    if self.climates[id][i] != current[id][i]:
                                         update_profile = True
                             else:
                                 update_profile = True
@@ -365,7 +365,10 @@ class Controller(polyinterface.Controller):
         nls.write('ND-EcobeeF_{0}-ICON = Thermostat\n'.format(id))
         for i in range(11):
           if i < len(self.climates[id]):
-            nls.write("EN_ECOSCH_{}-{} = {}\n".format(id,i,self.climates[id][i]['name']))
+            nls.write("CT_{}-{} = {}\n".format(id,i,self.climates[id][i]['name']))
+          else:
+            # Name them with smart<n>
+            nls.write("CT_{}-{} = smart{}\n".format(id,i,i-2))
       nodedef_h.write('</nodedefs>\n')
       nodedef_h.close()
       editor_h.write('</editors>\n')

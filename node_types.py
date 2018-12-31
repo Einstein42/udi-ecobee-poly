@@ -84,7 +84,8 @@ driversMap = {
     { 'driver': 'GV3', 'value': 0, 'uom': '25' },
     { 'driver': 'GV5', 'value': 0, 'uom': '22' },
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
-    { 'driver': 'GV7', 'value': 0, 'uom': '25' }
+    { 'driver': 'GV7', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV8', 'value': 0, 'uom': '2' }
   ],
   'EcobeeC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
@@ -100,8 +101,9 @@ driversMap = {
     { 'driver': 'GV3', 'value': 0, 'uom': '25' },
     { 'driver': 'GV5', 'value': 0, 'uom': '22' },
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
-    { 'driver': 'GV7', 'value': 0, 'uom': '25' }
-  ],
+    { 'driver': 'GV7', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV8', 'value': 0, 'uom': '2' }
+ ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
     { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
@@ -246,6 +248,7 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
+      #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
@@ -260,7 +263,8 @@ class Thermostat(polyinterface.Node):
         'GV3': self.getClimateIndex(climateType),
         'GV5': self.runtime['desiredDehumidity'],
         'GV6': 1 if self.settings['autoAway'] else 0,
-        'GV7': 1 if self.settings['followMeComfort'] else 0
+        'GV7': 1 if self.settings['followMeComfort'] else 0,
+        'GV8': 1 if self.runtime['connected'] else 0
       }
       for key, value in updates.items():
         self.setDriver(key, value)
@@ -413,7 +417,11 @@ class Thermostat(polyinterface.Node):
     # By default F values are converted to int, but for ambiant temp we
     # allow one decimal.
     def tempToDriver(self,temp,fromE=False,FtoInt=True):
-      temp = float(temp)
+      try:
+        temp = float(temp)
+      except:
+        LOGGER.error("{}:tempToDriver: Unable to convert '{}' to float")
+        return False
       # Convert from Ecobee value, unless it's already 0.
       if fromE and temp != 0:
           temp = temp / 10
@@ -615,7 +623,8 @@ class Sensor(polyinterface.Node):
                 val = 0
               if item['type'] == 'temperature':
                   val = self.parent.tempToDriver(val,True,False)
-              updates[xref[item['type']]] = val
+              if val is not False:
+                updates[xref[item['type']]] = val
           else:
             LOGGER.error("{}:update: Unknown capabilty: {}".format(self.address,item))
       LOGGER.debug("{}:update: updates={}".format(self.address,updates))

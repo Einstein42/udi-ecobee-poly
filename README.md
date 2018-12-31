@@ -42,6 +42,11 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.17: JimBo
+  - Add Connected to Thermostat, set to False when Ecobee servers can't see the Thermostat
+  - Fix crash where Sensor temp was 'unknown' when it hasn't reported yet
+  - Fix bug where profile is not rebuilt when a climate name is Changed
+  - If an invalid climate type is somehow selected, meaning it isn't named in the app, then smart<n> is shown.  I can't figure out how this can happen, but seems possible.
 - 2.0.16: JimBo
   - Fix issues with custom climate types for mutliple thermostats
 - 2.0.15: JimBo

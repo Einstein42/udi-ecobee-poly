@@ -24,6 +24,7 @@ ST-140E-GV4-NAME = Fan On Time
 ST-140E-GV5-NAME = Dehumidification Setpoint
 ST-140E-GV6-NAME = Smart Home-Away
 ST-140E-GV7-NAME = Follow Me
+ST-140E-GV8-NAME = Connected
 CMD-140E-GV3-NAME = Climate Type
 CMD-140E-GV4-NAME = Fan On Time
 CMD-140E-GV6-NAME = Smart Home-Away
