@@ -567,7 +567,7 @@ class Thermostat(polyinterface.Node):
         self.setDriver(driver, newTemp)
         self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
-
+    hint = [1, 12, 1, 0]
     commands = { 'QUERY': query,
                 'CLISPH': cmdSetPoint,
                 'CLISPC': cmdSetPoint,
@@ -624,6 +624,7 @@ class Sensor(polyinterface.Node):
     def query(self, command=None):
       self.reportDrivers()
 
+    hint = [1, 3, 2, 0]^M
     commands = {'QUERY': query, 'STATUS': query}
 
 class Weather(polyinterface.Node):
@@ -671,4 +672,5 @@ class Weather(polyinterface.Node):
     def query(self, command=None):
         self.reportDrivers()
 
+    hint = [1, 11, 1, 0]^M
     commands = {'QUERY': query, 'STATUS': query}
