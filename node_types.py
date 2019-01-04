@@ -202,6 +202,7 @@ class Thermostat(polyinterface.Node):
             forecastName = get_valid_node_name('Ecobee - Forecast')
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
+        self.query()
 
     def update(self, revData, fullData):
       LOGGER.debug("{}:update: ".format(self.address))
@@ -590,7 +591,7 @@ class Sensor(polyinterface.Node):
       self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])
 
     def start(self):
-      pass
+      self.query()
 
     def update(self, sensor):
       LOGGER.debug("{}:update:".format(self.address))
@@ -619,8 +620,6 @@ class Sensor(polyinterface.Node):
       LOGGER.debug("{}:update: updates={}".format(self.address,updates))
       for key, value in updates.items():
         self.setDriver(key, value)
-      # This shouldn't be needed, but on startup it is??
-      self.reportDrivers()
 
     def query(self, command=None):
       self.reportDrivers()
@@ -637,7 +636,7 @@ class Weather(polyinterface.Node):
         self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])
 
     def start(self):
-        pass
+        self.query()
 
     def update(self, weather):
       currentWeather = weather['forecasts'][self.forecastNum]
