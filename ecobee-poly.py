@@ -19,7 +19,7 @@ import re
 from copy import deepcopy
 
 from node_types import Thermostat, Sensor, Weather
-from node_funcs import get_valid_node_name,get_server_data
+from node_funcs import get_valid_node_name,get_server_data,get_profile_info
 
 LOGGER = polyinterface.LOGGER
 
@@ -273,7 +273,7 @@ class Controller(polyinterface.Controller):
                   self.climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
         LOGGER.debug("discover: climates={}".format(self.climates))
         climates_json = 'climates.json'
-        do_update = False
+        do_update = self.check_profile()
         try:
             with open(climates_json, 'r') as f:
               current = json.load(f)
@@ -298,6 +298,23 @@ class Controller(polyinterface.Controller):
         self.discover_st = True
         self.in_discover = False
         return True
+
+    def check_profile(self):
+        self.profile_info = get_profile_info(LOGGER)
+        # Set Default profile version if not Found
+        cdata = deepcopy(self.polyConfig['customData'])
+        LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
+        if not 'profile_info' in cdata:
+            cdata['profile_info'] = { 'version': 0 }
+        if self.profile_info['version'] == cdata['profile_info']['version']:
+            self.update_profile = False
+        else:
+            self.update_profile = True
+            self.poly.installprofile()
+        self.l_info('check_profile','update_profile={}'.format(self.update_profile))
+        cdata['profile_info'] = self.profile_info
+        self.saveCustomData(cdata)
+        return self.update_profile
 
     def write_profile(self):
       pfx = 'write_profile:'

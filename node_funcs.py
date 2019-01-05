@@ -63,3 +63,14 @@ def get_server_data(logger):
     serverdata['version_major'] = v1
     serverdata['version_minor'] = v2
     return serverdata
+
+def get_profile_info(logger):
+    pvf = 'profile/version.txt'
+    try:
+        with open(pvf) as f:
+            pv = f.read().replace('\n', '')
+    except Exception as err:
+        logger.error('get_profile_info: failed to read  file {0}: {1}'.format(pvf,err), exc_info=True)
+        pv = 0
+    f.close()
+    return { 'version': pv }
