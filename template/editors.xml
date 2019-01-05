@@ -1,5 +1,6 @@
-<editors>
-  <editor id="I_ECOSCH_tstatid">
-    <range uom="25" subset="0-tstatcnt" nls="EN_ECOSCH_tstatid" />
+  <editor id="CTA_tstatid">
+    <range uom="25" subset="0-10" nls="CT_tstatid" />
   </editor>
-</editors>
+  <editor id="CT_tstatid">
+    <range uom="25" subset="0-tstatcnt" nls="CT_tstatid" />
+  </editor>

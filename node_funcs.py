@@ -1,4 +1,5 @@
 
+import os
 import re
 import json
 
@@ -30,6 +31,24 @@ def is_int(s):
         return True
     except ValueError:
         return False
+
+def make_file_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        # TODO: Trap this?
+        os.makedirs(directory)
+    return True
+
+def get_profile_info(logger):
+    pvf = 'profile/version.txt'
+    try:
+        with open(pvf) as f:
+            pv = f.read().replace('\n', '')
+            f.close()
+    except Exception as err:
+        logger.error('get_profile_info: failed to read  file {0}: {1}'.format(pvf,err), exc_info=True)
+        pv = 0
+    return { 'version': pv }
 
 def get_server_data(logger):
     # Read the SERVER info from the json.
