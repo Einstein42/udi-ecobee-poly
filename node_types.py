@@ -209,7 +209,7 @@ class Thermostat(polyinterface.Node):
                         else:
                           # Did the nodedef id change?
                           nid = self.get_sensor_nodedef(sensor)
-                          if sensor['nodedef'] != nid:
+                          if fnode['nodedef'] != nid:
                               addS = True
                         if addS:
                             sensorName = 'Ecobee - {}'.format(sensor['name'])
