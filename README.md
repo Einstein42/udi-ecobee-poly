@@ -42,6 +42,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.18: JimBo
+  - Support sensors with or without Humidity
+  - Fix Sensor update to not report drivers on every check.  Will reduce a lot of updates to ISY.
 - 2.0.17: JimBo
   - Add Connected to Thermostat, set to False when Ecobee servers can't see the Thermostat
   - Fix crash where Sensor temp was 'unknown' when it hasn't reported yet
