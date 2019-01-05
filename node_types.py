@@ -233,7 +233,7 @@ class Thermostat(polyinterface.Node):
             for cb in sensor['capability']:
                 if cb['type'] == 'humidity':
                     has_num = True
-        CorF = 'C' if self.parent.useCelsius else 'F'
+        CorF = 'C' if self.useCelsius else 'F'
         HorN = 'H' if has_num else ''
         return 'EcobeeSensor{}{}'.format(HorN,CorF)
 
