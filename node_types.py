@@ -206,7 +206,7 @@ class Thermostat(polyinterface.Node):
                           LOGGER.debug("sensor = {}".format(sensor))
                         except TypeError:
                           addS = True
-                      else:
+                        else:
                           # Did the nodedef id change?
                           nid = self.get_sensor_nodedef(sensor)
                           if sensor['nodedef'] != nid:
