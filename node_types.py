@@ -206,10 +206,15 @@ class Thermostat(polyinterface.Node):
                           LOGGER.debug("sensor = {}".format(sensor))
                         except TypeError:
                           addS = True
+                      else:
+                          # Did the nodedef id change?
+                          nid = self.get_sensor_nodedef(sensor)
+                          if sensor['nodedef'] != nid:
+                              addS = True
                         if addS:
                             sensorName = 'Ecobee - {}'.format(sensor['name'])
                             self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                           get_valid_node_name(sensorName), self))
+                                                           get_valid_node_name(sensorName), nid, self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
@@ -219,6 +224,18 @@ class Thermostat(polyinterface.Node):
             self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
         self.query()
+
+    def get_sensor_nodedef(self,sensor):
+        # Given the ecobee sensor data, figure out the nodedef
+        # 'capability': [{'id': '1', 'type': 'temperature', 'value': '724'}, {'id': '2', 'type': 'humidity', 'value': '41'}, {'id': '3', 'type': 'occupancy', 'value': 'false'}
+        has_hum = False
+        if 'capability' in sensor:
+            for cb in sensor['capability']:
+                if cb['type'] == 'humidity':
+                    has_num = True
+        CorF = 'C' if self.parent.useCelsius else 'F'
+        HorN = 'H' if has_num else ''
+        return 'EcobeeSensor{}{}'.format(HorN,CorF)
 
     def update(self, revData, fullData):
       LOGGER.debug("{}:update: ".format(self.address))
@@ -598,12 +615,12 @@ class Thermostat(polyinterface.Node):
                  }
 
 class Sensor(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, parent):
+    def __init__(self, controller, primary, address, name, id, parent):
       super().__init__(controller, primary, address, name)
       self.type = 'sensor'
       # self.code = code
       self.parent = parent
-      self.id = 'EcobeeSensorC' if self.parent.useCelsius else 'EcobeeSensorF'
+      self.id = id
       self.drivers = self._convertDrivers(driversMap[self.id]) if self.controller._cloud else deepcopy(driversMap[self.id])
 
     def start(self):
