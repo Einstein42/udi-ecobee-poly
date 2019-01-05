@@ -14,7 +14,7 @@
         {
             "title": "ecobee: Polyglot NodeServer for Ecobee",
             "author": "James Milne (Einstein.42)",
-            "version": "2.0.17",
+            "version": "2.0.18",
             "date": "July 25, 2018",
             "source": "https://github.com/Einstein42/udi-ecobee-poly",
             "license": "https://github.com/Einstein42/udi-ecobee-poly/master/LICENSE"
