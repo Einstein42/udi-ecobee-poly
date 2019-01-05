@@ -104,10 +104,18 @@ driversMap = {
   ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
-    { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
     { 'driver': 'GV1', 'value': 0, 'uom': '25' }
   ],
   'EcobeeSensorC': [
+    { 'driver': 'ST', 'value': 0, 'uom': '4' },
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+  ],
+  'EcobeeSensorHF': [
+    { 'driver': 'ST', 'value': 0, 'uom': '17' },
+    { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+  ],
+  'EcobeeSensorHC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
     { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
     { 'driver': 'GV1', 'value': 0, 'uom': '25' }
@@ -182,14 +190,14 @@ class Thermostat(polyinterface.Node):
                     sensorAddressOld = self.getSensorAddressOld(sensor)
                     sensorAddress = self.getSensorAddress(sensor)
                     # Delete the old one if it exists
-                    # Delete the old one if it exists
                     try:
                       fnode = self.controller.poly.getNode(sensorAddressOld)
                     except TypeError:
                       fnode = False
-                      LOGGER.debug("caught fnode fail due to polyglot bug? assuming old node not found")
+                      LOGGER.debug("caught fnode fail due to polyglot cloud bug? assuming old node not found")
                     if fnode is not False:
                         self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
+                    print("sensor node = {}".format(self.controller.nodes))
                     if sensorAddress is not None and not sensorAddress in self.controller.nodes:
                         sensorName = 'Ecobee - {}'.format(sensor['name'])
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
