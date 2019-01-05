@@ -187,21 +187,26 @@ class Thermostat(polyinterface.Node):
             LOGGER.debug("remoteSensors={}".format(json.dumps(self.tstat['remoteSensors'], sort_keys=True, indent=2)))
             for sensor in self.tstat['remoteSensors']:
                 if 'id' in sensor and 'name' in sensor:
-                    sensorAddressOld = self.getSensorAddressOld(sensor)
                     sensorAddress = self.getSensorAddress(sensor)
-                    # Delete the old one if it exists
-                    try:
-                      fnode = self.controller.poly.getNode(sensorAddressOld)
-                    except TypeError:
-                      fnode = False
-                      LOGGER.debug("caught fnode fail due to polyglot cloud bug? assuming old node not found")
-                    if fnode is not False:
-                        self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
-                    print("sensor node = {}".format(self.controller.nodes))
-                    if sensorAddress is not None and not sensorAddress in self.controller.nodes:
-                        sensorName = 'Ecobee - {}'.format(sensor['name'])
-                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                       get_valid_node_name(sensorName), self))
+                    if sensorAddress is not None:
+                        # Delete the old one if it exists
+                        sensorAddressOld = self.getSensorAddressOld(sensor)
+                        try:
+                          fonode = self.controller.poly.getNode(sensorAddressOld)
+                        except TypeError:
+                          fonode = False
+                          LOGGER.debug("caught fnode fail due to polyglot cloud bug? assuming old node not found")
+                        if fonode is not False:
+                            self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
+                        try:
+                          fnode = self.controller.poly.getNode(sensorAddress)
+                        except TypeError:
+                          fnode = False
+                        print("sensor node = {}".format(fnode))
+                        if sensorAddress in self.controller.nodes:
+                            sensorName = 'Ecobee - {}'.format(sensor['name'])
+                            self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
+                                                           get_valid_node_name(sensorName), self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
