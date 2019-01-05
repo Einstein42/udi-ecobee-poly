@@ -310,7 +310,7 @@ class Controller(polyinterface.Controller):
             self.update_profile = False
         else:
             self.update_profile = True
-        LOGGER.info('check_profile','update_profile={}'.format(self.update_profile))
+        LOGGER.info('check_profile: update_profile={}'.format(self.update_profile))
         cdata['profile_info'] = self.profile_info
         self.saveCustomData(cdata)
         return self.update_profile
