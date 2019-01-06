@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.19: JimBo
+  - Fix bug when installing
 - 2.0.18: JimBo
   - Support sensors with or without Humidity
   - Fix Sensor update to not report drivers on every check.  Will reduce a lot of updates to ISY.

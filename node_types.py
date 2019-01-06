@@ -202,6 +202,8 @@ class Thermostat(polyinterface.Node):
                             self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                         addS = False
                         # Add Sensor is necessary
+                        # Did the nodedef id change?
+                        nid = self.get_sensor_nodedef(sensor)
                         try:
                           fnode = self.controller.poly.getNode(sensorAddress)
                           #LOGGER.debug("sensor node = {}".format(fnode))
@@ -209,9 +211,11 @@ class Thermostat(polyinterface.Node):
                         except TypeError:
                           addS = True
                         else:
-                          # Did the nodedef id change?
-                          nid = self.get_sensor_nodedef(sensor)
-                          if fnode['nodedef'] != nid:
+                          LOGGER.debug("fnode = {}".format(fnode))
+                          if fnode is False:
+                            addS = True
+                          else:
+                            if fnode['nodedef'] != nid:
                               addS = True
                         if addS:
                             sensorName = 'Ecobee - {}'.format(sensor['name'])
