@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.20: JimBo
+  - Fix for old Ecobee's that don't have the same sensor data.
 - 2.0.19: JimBo
   - Fix bug when installing
 - 2.0.18: JimBo

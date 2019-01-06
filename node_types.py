@@ -347,8 +347,10 @@ class Thermostat(polyinterface.Node):
       if sdata['type'] == 'thermostat':
         # Yes, use the thermostat id
         return 's{}'.format(self.tstat['identifier'])
-      # No, use the remote sensor code
-      return 'rs_{}'.format(sdata['code'].lower())
+      # No, use the remote sensor code if available
+      if 'code' in sdata:
+        return 'rs_{}'.format(sdata['code'].lower())
+      LOGGER.error("{}:getSensorAddress: Unable to determine sensor address for: {}".format(self.address,sdata))
 
     def query(self, command=None):
       self.reportDrivers()
