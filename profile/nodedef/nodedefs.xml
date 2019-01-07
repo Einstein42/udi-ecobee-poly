@@ -5,7 +5,10 @@
       <st id="ST" editor="BOOL" />
     </sts>
     <cmds>
-      <sends />
+      <sends>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </sends>
       <accepts>
         <cmd id="DISCOVER" />
       </accepts>

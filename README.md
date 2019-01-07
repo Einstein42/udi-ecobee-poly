@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.23: JimBo
+  - [Add heartbeat](https://github.com/Einstein42/udi-ecobee-poly/issues/29)
 - 2.0.22: JimBo
   - [Ecobee server issues caused nodeserver to hang](https://github.com/Einstein42/udi-ecobee-poly/issues/28)
     - More trapping

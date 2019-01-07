@@ -36,11 +36,13 @@ class Controller(polyinterface.Controller):
         self.discover_st = False
         self.refreshingTokens = False
         self.pinRun = False
+        self.hb = 0
         self._cloud = CLOUD
 
     def start(self):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
+        self.heartbeat()
         #LOGGER.debug(self.polyConfig['customData'])
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
@@ -222,9 +224,19 @@ class Controller(polyinterface.Controller):
     def longPoll(self):
         # Call discovery if it failed on startup
         LOGGER.debug("{}:longPoll".format(self.address))
+        self.heartbeat()
         if self.discover_st is None:
             self.discovery()
         self.updateThermostats()
+
+   def heartbeat(self):
+        LOGGER.debug('heartbeat hb={}'.format(self.hb))
+        if self.hb == 0:
+            self.reportCmd("DON",2)
+            self.hb = 1
+        else:
+            self.reportCmd("DOF",2)
+            self.hb = 0
 
     def updateThermostats(self):
         LOGGER.debug("{}:updateThermostats:".format(self.address))
