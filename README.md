@@ -45,6 +45,8 @@ If you already have it installed and want the update before it's in the store.
 - 2.0.22: JimBo
   - [Ecobee server issues caused nodeserver to hang](https://github.com/Einstein42/udi-ecobee-poly/issues/28)
     - More trapping
+  - [Set Fan driver on/off based on heat setting when fanControlRequired setting](https://github.com/Einstein42/udi-ecobee-poly/issues/25)
+    - Should actually work this time.
 - 2.0.21: JimBo
   - [Ecobee server issues caused nodeserver to hang](https://github.com/Einstein42/udi-ecobee-poly/issues/28)
     - Not a sure fix, but should improve stablity.

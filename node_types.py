@@ -295,15 +295,14 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       #LOGGER.debug("{}:update: equipmentStatus={}".format(self.address,equipmentStatus))
-      # If fan is only, or
-      if 'fan' in equipmentStatus or (clihcs != 0 and self.settings['fanControlRequired']):
+      # The fan is on if on, or we are in a auxHeat mode and we don't control the fan,
+      if 'fan' in equipmentStatus or (clihcs >= 6 and not self.settings['fanControlRequired']):
         clifrs = 1
       else:
         clifrs = 0
       LOGGER.debug("{}:_update: clifrs={} (equipmentStatus={} or clihcs={}, fanControlRequired={}"
                    .format(self.address,clifrs,equipmentStatus,clihcs,self.settings['fanControlRequired'])
                    )
-
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
