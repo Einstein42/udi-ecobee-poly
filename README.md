@@ -42,6 +42,10 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.21: JimBo
+  - Small improvement to error trapping when Ecobee servers go down
+  - [Add control of fan on/auto state](https://github.com/Einstein42/udi-ecobee-poly/issues/23)
+  - [Set Fan driver on/off based on heat setting when fanControlRequired setting](https://github.com/Einstein42/udi-ecobee-poly/issues/25)
 - 2.0.20: JimBo
   - Fix for old Ecobee's that don't have the same sensor data.
 - 2.0.19: JimBo
