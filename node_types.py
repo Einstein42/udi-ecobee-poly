@@ -209,6 +209,8 @@ class Thermostat(polyinterface.Node):
                             self.controller.addNotice({fnode['address']: "Sensor created with new name, please delete old sensor with address '{}' in the Polyglot UI.".format(fnode['address'])})
                         addS = False
                         # Add Sensor is necessary
+                        # Did the nodedef id change?
+                        nid = self.get_sensor_nodedef(sensor)
                         try:
                           fnode = self.controller.poly.getNode(sensorAddress)
                           #LOGGER.debug("sensor node = {}".format(fnode))
@@ -216,9 +218,11 @@ class Thermostat(polyinterface.Node):
                         except TypeError:
                           addS = True
                         else:
-                          # Did the nodedef id change?
-                          nid = self.get_sensor_nodedef(sensor)
-                          if fnode['nodedef'] != nid:
+                          LOGGER.debug("fnode = {}".format(fnode))
+                          if fnode is False:
+                            addS = True
+                          else:
+                            if fnode['nodedef'] != nid:
                               addS = True
                         if addS:
                             sensorName = 'Ecobee - {}'.format(sensor['name'])
@@ -291,6 +295,11 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       #LOGGER.debug("{}:update: equipmentStatus={}".format(self.address,equipmentStatus))
+      if self.settings['fanControlRequired']:
+        clifrs = 1 if 'fan' in equipmentStatus else 0
+      else:
+        clifrs = 0 if clihcs == 0 else 1
+
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
@@ -299,7 +308,7 @@ class Thermostat(polyinterface.Node):
         'CLIFS': fanMap[self.runtime["desiredFanMode"]],
         'CLIHUM': self.runtime['actualHumidity'],
         'CLIHCS': clihcs,
-        'CLIFRS': 1 if 'fan' in equipmentStatus else 0,
+        'CLIFRS': clifrs,
         'GV1': self.runtime['desiredHumidity'],
         'CLISMD': self.clismd,
         'GV4': self.settings['fanMinOnTime'],
@@ -353,8 +362,10 @@ class Thermostat(polyinterface.Node):
       if sdata['type'] == 'thermostat':
         # Yes, use the thermostat id
         return 's{}'.format(self.tstat['identifier'])
-      # No, use the remote sensor code
-      return 'rs_{}'.format(sdata['code'].lower())
+      # No, use the remote sensor code if available
+      if 'code' in sdata:
+        return 'rs_{}'.format(sdata['code'].lower())
+      LOGGER.error("{}:getSensorAddress: Unable to determine sensor address for: {}".format(self.address,sdata))
 
     def query(self, command=None):
       self.reportDrivers()
