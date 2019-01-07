@@ -469,7 +469,12 @@ class Controller(polyinterface.Controller):
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
             return False
-        res = auth_conn.getresponse()
+        try:
+            res = auth_conn.getresponse()
+        except Exception as e:
+            LOGGER.error('Ecobee API Response error: {}'.format(e))
+            auth_conn.close()
+            return False
         data = json.loads(res.read().decode('utf-8'))
         auth_conn.close()
         return data
