@@ -229,7 +229,7 @@ class Controller(polyinterface.Controller):
             self.discovery()
         self.updateThermostats()
 
-   def heartbeat(self):
+    def heartbeat(self):
         LOGGER.debug('heartbeat hb={}'.format(self.hb))
         if self.hb == 0:
             self.reportCmd("DON",2)
