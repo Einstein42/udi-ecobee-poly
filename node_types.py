@@ -69,12 +69,18 @@ transitionMap = {
   'indefinite': 2
 }
 
+fanMap = {
+  'auto': 0,
+  'on': 1,
+}
+
 driversMap = {
   'EcobeeF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
     { 'driver': 'CLISPH', 'value': 0, 'uom': '17' },
     { 'driver': 'CLISPC', 'value': 0, 'uom': '17' },
     { 'driver': 'CLIMD', 'value': 0, 'uom': '67' },
+    { 'driver': 'CLIFS', 'value': 0, 'uom': '68' },
     { 'driver': 'CLIHUM', 'value': 0, 'uom': '22' },
     { 'driver': 'CLIHCS', 'value': 0, 'uom': '25' },
     { 'driver': 'CLIFRS', 'value': 0, 'uom': '80' },
@@ -92,6 +98,7 @@ driversMap = {
     { 'driver': 'CLISPH', 'value': 0, 'uom': '4' },
     { 'driver': 'CLISPC', 'value': 0, 'uom': '4' },
     { 'driver': 'CLIMD', 'value': 0, 'uom': '67' },
+    { 'driver': 'CLIFS', 'value': 0, 'uom': '68' },
     { 'driver': 'CLIHUM', 'value': 0, 'uom': '22' },
     { 'driver': 'CLIHCS', 'value': 0, 'uom': '25' },
     { 'driver': 'CLIFRS', 'value': 0, 'uom': '80' },
@@ -283,11 +290,13 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
       #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
+      #LOGGER.debug("{}:update: equipmentStatus={}".format(self.address,equipmentStatus))
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
         'CLISPC': self.tempToDriver(self.runtime['desiredCool'],True),
         'CLIMD': modeMap[self.settings['hvacMode']],
+        'CLIFS': fanMap[self.runtime["desiredFanMode"]],
         'CLIHUM': self.runtime['actualHumidity'],
         'CLIHCS': clihcs,
         'CLIFRS': 1 if 'fan' in equipmentStatus else 0,
@@ -328,6 +337,7 @@ class Thermostat(polyinterface.Node):
     def getClimateDict(self,name):
       for cref in self.program['climates']:
         if name == cref['climateRef']:
+            LOGGER.info('{}:getClimateDict: Returning {}'.format(self.address,cref))
             return cref
       LOGGER.error('{}:getClimateDict: Unknown climateRef name {}'.format(self.address,name))
       return None
@@ -386,8 +396,10 @@ class Thermostat(polyinterface.Node):
       cdict = self.getClimateDict(climateName)
       self.setCool(cdict['coolTemp'],True)
       self.setHeat(cdict['heatTemp'],True)
+      # TODO: cdict contains coolFan & heatFan, should we use those?
+      self.setFan(self.runtime["desiredFanMode"])
 
-    def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None):
+    def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None,fanMode=None):
       LOGGER.debug("pushScheduleMode: clismd={} coolTemp={} heatTemp={}".format(clismd,coolTemp,heatTemp))
       if clismd is None:
           clismd = int(self.getDriver('CLISMD'))
@@ -399,18 +411,23 @@ class Thermostat(polyinterface.Node):
           heatTemp = self.getDriver('CLISPH')
       if coolTemp is None:
           coolTemp = self.getDriver('CLISPC')
+      params = {
+        'holdType': clismd_name,
+        'heatHoldTemp': self.tempToEcobee(heatTemp),
+        'coolHoldTemp': self.tempToEcobee(coolTemp),
+      }
+      if fanMode is not None:
+          params['fan'] = getMapName(fanMap,fanMode)
       func = {
         'type': 'setHold',
-        'params': {
-          'holdType': clismd_name,
-          'heatHoldTemp': self.tempToEcobee(heatTemp),
-          'coolHoldTemp': self.tempToEcobee(coolTemp)          }
-        }
+        'params': params
+      }
       if self.ecobeePost({'functions': [func]}):
         self.setScheduleMode(clismd_name)
         self.setCool(coolTemp)
         self.setHeat(heatTemp)
-
+        if fanMode is not None:
+          self.setFan(fanMode)
     #
     # Set Methods for drivers so they are set the same way
     #
@@ -479,7 +496,20 @@ class Thermostat(polyinterface.Node):
       LOGGER.debug('{}:setHeat: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
       self.setDriver('CLISPH',dval)
 
-    def cmdSetPoint(self, cmd):
+    def setFan(self,val):
+      if is_int(val):
+          dval = val
+      else:
+          if val in fanMap:
+            dval = fanMap[val]
+          else:
+            logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
+            return False
+      LOGGER.debug('{}:setFan: {}={}'.format(self.address,val,dval))
+      self.setDriver('CLIFS',dval)
+
+
+    def cmdSetPF(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
       # TODO: Need to check that mode is auto,
       #LOGGER.debug("self.events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
@@ -487,8 +517,10 @@ class Thermostat(polyinterface.Node):
       driver = cmd['cmd']
       if driver == 'CLISPH':
         return self.pushScheduleMode(heatTemp=cmd['value'])
-      else:
+      elif driver == 'CLISPC':
         return self.pushScheduleMode(coolTemp=cmd['value'])
+      else:
+        return self.pushScheduleMode(fanMode=cmd['value'])
 
     def cmdSetScheduleMode(self, cmd):
       '''
@@ -612,8 +644,9 @@ class Thermostat(polyinterface.Node):
 
     hint = [1, 12, 1, 0]
     commands = { 'QUERY': query,
-                'CLISPH': cmdSetPoint,
-                'CLISPC': cmdSetPoint,
+                'CLISPH': cmdSetPF,
+                'CLISPC': cmdSetPF,
+                'CLIFS': cmdSetPF,
                 'CLIMD': cmdSetMode,
                 'CLISMD': cmdSetScheduleMode,
                 'GV3': cmdSetClimateType,
