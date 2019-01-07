@@ -99,12 +99,24 @@ class Controller(polyinterface.Controller):
             try:
                 auth_conn.request('POST', '/token?{}'.format(payload))
             except Exception as e:
-                LOGGER.error('Ecobee API Connection error: {}'.format(e))
+                LOGGER.error('getRefresh: Ecobee API Connection error: {}'.format(e))
                 auth_conn.close()
                 self.refreshingTokens = False
                 return False
-            res = auth_conn.getresponse()
-            data = json.loads(res.read().decode('utf-8'))
+            try:
+                res = auth_conn.getresponse()
+            except Exception as e:
+                LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
+                auth_conn.close()
+                self.refreshingTokens = False
+                return False
+            try:
+                data = json.loads(res.read().decode('utf-8'))
+            except Exception as e:
+                LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
+                auth_conn.close()
+                self.refreshingTokens = False
+                return False
             auth_conn.close()
             if 'error' in data:
                 LOGGER.error('Requesting Auth: {} :: {}'.format(data['error'], data['error_description']))
@@ -140,8 +152,20 @@ class Controller(polyinterface.Controller):
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
             return False
-        res = auth_conn.getresponse()
-        data = json.loads(res.read().decode('utf-8'))
+        try:
+            res = auth_conn.getresponse()
+        except Exception as e:
+            LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
+            auth_conn.close()
+            self.refreshingTokens = False
+            return False
+        try:
+            data = json.loads(res.read().decode('utf-8'))
+        except Exception as e:
+            LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
+            auth_conn.close()
+            self.refreshingTokens = False
+            return False
         auth_conn.close()
         LOGGER.debug(data)
         if 'error' in data:
@@ -164,8 +188,20 @@ class Controller(polyinterface.Controller):
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
             return False
-        res = auth_conn.getresponse()
-        data = json.loads(res.read().decode('utf-8'))
+        try:
+            res = auth_conn.getresponse()
+        except Exception as e:
+            LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
+            auth_conn.close()
+            self.refreshingTokens = False
+            return False
+        try:
+            data = json.loads(res.read().decode('utf-8'))
+        except Exception as e:
+            LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
+            auth_conn.close()
+            self.refreshingTokens = False
+            return False
         auth_conn.close()
         LOGGER.debug(data)
         if 'ecobeePin' in data:
