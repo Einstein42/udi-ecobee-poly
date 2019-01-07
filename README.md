@@ -23,6 +23,10 @@ a limitation imposed by Ecobee.
   1. Hold Indefinite
   If this is changed to either Hold settings then the current Cool/Heat and Fan modes are sent with that Hold type.  If Running is selected then any Holds are cancelled.
 
+## Monitoring
+
+See https://forum.universal-devices.com/topic/25016-polyglot-nodeserver-monitoring/ for info on how to use the heartbeats.  You can also check the thermostat GV8 True/False to see if the Ecobee servers can see the thermostats.
+
 ## Upgrading
 
 1. Open the Polyglot web page
@@ -44,6 +48,7 @@ If you already have it installed and want the update before it's in the store.
 
 - 2.0.23: JimBo
   - [Add heartbeat](https://github.com/Einstein42/udi-ecobee-poly/issues/29)
+    - See https://forum.universal-devices.com/topic/25016-polyglot-nodeserver-monitoring/ for info on how to use it.
 - 2.0.22: JimBo
   - [Ecobee server issues caused nodeserver to hang](https://github.com/Einstein42/udi-ecobee-poly/issues/28)
     - More trapping
