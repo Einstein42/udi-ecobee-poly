@@ -411,7 +411,9 @@ class Thermostat(polyinterface.Node):
       self.setCool(cdict['coolTemp'],True)
       self.setHeat(cdict['heatTemp'],True)
       # TODO: cdict contains coolFan & heatFan, should we use those?
-      self.setFan(self.runtime["desiredFanMode"])
+      self.setFanMode(cdict['coolFan'])
+      # We assume fan goes off, next refresh will say what it really is.
+      self.setFanState(0)
 
     def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None,fanMode=None):
       LOGGER.debug("pushScheduleMode: clismd={} coolTemp={} heatTemp={}".format(clismd,coolTemp,heatTemp))
@@ -441,7 +443,7 @@ class Thermostat(polyinterface.Node):
         self.setCool(coolTemp)
         self.setHeat(heatTemp)
         if fanMode is not None:
-          self.setFan(fanMode)
+          self.setFanMode(fanMode)
     #
     # Set Methods for drivers so they are set the same way
     #
@@ -510,7 +512,7 @@ class Thermostat(polyinterface.Node):
       LOGGER.debug('{}:setHeat: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
       self.setDriver('CLISPH',dval)
 
-    def setFan(self,val):
+    def setFanMode(self,val):
       if is_int(val):
           dval = val
       else:
@@ -519,9 +521,20 @@ class Thermostat(polyinterface.Node):
           else:
             logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
             return False
-      LOGGER.debug('{}:setFan: {}={}'.format(self.address,val,dval))
+      LOGGER.debug('{}:setFanMode: {}={}'.format(self.address,val,dval))
       self.setDriver('CLIFS',dval)
 
+    def setFanState(self,val):
+      if is_int(val):
+          dval = val
+      else:
+          if val in fanMap:
+            dval = fanMap[val]
+          else:
+            logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
+            return False
+      LOGGER.debug('{}:setFanState: {}={}'.format(self.address,val,dval))
+      self.setDriver('CLIFRS',dval)
 
     def cmdSetPF(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml

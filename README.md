@@ -42,6 +42,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.24: JimBo
+  - Set Fan to off when Climate Type = Resume, will get updated on next long poll.
 - 2.0.23: JimBo
   - [Add heartbeat](https://github.com/Einstein42/udi-ecobee-poly/issues/29)
 - 2.0.22: JimBo
