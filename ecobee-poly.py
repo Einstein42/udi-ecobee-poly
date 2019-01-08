@@ -305,13 +305,7 @@ class Controller(polyinterface.Controller):
         #
         for thermostatId, thermostat in thermostats.items():
             address = self.thermostatIdToAddress(thermostatId)
-            programs = False
-            if address in self.nodes:
-                # Only get program data if we have the node.
-                fullData = self.getThermostatSelection(thermostatId,includeProgram=True)
-                if fullData is not False:
-                    programs = fullData['thermostatList'][0]['program']
-            else:
+            if not address in self.nodes:
                 fullData = self.getThermostatFull(thermostatId)
                 if fullData is not False:
                     tstat = fullData['thermostatList'][0]
@@ -493,7 +487,7 @@ class Controller(polyinterface.Controller):
         if not self._checkTokens():
             LOGGER.error('getThermostat failed. Couldn\'t get tokens.')
             return False
-        LOGGER.info('Getting Full Thermostat Data for {}'.format(id))
+        LOGGER.info('Getting Thermostat Data for {}'.format(id))
         data = urllib.parse.quote_plus(json.dumps({
                 'selection': {
                     'selectionType': 'thermostats',
