@@ -443,8 +443,8 @@ class Thermostat(polyinterface.Node):
         self.setCool(coolTemp)
         self.setHeat(heatTemp)
         if fanMode is not None:
-          self.setFanMode(fanMode)
-          if fanMode == 1:
+          ir = self.setFanMode(fanMode)
+          if ir == 1:
             self.setFanState(1)
           else:
             self.setFanState(0)
@@ -527,6 +527,7 @@ class Thermostat(polyinterface.Node):
             return False
       LOGGER.debug('{}:setFanMode: {}={}'.format(self.address,val,dval))
       self.setDriver('CLIFS',dval)
+      return dval
 
     def setFanState(self,val):
       if is_int(val):
