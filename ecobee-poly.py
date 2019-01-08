@@ -296,7 +296,13 @@ class Controller(polyinterface.Controller):
             LOGGER.error("Discover Failed, No thermostats returned!  Will try again on next long poll")
             return False
         self.revData = deepcopy(thermostats)
-        self.climates = dict()
+        #
+        # Build or update the profile first.
+        #
+        self.check_profile(thermostats)
+        #
+        # Now add our thermostats
+        #
         for thermostatId, thermostat in thermostats.items():
             address = self.thermostatIdToAddress(thermostatId)
             programs = False
@@ -313,21 +319,28 @@ class Controller(polyinterface.Controller):
                     self.addNode(Thermostat(self, address, address, thermostatId,
                                             'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
-                    programs = tstat['program']
-            #LOGGER.debug("discover: program={}".format(json.dumps(programs, sort_keys=True, indent=2)))
-            if programs is not False:
-              self.climates[thermostatId] = list()
-              for climate in programs['climates']:
-                  self.climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
-        LOGGER.debug("discover: climates={}".format(self.climates))
-        self.check_profile()
         self.discover_st = True
         self.in_discover = False
         return True
 
-    def check_profile(self):
+    def check_profile(self,thermostats):
         self.profile_info = get_profile_info(LOGGER)
+        #
+        # First get all the climate programs so we can build the profile if necessary
+        #
+        climates = dict()
+        for thermostatId, thermostat in thermostats.items():
+            # Only get program data if we have the node.
+            fullData = self.getThermostatSelection(thermostatId,includeProgram=True)
+            if fullData is not False:
+                programs = fullData['thermostatList'][0]['program']
+                climates[thermostatId] = list()
+                for climate in programs['climates']:
+                    climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
+        LOGGER.debug("discover: climates={}".format(climates))
+        #
         # Set Default profile version if not Found
+        #
         cdata = deepcopy(self.polyConfig['customData'])
         LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
         if not 'profile_info' in cdata:
@@ -338,20 +351,13 @@ class Controller(polyinterface.Controller):
             LOGGER.info('check_profile: update_profile={} checking climates.'.format(update_profile))
             if 'climates' in cdata:
                 current = cdata['climates']
-                #cfg = cfg.decode("utf-8")
-                #try:
-                #    current = json.loads(cfg)
-                #except:
-                #    err = sys.exc_info()[0]
-                #    LOGGER.error('check_profile: failed to parse cfg={0} Error: {1}'.format(cfg,err))
-                #    update_profile = True
                 if not update_profile:
                     # Check if the climates have changed.
-                    for id in self.climates:
+                    for id in climates:
                         if id in current:
-                            if len(self.climates[id]) == len(current[id]):
-                                for i in range(len(self.climates[id])):
-                                    if self.climates[id][i] != current[id][i]:
+                            if len(climates[id]) == len(current[id]):
+                                for i in range(len(climates[id])):
+                                    if climates[id][i] != current[id][i]:
                                         update_profile = True
                             else:
                                 update_profile = True
@@ -363,13 +369,13 @@ class Controller(polyinterface.Controller):
             update_profile = True
         LOGGER.info('check_profile: update_profile={}'.format(update_profile))
         if update_profile:
-            self.write_profile()
+            self.write_profile(climates)
             self.poly.installprofile()
             cdata['profile_info'] = self.profile_info
-            cdata['climates'] = self.climates
+            cdata['climates'] = climates
             self.saveCustomData(cdata)
 
-    def write_profile(self):
+    def write_profile(self,climates):
       pfx = 'write_profile:'
       #
       # Start the nls with the template data.
@@ -392,7 +398,7 @@ class Controller(polyinterface.Controller):
       LOGGER.info("{0} Writing {1}".format(pfx,editor_f))
       editor_h = open(editor_f, "w")
       editor_h.write('<editors>\n')
-      for id in self.climates:
+      for id in climates:
         # Read thermostat template to write the custom version.
         in_h  = open('template/thermostat.xml','r')
         for line in in_h:
@@ -402,7 +408,7 @@ class Controller(polyinterface.Controller):
         in_h  = open('template/editors.xml','r')
         for line in in_h:
             line = re.sub(r'tstatid',r'{0}'.format(id),line)
-            line = re.sub(r'tstatcnt',r'{0}'.format(len(self.climates[id])-1),line)
+            line = re.sub(r'tstatcnt',r'{0}'.format(len(climates[id])-1),line)
             editor_h.write(line)
         in_h.close()
         # Then the NLS lines.
@@ -412,8 +418,8 @@ class Controller(polyinterface.Controller):
         nls.write('ND-EcobeeF_{0}-NAME = Ecobee Thermostat {0} (F)\n'.format(id))
         nls.write('ND-EcobeeF_{0}-ICON = Thermostat\n'.format(id))
         for i in range(11):
-          if i < len(self.climates[id]):
-            nls.write("CT_{}-{} = {}\n".format(id,i,self.climates[id][i]['name']))
+          if i < len(climates[id]):
+            nls.write("CT_{}-{} = {}\n".format(id,i,climates[id][i]['name']))
           else:
             # Name them with smart<n>
             nls.write("CT_{}-{} = smart{}\n".format(id,i,i-2))

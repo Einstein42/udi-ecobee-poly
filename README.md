@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.25: JimBo
+  - Build the profile before adding any nodes, shouldn't make any difference, but is just the right thing to do.
 - 2.0.24: JimBo
   - Set Fan State on when manually turned on and off when Climate Type = Resume, will get updated on next long poll if not the actual status.
 - 2.0.23: JimBo
