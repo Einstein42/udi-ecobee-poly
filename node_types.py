@@ -444,6 +444,10 @@ class Thermostat(polyinterface.Node):
         self.setHeat(heatTemp)
         if fanMode is not None:
           self.setFanMode(fanMode)
+          if fanMode == 1:
+            self.setFanState(1)
+          else:
+            self.setFanState(0)
     #
     # Set Methods for drivers so they are set the same way
     #
