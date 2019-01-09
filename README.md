@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.26: JimBo
+  - Changed logic for adding sensors and checking sensor updates, so we know if there is a problem with sensor not found
 - 2.0.25: JimBo
   - Build the profile before adding any nodes, shouldn't make any difference, but is just the right thing to do.
 - 2.0.24: JimBo
