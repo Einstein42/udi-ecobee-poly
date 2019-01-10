@@ -266,7 +266,6 @@ class Thermostat(polyinterface.Node):
       self._update()
 
     def _update(self):
-      #LOGGER.debug("events={}".format(json.dumps(events, sort_keys=True, indent=2)))
       equipmentStatus = self.tstat['equipmentStatus'].split(',')
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       self.runtime = self.tstat['runtime']
@@ -280,8 +279,14 @@ class Thermostat(polyinterface.Node):
       # And the default mode, unless there is an event
       self.clismd = 0
       # Is there an active event?
-      if len(self.events) > 0 and self.events[0]['type'] == 'hold' and self.events[0]['running']:
+      LOGGER.debug("events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+      # Why did this have   and self.events[0]['running']
+      if len(self.events) > 0 and self.events[0]['type'] == 'hold':
         #LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+        LOGGER.debug("{}:_update: #events={} type={} holdClimateRef={}".
+                     format(self.address,len(self.events),
+                            self.events[0]['type'],
+                            self.events[0]['holdClimateRef']))
         # This seems to mean an indefinite hold
         #  "endDate": "2035-01-01", "endTime": "00:00:00",
         if self.events[0]['endTime'] == '00:00:00':
@@ -290,6 +295,7 @@ class Thermostat(polyinterface.Node):
             self.clismd = transitionMap['nextTransition']
         if self.events[0]['holdClimateRef'] != '':
           climateType = self.events[0]['holdClimateRef']
+      LOGGER.debug("{}:_update: climateType={}".format(self.address,len(self.events),climateType))
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
