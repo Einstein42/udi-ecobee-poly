@@ -415,7 +415,7 @@ class Controller(polyinterface.Controller):
         for i in range(len(climateList)):
             name = climateList[i]
             # Find this name in the map and replace with our name.
-            for cli in self.climates[id]:
+            for cli in climates[id]:
                 if cli['ref'] == name:
                     customList[i] = cli['name']
         LOGGER.debug("{} customList={}".format(pfx,customList))
