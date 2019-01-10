@@ -197,30 +197,16 @@ class Thermostat(polyinterface.Node):
                         # Add Sensor is necessary
                         # Did the nodedef id change?
                         nid = self.get_sensor_nodedef(sensor)
-                        try:
-                          fnode = self.controller.poly.getNode(sensorAddress)
-                          #LOGGER.debug("sensor node = {}".format(fnode))
-                          LOGGER.debug("sensor = {}".format(sensor))
-                        except TypeError:
-                          addS = True
-                        else:
-                          LOGGER.debug("fnode = {}".format(fnode))
-                          if fnode is False:
-                            addS = True
-                          else:
-                            if fnode['nodedef'] != nid:
-                              addS = True
-                        if addS:
-                            sensorName = 'Ecobee - {}'.format(sensor['name'])
-                            self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                           get_valid_node_name(sensorName), nid, self))
+                        sensorName = 'Ecobee - {}'.format(sensor['name'])
+                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
+                                                       get_valid_node_name(sensorName), nid, self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
-            self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
+            self.weather = self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
             forecastAddress = 'f{}'.format(self.thermostatId)
             forecastName = get_valid_node_name('Ecobee - Forecast')
-            self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
+            self.forcast = self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
         self.query()
 
@@ -313,19 +299,22 @@ class Thermostat(polyinterface.Node):
         'GV7': 1 if self.settings['followMeComfort'] else 0,
         'GV8': 1 if self.runtime['connected'] else 0
       }
+      LOGGER.debug("{}:_update: {}".format(self.address,updates))
       for key, value in updates.items():
         self.setDriver(key, value)
-      # Need to copy this because on startup the nodes can change which causes a Exception
-      tnodes = self.controller.nodes
-      for address, node in tnodes.items():
-        if node.primary == self.address and node.type == 'sensor':
-          for sensor in self.tstat['remoteSensors']:
-            if node.address == self.getSensorAddress(sensor):
-              node.update(sensor)
-        if node.primary == self.address and (node.type == 'weather' or node.type == 'forecast'):
-          weather = self.tstat['weather']
-          if weather:
-            node.update(weather)
+
+      # Update my remote sensors.
+      for sensor in self.tstat['remoteSensors']:
+          saddr = self.getSensorAddress(sensor)
+          if saddr in self.controller.nodes:
+              if self.controller.nodes[saddr].primary == self.address:
+                  self.controller.nodes[saddr].update(sensor)
+              else:
+                  LOGGER.debug("{}._update: remoteSensor {} is not mine.".format(self.address,saddr))
+          else:
+              LOGGER.error("{}._update: remoteSensor {} is not in our node list: {}".format(self.address,saddr,self.controller.nodes))
+      self.weather.update(self.tstat['weather'])
+      self.forcast.update(self.tstat['weather'])
 
     def getClimateIndex(self,name):
       if name in climateMap:
@@ -666,7 +655,7 @@ class Thermostat(polyinterface.Node):
         self.setDriver(driver, newTemp)
         self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
-    hint = [1, 12, 1, 0]
+    hint = '0x010c0100'
     commands = { 'QUERY': query,
                 'CLISPH': cmdSetPF,
                 'CLISPC': cmdSetPF,
@@ -725,7 +714,7 @@ class Sensor(polyinterface.Node):
     def query(self, command=None):
       self.reportDrivers()
 
-    hint = [1, 3, 2, 0]
+    hint = '0x01030200'
     commands = {'QUERY': query, 'STATUS': query}
 
 class Weather(polyinterface.Node):
@@ -773,5 +762,5 @@ class Weather(polyinterface.Node):
     def query(self, command=None):
         self.reportDrivers()
 
-    hint = [1, 11, 1, 0]
+    hint = '0x010b0100'
     commands = {'QUERY': query, 'STATUS': query}
