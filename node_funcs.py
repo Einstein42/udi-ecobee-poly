@@ -3,6 +3,29 @@ import os
 import re
 import json
 
+
+def ltom(list):
+    map = dict()
+    i = 0
+    for name in list:
+        map[name] = i
+        i += 1
+    return map
+
+climateList = [
+    'away',
+    'home',
+    'sleep',
+    'smart1',
+    'smart2',
+    'smart3',
+    'smart4',
+    'smart5',
+    'smart6',
+    'smart7'
+  ]
+climateMap = ltom(climateList)
+
 # Removes invalid charaters for ISY Node description
 def get_valid_node_name(name):
     # Only allow utf-8 characters

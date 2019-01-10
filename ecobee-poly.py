@@ -19,7 +19,7 @@ import re
 from copy import deepcopy
 
 from node_types import Thermostat, Sensor, Weather
-from node_funcs import get_valid_node_name,get_server_data,make_file_dir,get_profile_info
+from node_funcs import *
 
 LOGGER = polyinterface.LOGGER
 
@@ -370,7 +370,7 @@ class Controller(polyinterface.Controller):
             self.saveCustomData(cdata)
 
     def write_profile(self):
-      pfx = 'write_profile:'
+      pfx = '{}:write_profile:'.format(self.address)
       #
       # Start the nls with the template data.
       #
@@ -402,7 +402,7 @@ class Controller(polyinterface.Controller):
         in_h  = open('template/editors.xml','r')
         for line in in_h:
             line = re.sub(r'tstatid',r'{0}'.format(id),line)
-            line = re.sub(r'tstatcnt',r'{0}'.format(len(self.climates[id])-1),line)
+            line = re.sub(r'tstatcnt',r'{0}'.format(len(climateList)-1),line)
             editor_h.write(line)
         in_h.close()
         # Then the NLS lines.
@@ -411,12 +411,16 @@ class Controller(polyinterface.Controller):
         nls.write('ND-EcobeeC_{0}-ICON = Thermostat\n'.format(id))
         nls.write('ND-EcobeeF_{0}-NAME = Ecobee Thermostat {0} (F)\n'.format(id))
         nls.write('ND-EcobeeF_{0}-ICON = Thermostat\n'.format(id))
-        for i in range(11):
-          if i < len(self.climates[id]):
-            nls.write("CT_{}-{} = {}\n".format(id,i,self.climates[id][i]['name']))
-          else:
-            # Name them with smart<n>
-            nls.write("CT_{}-{} = smart{}\n".format(id,i,i-2))
+        customList = deepcopy(climateList)
+        for i in range(len(climateList)):
+            name = climateList[i]
+            # Find this name in the map and replace with our name.
+            for cli in self.climates[id]:
+                if cli['ref'] == name:
+                    customList[i] = cli['name']
+        LOGGER.debug("{} customList={}".format(pfx,customList))
+        for i in range(len(customList)):
+            nls.write("CT_{}-{} = {}\n".format(id,i,customList[i]))
       nodedef_h.write('</nodedefs>\n')
       nodedef_h.close()
       editor_h.write('</editors>\n')

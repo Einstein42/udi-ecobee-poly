@@ -17,20 +17,6 @@ modeMap = {
   'auto': 3
 }
 
-climateMap = {
-  'away': 0,
-  'home': 1,
-  'sleep': 2,
-  'smart1': 3,
-  'smart2': 4,
-  'smart3': 5,
-  'smart4': 6,
-  'smart5': 7,
-  'smart6': 8,
-  'smart7': 9,
-  'unknown': 10
-}
-
 equipmentStatusMap = {
   'off': 0,
   'heatPump': 1,
