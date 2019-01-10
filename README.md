@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.27: JimBo
+  - [Fixed custom climate names for good this time](https://github.com/Einstein42/udi-ecobee-poly/issues/32)
 - 2.0.26: JimBo
   - Changed logic for adding sensors and checking sensor updates, so we know if there is a problem with sensor not found
 - 2.0.25: JimBo

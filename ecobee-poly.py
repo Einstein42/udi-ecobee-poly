@@ -369,7 +369,7 @@ class Controller(polyinterface.Controller):
             cdata['climates'] = climates
             self.saveCustomData(cdata)
 
-    def write_profile(selfclimates):
+    def write_profile(self,climates):
       pfx = '{}:write_profile:'.format(self.address)
       #
       # Start the nls with the template data.
