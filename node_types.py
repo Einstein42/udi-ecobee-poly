@@ -197,30 +197,16 @@ class Thermostat(polyinterface.Node):
                         # Add Sensor is necessary
                         # Did the nodedef id change?
                         nid = self.get_sensor_nodedef(sensor)
-                        try:
-                          fnode = self.controller.poly.getNode(sensorAddress)
-                          #LOGGER.debug("sensor node = {}".format(fnode))
-                          LOGGER.debug("sensor = {}".format(sensor))
-                        except TypeError:
-                          addS = True
-                        else:
-                          LOGGER.debug("fnode = {}".format(fnode))
-                          if fnode is False:
-                            addS = True
-                          else:
-                            if fnode['nodedef'] != nid:
-                              addS = True
-                        if addS:
-                            sensorName = 'Ecobee - {}'.format(sensor['name'])
-                            self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                           get_valid_node_name(sensorName), nid, self))
+                        sensorName = get_valid_node_name('Ecobee - {}'.format(sensor['name']))
+                        self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
+                                                       sensorName, nid, self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
-            self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
+            self.weather = self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
             forecastAddress = 'f{}'.format(self.thermostatId)
             forecastName = get_valid_node_name('Ecobee - Forecast')
-            self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
+            self.forcast = self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
         self.update(self.revData, self.fullData)
         self.query()
 
@@ -255,6 +241,7 @@ class Thermostat(polyinterface.Node):
       equipmentStatus = self.tstat['equipmentStatus'].split(',')
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       self.runtime = self.tstat['runtime']
+      LOGGER.debug("{}:_update: runtime={}".format(self.address,json.dumps(self.runtime, sort_keys=True, indent=2)))
       clihcs = 0
       for status in equipmentStatus:
         if status in equipmentStatusMap:
@@ -289,7 +276,6 @@ class Thermostat(polyinterface.Node):
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
-      #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       #LOGGER.debug("{}:update: equipmentStatus={}".format(self.address,equipmentStatus))
       # The fan is on if on, or we are in a auxHeat mode and we don't control the fan,
       if 'fan' in equipmentStatus or (clihcs >= 6 and not self.settings['fanControlRequired']):
@@ -319,17 +305,19 @@ class Thermostat(polyinterface.Node):
       }
       for key, value in updates.items():
         self.setDriver(key, value)
-      # Need to copy this because on startup the nodes can change which causes a Exception
-      tnodes = self.controller.nodes
-      for address, node in tnodes.items():
-        if node.primary == self.address and node.type == 'sensor':
-          for sensor in self.tstat['remoteSensors']:
-            if node.address == self.getSensorAddress(sensor):
-              node.update(sensor)
-        if node.primary == self.address and (node.type == 'weather' or node.type == 'forecast'):
-          weather = self.tstat['weather']
-          if weather:
-            node.update(weather)
+
+      # Update my remote sensors.
+      for sensor in self.tstat['remoteSensors']:
+          saddr = self.getSensorAddress(sensor)
+          if saddr in self.controller.nodes:
+              if self.controller.nodes[saddr].primary == self.address:
+                  self.controller.nodes[saddr].update(sensor)
+              else:
+                  LOGGER.debug("{}._update: remoteSensor {} is not mine.".format(self.address,saddr))
+          else:
+              LOGGER.error("{}._update: remoteSensor {} is not in our node list: {}".format(self.address,saddr,self.controller.nodes))
+      self.weather.update(self.tstat['weather'])
+      self.forcast.update(self.tstat['weather'])
 
     def getClimateIndex(self,name):
       if name in climateMap:
