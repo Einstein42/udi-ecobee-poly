@@ -47,8 +47,7 @@ If you already have it installed and want the update before it's in the store.
 ## Release Notes
 
 - 2.0.28: JimBo
-  - Added vacation mode tracking as a Climate Type
-    - [Track Vacation along with Smart Home/Away](https://github.com/Einstein42/udi-ecobee-poly/issues/31)
+  - Added vacation mode tracking as a Climate Type for [Track Vacation along with Smart Home/Away](https://github.com/Einstein42/udi-ecobee-poly/issues/31)
 - 2.0.27: JimBo
   - [Issue with custom climate names](https://github.com/Einstein42/udi-ecobee-poly/issues/32)
 - 2.0.26: JimBo
