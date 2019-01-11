@@ -22,7 +22,8 @@ climateList = [
     'smart4',
     'smart5',
     'smart6',
-    'smart7'
+    'smart7',
+    'vacation'
   ]
 climateMap = ltom(climateList)
 
