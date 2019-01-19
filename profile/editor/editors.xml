@@ -41,8 +41,9 @@
   <editor id="I_TSTAT_ALERT">
     <range uom="25" subset="0,1" nls="EN_ALERT" />
   </editor>
+  <!-- Used for Hold option when setting climate type in program -->
   <editor id="I_TSTAT_ECO_SCHED_OPT">
-    <range uom="25" subset="0-1" nls="EN_ECOSCH_OPT" />
+    <range uom="25" subset="1-2" nls="EN_PM2" />
   </editor>
   <editor id="I_TSTAT_FAN_MODE">
     <range uom="68" subset="0,1" />

@@ -37,6 +37,7 @@ CMD-140E-BRT-NAME = Setpoint Up
 CMD-140E-DIM-NAME = Setpoint Down
 PGM-CMD-140E-GV3-FMT = //${c}/to ${v}/ /HoldType//, Hold Type ${v}/
 CMDP-I_TSTAT_ECO_SCHED_OPT-HoldType-NAME = Hold Type
+
 ST-140ES-ST-NAME = Temperature
 ST-140ES-GV1-NAME = Occupancy
 ST-140EW-ST-NAME = Temperature
