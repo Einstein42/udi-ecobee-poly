@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.28: JimBo
+  - Fixed Hold Type values when setting Climate Type in a Program action.  Although Polyglot doesn't seem to recognize them yet so you have to change hold type in it's own program action.
 - 2.0.27: JimBo
   - [Fixed custom climate names for good this time](https://github.com/Einstein42/udi-ecobee-poly/issues/32)
 - 2.0.26: JimBo
