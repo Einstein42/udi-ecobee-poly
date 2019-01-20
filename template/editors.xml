@@ -1,5 +1,5 @@
   <editor id="CTA_tstatid">
-    <range uom="25" subset="0-tstatcnta" nls="CT_tstatid" />
+    <range uom="25" subset="0-10" nls="CT_tstatid" />
   </editor>
   <editor id="CT_tstatid">
     <range uom="25" subset="0-tstatcnt" nls="CT_tstatid" />
