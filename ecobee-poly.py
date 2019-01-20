@@ -402,7 +402,9 @@ class Controller(polyinterface.Controller):
         in_h  = open('template/editors.xml','r')
         for line in in_h:
             line = re.sub(r'tstatid',r'{0}'.format(id),line)
-            line = re.sub(r'tstatcnt',r'{0}'.format(len(climateList)-1),line)
+            line = re.sub(r'tstatcnta',r'{0}'.format(len(climateList)-1),line)
+            # This is minus 2 because we don't allow selecting vacation.
+            line = re.sub(r'tstatcnt',r'{0}'.format(len(climateList)-2),line)
             editor_h.write(line)
         in_h.close()
         # Then the NLS lines.
@@ -411,7 +413,11 @@ class Controller(polyinterface.Controller):
         nls.write('ND-EcobeeC_{0}-ICON = Thermostat\n'.format(id))
         nls.write('ND-EcobeeF_{0}-NAME = Ecobee Thermostat {0} (F)\n'.format(id))
         nls.write('ND-EcobeeF_{0}-ICON = Thermostat\n'.format(id))
-        customList = deepcopy(climateList)
+        # ucfirst them all
+        customList = list()
+        for i in range(len(climateList)):
+            customList.append(climateList[i][0].upper() + climateList[i][1:])
+        # Now see if there are custom names
         for i in range(len(climateList)):
             name = climateList[i]
             # Find this name in the map and replace with our name.

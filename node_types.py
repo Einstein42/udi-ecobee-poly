@@ -197,9 +197,9 @@ class Thermostat(polyinterface.Node):
                         # Add Sensor is necessary
                         # Did the nodedef id change?
                         nid = self.get_sensor_nodedef(sensor)
-                        sensorName = 'Ecobee - {}'.format(sensor['name'])
+                        sensorName = get_valid_node_name('Ecobee - {}'.format(sensor['name']))
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
-                                                       get_valid_node_name(sensorName), nid, self))
+                                                       sensorName, nid, self))
         if 'weather' in self.tstat:
             weatherAddress = 'w{}'.format(self.thermostatId)
             weatherName = get_valid_node_name('Ecobee - Weather')
@@ -241,6 +241,7 @@ class Thermostat(polyinterface.Node):
       equipmentStatus = self.tstat['equipmentStatus'].split(',')
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       self.runtime = self.tstat['runtime']
+      LOGGER.debug("{}:_update: runtime={}".format(self.address,json.dumps(self.runtime, sort_keys=True, indent=2)))
       clihcs = 0
       for status in equipmentStatus:
         if status in equipmentStatusMap:
@@ -253,25 +254,28 @@ class Thermostat(polyinterface.Node):
       # Is there an active event?
       LOGGER.debug("events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
       # Why did this have   and self.events[0]['running']
-      if len(self.events) > 0 and self.events[0]['type'] == 'hold':
-        #LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
-        LOGGER.debug("{}:_update: #events={} type={} holdClimateRef={}".
-                     format(self.address,len(self.events),
-                            self.events[0]['type'],
-                            self.events[0]['holdClimateRef']))
-        # This seems to mean an indefinite hold
-        #  "endDate": "2035-01-01", "endTime": "00:00:00",
-        if self.events[0]['endTime'] == '00:00:00':
-            self.clismd = transitionMap['indefinite']
-        else:
-            self.clismd = transitionMap['nextTransition']
-        if self.events[0]['holdClimateRef'] != '':
-          climateType = self.events[0]['holdClimateRef']
-      LOGGER.debug("{}:_update: climateType={}".format(self.address,len(self.events),climateType))
+      if len(self.events) > 0:
+        if self.events[0]['type'] == 'hold':
+            #LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
+            LOGGER.debug("{}:_update: #events={} type={} holdClimateRef={}".
+                         format(self.address,len(self.events),
+                                self.events[0]['type'],
+                                self.events[0]['holdClimateRef']))
+            # This seems to mean an indefinite hold
+            #  "endDate": "2035-01-01", "endTime": "00:00:00",
+            if self.events[0]['endTime'] == '00:00:00':
+                self.clismd = transitionMap['indefinite']
+            else:
+                self.clismd = transitionMap['nextTransition']
+            if self.events[0]['holdClimateRef'] != '':
+                climateType = self.events[0]['holdClimateRef']
+        elif self.events[0]['type'] == 'vacation':
+          climateType = 'vacation'
+
+      LOGGER.debug("{}:_update: climateType={}".format(self.address,climateType))
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
-      #LOGGER.debug("runtime={}".format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       #LOGGER.debug("{}:update: equipmentStatus={}".format(self.address,equipmentStatus))
       # The fan is on if on, or we are in a auxHeat mode and we don't control the fan,
       if 'fan' in equipmentStatus or (clihcs >= 6 and not self.settings['fanControlRequired']):
@@ -299,7 +303,6 @@ class Thermostat(polyinterface.Node):
         'GV7': 1 if self.settings['followMeComfort'] else 0,
         'GV8': 1 if self.runtime['connected'] else 0
       }
-      LOGGER.debug("{}:_update: {}".format(self.address,updates))
       for key, value in updates.items():
         self.setDriver(key, value)
 

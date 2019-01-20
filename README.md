@@ -46,10 +46,14 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.30: JimBo
+  - Fix for Hold Type names in Climate Control program action.  Although, they don't actually work yet in Polyglot, so you have to set Hold Type in another Action.
+- 2.0.29: JimBo
+  - Added back fix for checking sensors from 2.0.26 that git merge decided to get rid of.
 - 2.0.28: JimBo
-  - Fixed Hold Type values when setting Climate Type in a Program action.  Although Polyglot doesn't seem to recognize them yet so you have to change hold type in it's own program action.
+  - Added vacation mode tracking as a Climate Type for [Track Vacation along with Smart Home/Away](https://github.com/Einstein42/udi-ecobee-poly/issues/31)
 - 2.0.27: JimBo
-  - [Fixed custom climate names for good this time](https://github.com/Einstein42/udi-ecobee-poly/issues/32)
+  - [Issue with custom climate names](https://github.com/Einstein42/udi-ecobee-poly/issues/32)
 - 2.0.26: JimBo
   - Changed logic for adding sensors and checking sensor updates, so we know if there is a problem with sensor not found
 - 2.0.25: JimBo
