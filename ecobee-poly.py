@@ -584,12 +584,12 @@ class Controller(polyinterface.Controller):
         return False
 
     def cmd_poll(self,  *args, **kwargs):
-        LOGGER.debug("{}:query".format(self.address))
+        LOGGER.debug("{}:cmd_poll".format(self.address))
         self.updateThermostats()
         self.query()
 
     def cmd_query(self, *args, **kwargs):
-        LOGGER.debug("{}:query".format(self.address))
+        LOGGER.debug("{}:cmd_query".format(self.address))
         self.query()
 
     id = 'ECO_CTR'
