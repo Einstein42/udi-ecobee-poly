@@ -274,7 +274,7 @@ class Controller(polyinterface.Controller):
         self.updateThermostats()
         self.query()
 
-    def query(self)
+    def query(self):
         self.reportDrivers()
         for node in self.nodes:
             self.nodes[node].reportDrivers()
@@ -464,7 +464,11 @@ class Controller(polyinterface.Controller):
         if res is None:
             LOGGER.error("Bad response {} from thermostatSummary".format(res))
             return False
-        data = json.loads(res.read().decode('utf-8'))
+        rdata = res.read().decode('utf-8')
+        if rdata is None:
+            LOGGER.error("Bad read {} from thermostatSummary".format(rdata))
+            return False
+        data = json.loads(rdata)
         auth_conn.close()
         thermostats = {}
         if 'revisionList' in data:
