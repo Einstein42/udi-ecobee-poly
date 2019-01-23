@@ -269,9 +269,13 @@ class Controller(polyinterface.Controller):
                 return True
         return False
 
-    def query(self):
+    def poll(self):
         LOGGER.debug("{}:query".format(self.address))
         self.updateThermostats()
+        self.query()
+
+    def query(self)
+        self.reportDrivers()
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 
@@ -581,9 +585,8 @@ class Controller(polyinterface.Controller):
         return False
 
     id = 'ECO_CTR'
-    commands = {'DISCOVER': discover}
+    commands = {'DISCOVER': discover, 'QUERY': query, 'POLL': poll}
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
-
 
 if __name__ == "__main__":
     try:

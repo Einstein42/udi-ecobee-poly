@@ -11,6 +11,8 @@
       </sends>
       <accepts>
         <cmd id="DISCOVER" />
+        <cmd id="POLL" />
+        <cmd id="QUERY" />
       </accepts>
     </cmds>
   </nodeDef>

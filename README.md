@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.31: JimBo
+  - Add Poll on controller to grab all current settings, and query to just report what we currently know drivers values to the isy.
 - 2.0.30: JimBo
   - Fix for Hold Type names in Climate Control program action.  Although, they don't actually work yet in Polyglot, so you have to set Hold Type in another Action.
 - 2.0.29: JimBo

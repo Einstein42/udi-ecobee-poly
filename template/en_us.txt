@@ -1,7 +1,9 @@
 ND-ECO_CTR-NAME = Ecobee Controller
 ND-ECO_CTR-ICON = GenericCtl
 
-CMD-ECTR-DISCOVER-NAME = Re-Discover
+CMD-ECTR-DISCOVER-NAME = Discover
+CMD-ECTR-POLL-NAME = Poll
+CMD-ECTR-QUERY-NAME = Query
 ST-ECTR-ST-NAME = NodeServer Online
 
 ND-EcobeeC-NAME = Ecobee Thermostat (C)
