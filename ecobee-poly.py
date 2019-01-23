@@ -269,11 +269,6 @@ class Controller(polyinterface.Controller):
                 return True
         return False
 
-    def poll(self):
-        LOGGER.debug("{}:query".format(self.address))
-        self.updateThermostats()
-        self.query()
-
     def query(self):
         self.reportDrivers()
         for node in self.nodes:
@@ -588,8 +583,17 @@ class Controller(polyinterface.Controller):
                     LOGGER.error('Bad return code {}:{}'.format(data['status']['code'],data['status']['message']))
         return False
 
+    def cmd_poll(self,  *args, **kwargs):
+        LOGGER.debug("{}:query".format(self.address))
+        self.updateThermostats()
+        self.query()
+
+    def cmd_query(self, *args, **kwargs):
+        LOGGER.debug("{}:query".format(self.address))
+        self.query()
+
     id = 'ECO_CTR'
-    commands = {'DISCOVER': discover, 'QUERY': query, 'POLL': poll}
+    commands = {'DISCOVER': discover, 'QUERY': cmd_query, 'POLL': cmd_poll}
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
 
 if __name__ == "__main__":
