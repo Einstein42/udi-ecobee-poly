@@ -225,6 +225,9 @@ class Controller(polyinterface.Controller):
         # Call discovery if it failed on startup
         LOGGER.debug("{}:longPoll".format(self.address))
         self.heartbeat()
+        if self.in_discover:
+            LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
+            return
         if self.discover_st is None:
             self.discovery()
         self.updateThermostats()
