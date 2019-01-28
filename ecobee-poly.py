@@ -603,4 +603,5 @@ if __name__ == "__main__":
         control = Controller(polyglot)
         control.runForever()
     except (KeyboardInterrupt, SystemExit):
+        polyglot.stop()
         sys.exit(0)
