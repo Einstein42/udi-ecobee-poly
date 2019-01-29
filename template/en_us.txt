@@ -5,6 +5,7 @@ CMD-ECTR-DISCOVER-NAME = Discover
 CMD-ECTR-POLL-NAME = Poll
 CMD-ECTR-QUERY-NAME = Query
 ST-ECTR-ST-NAME = NodeServer Online
+ST-ECTR-GV1-NAME = Ecobee Connection Status
 
 ND-EcobeeC-NAME = Ecobee Thermostat (C)
 ND-EcobeeC-ICON = Thermostat
@@ -42,6 +43,8 @@ CMDP-I_TSTAT_ECO_SCHED_OPT-HoldType-NAME = Hold Type
 
 ST-140ES-ST-NAME = Temperature
 ST-140ES-GV1-NAME = Occupancy
+ST-140ES-GV2-NAME = Responding
+
 ST-140EW-ST-NAME = Temperature
 ST-140EW-GV1-NAME = Humidity
 ST-140EW-GV2-NAME = POP

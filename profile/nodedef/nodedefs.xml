@@ -3,6 +3,7 @@
     <editors />
     <sts>
       <st id="ST" editor="BOOL" />
+      <st id="GV1" editor="BOOL" />
     </sts>
     <cmds>
       <sends>
@@ -20,12 +21,14 @@
     <sts>
       <st id="ST" editor="I_TEMP_C" />
       <st id="GV1" editor="I_TSTAT_OCC" />
+      <st id="GV2" editor="BOOL" />
     </sts>
   </nodeDef>
   <nodeDef id="EcobeeSensorF" nodeType="140" nls="140ES" >
     <sts>
       <st id="ST" editor="I_TEMP_F" />
       <st id="GV1" editor="I_TSTAT_OCC" />
+      <st id="GV2" editor="BOOL" />
     </sts>
   </nodeDef>
   <nodeDef id="EcobeeSensorHC" nodeType="140" nls="140ES" >
@@ -33,6 +36,7 @@
       <st id="ST" editor="I_TEMP_C" />
       <st id="CLIHUM" editor="I_HUMIDITY" />
       <st id="GV1" editor="I_TSTAT_OCC" />
+      <st id="GV2" editor="BOOL" />
     </sts>
   </nodeDef>
   <nodeDef id="EcobeeSensorHF" nodeType="140" nls="140ES" >
@@ -40,6 +44,7 @@
       <st id="ST" editor="I_TEMP_F" />
       <st id="CLIHUM" editor="I_HUMIDITY" />
       <st id="GV1" editor="I_TSTAT_OCC" />
+      <st id="GV2" editor="BOOL" />
     </sts>
   </nodeDef>
   <nodeDef id="EcobeeWeatherF" nodeType="140" nls="140EW" >

@@ -99,21 +99,25 @@ driversMap = {
  ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
-    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV2', 'value': 0, 'uom': '2' }
   ],
   'EcobeeSensorC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
-    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV2', 'value': 0, 'uom': '2' }
   ],
   'EcobeeSensorHF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
     { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
-    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV2', 'value': 0, 'uom': '2' }
   ],
   'EcobeeSensorHC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
     { 'driver': 'CLIHUM', 'value': -1, 'uom': '22' },
-    { 'driver': 'GV1', 'value': 0, 'uom': '25' }
+    { 'driver': 'GV1', 'value': 0, 'uom': '25' },
+    { 'driver': 'GV2', 'value': 0, 'uom': '2' }
   ],
   'EcobeeWeatherF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
@@ -696,6 +700,7 @@ class Sensor(polyinterface.Node):
           'temperature': 'ST',
           'humidity': 'CLIHUM',
           'occupancy': 'GV1',
+          'responding': 'GV2'
       }
       for item in sensor['capability']:
           if item['type'] in xref:
@@ -705,6 +710,11 @@ class Sensor(polyinterface.Node):
               elif val == "false":
                 val = 0
               if item['type'] == 'temperature':
+                # temperature unknown seems to mean the sensor is not responding.s
+                if val == 'unknown':
+                  updates[xref['responding']] = 0
+                else:
+                  updates[xref['responding']] = 1
                   val = self.parent.tempToDriver(val,True,False)
               if val is not False:
                 updates[xref[item['type']]] = val
