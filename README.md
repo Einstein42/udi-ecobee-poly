@@ -46,8 +46,12 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.32: JimBo
+  - [Fix issue with unknown remote sensor temperature](https://github.com/Einstein42/udi-ecobee-poly/issues/35)
+  - [AttributeError: 'Controller' object has no attribute 'revData'](https://github.com/Einstein42/udi-ecobee-poly/issues/36)
+  - [Thermostat connected not updated when service is down](https://github.com/Einstein42/udi-ecobee-poly/issues/37)
 - 2.0.31: JimBo
-  - Add Poll on controller to grab all current settings, and query to just report what we currently know drivers values to the isy.
+  - Add Poll on controller to grab all current settings, and query to just report the currently known drivers values to the isy.
   - Fix another issue found when Ecobee servers are not responding.
 - 2.0.30: JimBo
   - Fix for Hold Type names in Climate Control program action.  Although, they don't actually work yet in Polyglot, so you have to set Hold Type in another Action.

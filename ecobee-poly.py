@@ -47,6 +47,7 @@ class Controller(polyinterface.Controller):
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
+        self.set_ecobee_st(False)
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
@@ -225,6 +226,9 @@ class Controller(polyinterface.Controller):
         # Call discovery if it failed on startup
         LOGGER.debug("{}:longPoll".format(self.address))
         self.heartbeat()
+        if self.in_discover:
+            LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
+            return
         if self.discover_st is None:
             self.discovery()
         self.updateThermostats()
@@ -454,17 +458,21 @@ class Controller(polyinterface.Controller):
         except Exception as e:
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
+            self.set_ecobee_st(False)
             return False
         res = auth_conn.getresponse()
         if res is None:
             LOGGER.error("Bad response {} from thermostatSummary".format(res))
+            self.set_ecobee_st(False)
             return False
         rdata = res.read().decode('utf-8')
         if rdata is None:
             LOGGER.error("Bad read {} from thermostatSummary".format(rdata))
+            self.set_ecobee_st(False)
             return False
         data = json.loads(rdata)
         auth_conn.close()
+        self.set_ecobee_st(True)
         thermostats = {}
         if 'revisionList' in data:
             for thermostat in data['revisionList']:
@@ -529,7 +537,9 @@ class Controller(polyinterface.Controller):
         except Exception as e:
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
+            self.set_ecobee_st(False)
             return False
+        self.set_ecobee_st(True)
         try:
             res = auth_conn.getresponse()
         except Exception as e:
@@ -567,7 +577,9 @@ class Controller(polyinterface.Controller):
         except Exception as e:
             LOGGER.error('Ecobee API Connection error: {}'.format(e))
             auth_conn.close()
+            self.set_ecobee_st(False)
             return False
+        self.set_ecobee_st(True)
         res = auth_conn.getresponse()
         data = json.loads(res.read().decode('utf-8'))
         auth_conn.close()
@@ -592,9 +604,16 @@ class Controller(polyinterface.Controller):
         LOGGER.debug("{}:cmd_query".format(self.address))
         self.query()
 
+    def set_ecobee_st(self,val):
+      ival = 1 if val else 0
+      self.setDriver('GV1',ival)
+
     id = 'ECO_CTR'
     commands = {'DISCOVER': discover, 'QUERY': cmd_query, 'POLL': cmd_poll}
-    drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
+    drivers = [
+        {'driver': 'ST', 'value': 1, 'uom': 2},
+        {'driver': 'GV1', 'value': 0, 'uom': 2}
+    ]
 
 if __name__ == "__main__":
     try:
