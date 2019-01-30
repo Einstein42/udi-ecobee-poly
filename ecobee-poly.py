@@ -105,6 +105,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.error('getRefresh: Ecobee API Connection error: {}'.format(e))
                 auth_conn.close()
                 self.refreshingTokens = False
+                self.set_ecobee_st(False)
                 return False
             try:
                 res = auth_conn.getresponse()
@@ -112,6 +113,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
                 auth_conn.close()
                 self.refreshingTokens = False
+                self.set_ecobee_st(False)
                 return False
             try:
                 data = json.loads(res.read().decode('utf-8'))
@@ -119,8 +121,10 @@ class Controller(polyinterface.Controller):
                 LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
                 auth_conn.close()
                 self.refreshingTokens = False
+                self.set_ecobee_st(False)
                 return False
             auth_conn.close()
+            self.set_ecobee_st(True)
             if 'error' in data:
                 LOGGER.error('Requesting Auth: {} :: {}'.format(data['error'], data['error_description']))
                 self.auth_token = None
@@ -622,5 +626,4 @@ if __name__ == "__main__":
         control = Controller(polyglot)
         control.runForever()
     except (KeyboardInterrupt, SystemExit):
-        polyglot.stop()
         sys.exit(0)
