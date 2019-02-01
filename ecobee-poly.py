@@ -47,6 +47,8 @@ class Controller(polyinterface.Controller):
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
+        self.heartbeat()
+        # Force to false, and successful communication will fix it
         self.set_ecobee_st(False)
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
@@ -263,7 +265,7 @@ class Controller(polyinterface.Controller):
                     else:
                         LOGGER.error('Failed to get updated data for thermostat: {}({})'.format(thermostat['name'], thermostatId))
                 else:
-                    LOGGER.error('Thermostat is not in our node list: '.format(address))
+                    LOGGER.error("Thermostat id '{}' address '{}' is not in our node list. thermostat: {}".format(thermostatId,address,thermostat))
             else:
                 LOGGER.info("No {} '{}' update detected".format(thermostatId,thermostat['name']))
 

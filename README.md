@@ -46,6 +46,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.33: JimBo
+  - Send heartbeat on startup
 - 2.0.32: JimBo
   - [Fix issue with unknown remote sensor temperature](https://github.com/Einstein42/udi-ecobee-poly/issues/35)
   - [AttributeError: 'Controller' object has no attribute 'revData'](https://github.com/Einstein42/udi-ecobee-poly/issues/36)
