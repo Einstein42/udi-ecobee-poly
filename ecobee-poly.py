@@ -470,12 +470,17 @@ class Controller(polyinterface.Controller):
             self.set_ecobee_st(False)
             return False
         rdata = res.read().decode('utf-8')
+        auth_conn.close()
         if rdata is None:
             LOGGER.error("Bad read {} from thermostatSummary".format(rdata))
             self.set_ecobee_st(False)
             return False
-        data = json.loads(rdata)
-        auth_conn.close()
+        try:
+            data = json.loads(rdata)
+        except Exception as e:
+            LOGGER.error('Ecobee API data format error: {} for: {}'.format(e,rdata))
+            self.set_ecobee_st(False)
+            return False
         self.set_ecobee_st(True)
         thermostats = {}
         if 'revisionList' in data:
