@@ -61,6 +61,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.34: JimBo
+  - [AttributeError: 'Controller' object has no attribute 'revData'](https://github.com/Einstein42/udi-ecobee-poly/issues/36)
+  - Send Heartbeat on startup
 - 2.0.33: JimBo
   - Fix another crash from Ecobee server returning bad json data.
 - 2.0.32: JimBo

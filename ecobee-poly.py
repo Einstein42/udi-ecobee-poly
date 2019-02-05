@@ -300,6 +300,7 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Discovering Ecobee Thermostats')
         if self.auth_token is None:
             return False
+        self.revData = {} # Intialize in case we fail
         thermostats = self.getThermostats()
         if thermostats is False:
             LOGGER.error("Discover Failed, No thermostats returned!  Will try again on next long poll")
