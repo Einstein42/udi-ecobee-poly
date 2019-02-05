@@ -23,6 +23,19 @@ a limitation imposed by Ecobee.
   1. Hold Indefinite
   If this is changed to either Hold settings then the current Cool/Heat and Fan modes are sent with that Hold type.  If Running is selected then any Holds are cancelled.
 
+## Node info
+
+1. Controller node - Nodeserver Online
+   * The Nodeserver process status
+1. Controller node - Ecobee Connection Status
+   * The Nodeserver communication to the Ecobee server status.
+1. Main thermostat node (n00x_t) - Connected
+   * The Ecobee servers can see the thermostat
+1. Main thermostat sensor node (n00x_s) - Responding
+   * Probably node needed since main sensor is inside the thermostat
+1. Remote sensor node (n00x_rs) - Responding
+   * The thermostat can see the sensor, this going False can indicate dead battery or out-of-range.
+
 ## Monitoring
 
 See https://forum.universal-devices.com/topic/25016-polyglot-nodeserver-monitoring/ for info on how to use the heartbeats.  You can also check the thermostat GV8 True/False to see if the Ecobee servers can see the thermostats.
