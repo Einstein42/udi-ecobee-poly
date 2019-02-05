@@ -23,11 +23,26 @@ a limitation imposed by Ecobee.
   1. Hold Indefinite
   If this is changed to either Hold settings then the current Cool/Heat and Fan modes are sent with that Hold type.  If Running is selected then any Holds are cancelled.
 
+## Node info
+
+1. Controller node - Nodeserver Online
+   * The Nodeserver process status
+1. Controller node - Ecobee Connection Status
+   * The Nodeserver communication to the Ecobee server status.
+1. Main thermostat node (n00x_t) - Connected
+   * The Ecobee servers can see the thermostat
+1. Main thermostat sensor node (n00x_s) - Responding
+   * Probably node needed since main sensor is inside the thermostat
+1. Remote sensor node (n00x_rs) - Responding
+   * The thermostat can see the sensor, this going False can indicate dead battery or out-of-range.
+
 ## Monitoring
 
 See https://forum.universal-devices.com/topic/25016-polyglot-nodeserver-monitoring/ for info on how to use the heartbeats.  You can also check the thermostat GV8 True/False to see if the Ecobee servers can see the thermostats.
 
 ## Upgrading
+
+When a new release is published, it should be released to the polyglot web store within an hour, currently around 40 minutes past the hour.
 
 1. Open the Polyglot web page
   1. Go to nodeserver store and click "Update" for "Ecobee"
@@ -47,7 +62,7 @@ If you already have it installed and want the update before it's in the store.
 ## Release Notes
 
 - 2.0.33: JimBo
-  - Send heartbeat on startup
+  - Fix another crash from Ecobee server returning bad json data.
 - 2.0.32: JimBo
   - [Fix issue with unknown remote sensor temperature](https://github.com/Einstein42/udi-ecobee-poly/issues/35)
   - [AttributeError: 'Controller' object has no attribute 'revData'](https://github.com/Einstein42/udi-ecobee-poly/issues/36)
