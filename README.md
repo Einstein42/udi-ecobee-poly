@@ -29,6 +29,8 @@ See https://forum.universal-devices.com/topic/25016-polyglot-nodeserver-monitori
 
 ## Upgrading
 
+When a new release is published, it should be released to the polyglot web store within an hour, currently around 40 minutes past the hour.
+
 1. Open the Polyglot web page
   1. Go to nodeserver store and click "Update" for "Ecobee"
   1. Wait for the update completed notice
