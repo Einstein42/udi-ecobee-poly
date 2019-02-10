@@ -49,7 +49,7 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
         self.heartbeat()
         # Force to false, and successful communication will fix it
-        self.set_ecobee_st(False)
+        #self.set_ecobee_st(False) Causes it to always stay false.
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             self.auth_token = self.tokenData['access_token']
@@ -285,7 +285,8 @@ class Controller(polyinterface.Controller):
             self.nodes[node].reportDrivers()
 
     def stop(self):
-        LOGGER.debug('NodeServer stopped.')
+        LOGGER.debug('NodeServer stoping...')
+        self.set_ecobee_st(False)
 
     def thermostatIdToAddress(self,tid):
         return 't{}'.format(tid)
@@ -552,6 +553,7 @@ class Controller(polyinterface.Controller):
             self.set_ecobee_st(False)
             return False
         self.set_ecobee_st(True)
+        LOGGER.info('Reading response for {}'.format(id))
         try:
             res = auth_conn.getresponse()
         except Exception as e:
@@ -565,6 +567,7 @@ class Controller(polyinterface.Controller):
             auth_conn.close()
             return False
         auth_conn.close()
+        LOGGER.debug('getThermostatSelection {} done'.format(id))
         return data
 
     def ecobeePost(self, thermostatId, postData = {}):
@@ -618,6 +621,7 @@ class Controller(polyinterface.Controller):
 
     def set_ecobee_st(self,val):
       ival = 1 if val else 0
+      LOGGER.debug("{}:set_ecobee_st: {}={}".format(self.address,val,ival))
       self.setDriver('GV1',ival)
 
     id = 'ECO_CTR'

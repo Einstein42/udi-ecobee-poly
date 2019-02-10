@@ -61,6 +61,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.35: JimBo
+  - Fix initialization of "Ecobee Connection Status".  Try to set it to False on exit, but doesn't work due to polyglot issue.
+  - Add debug in getThermostatSelection to see where it's hanging
 - 2.0.34: JimBo
   - [AttributeError: 'Controller' object has no attribute 'revData'](https://github.com/Einstein42/udi-ecobee-poly/issues/36)
   - Send Heartbeat on startup
