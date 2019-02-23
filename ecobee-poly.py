@@ -467,7 +467,13 @@ class Controller(polyinterface.Controller):
             auth_conn.close()
             self.set_ecobee_st(False)
             return False
-        res = auth_conn.getresponse()
+        try:
+            res = auth_conn.getresponse()
+        except Exception as e:
+            LOGGER.error('Ecobee getresponse failed: {}'.format(e))
+            auth_conn.close()
+            self.set_ecobee_st(False)
+            return False
         if res is None:
             LOGGER.error("Bad response {} from thermostatSummary".format(res))
             self.set_ecobee_st(False)
