@@ -574,6 +574,7 @@ class Controller(polyinterface.Controller):
             return False
         auth_conn.close()
         LOGGER.debug('getThermostatSelection {} done'.format(id))
+        LOGGER.debug('getThermostatSelection data={}'.format(data))
         return data
 
     def ecobeePost(self, thermostatId, postData = {}):
