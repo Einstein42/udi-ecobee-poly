@@ -236,7 +236,7 @@ class Controller(polyinterface.Controller):
             LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
             return
         if self.discover_st is False:
-            self.discovery()
+            self.discover()
         self.updateThermostats()
 
     def heartbeat(self):
