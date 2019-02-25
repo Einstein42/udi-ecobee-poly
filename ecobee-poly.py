@@ -235,7 +235,7 @@ class Controller(polyinterface.Controller):
         if self.in_discover:
             LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
             return
-        if self.discover_st is None:
+        if self.discover_st is False:
             self.discovery()
         self.updateThermostats()
 
@@ -298,6 +298,15 @@ class Controller(polyinterface.Controller):
             return True
         self.in_discover = True
         self.discover_st = False
+        try:
+            self.discover_st = self._discover()
+        except Exception as e:
+            LOGGER.error('discover failed: {}'.format(e))
+            self.discover_st = False
+        self.in_discover = False
+        return self.discover_st
+
+    def _discover(self, *args, **kwargs):
         LOGGER.info('Discovering Ecobee Thermostats')
         if self.auth_token is None:
             return False
@@ -324,8 +333,6 @@ class Controller(polyinterface.Controller):
                     self.addNode(Thermostat(self, address, address, thermostatId,
                                             'Ecobee - {}'.format(get_valid_node_name(thermostat['name'])),
                                             thermostat, fullData, useCelsius))
-        self.discover_st = True
-        self.in_discover = False
         return True
 
     def check_profile(self,thermostats):
@@ -342,7 +349,7 @@ class Controller(polyinterface.Controller):
                 climates[thermostatId] = list()
                 for climate in programs['climates']:
                     climates[thermostatId].append({'name': climate['name'], 'ref':climate['climateRef']})
-        LOGGER.debug("discover: climates={}".format(climates))
+        LOGGER.debug("check_profile: climates={}".format(climates))
         #
         # Set Default profile version if not Found
         #
