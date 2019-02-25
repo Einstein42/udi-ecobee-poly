@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.37: JimBo
+  - Trap any error in discover in case Ecobee servers are not responding when starting up, and we hit an error that is not being trapped.
 - 2.0.36: JimBo
   - [Trap: ConnectionResetError: [Errno 104] Connection reset by peer](https://github.com/Einstein42/udi-ecobee-poly/issues/39)
 - 2.0.35: JimBo
