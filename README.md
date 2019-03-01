@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.0.39: JimBo
+  - Add more debugging to see where hang is happening
 - 2.0.38: JimBo
   - Fixed typo when initial discover fails.
 - 2.0.37: JimBo
