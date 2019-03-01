@@ -654,7 +654,7 @@ class Controller(polyinterface.Controller):
         LOGGER.warning("%s:%s:%s: %s" % (self.id,self.name,name,string))
 
     def l_debug(self, name, level, string, execInfo=False):
-        if level <= self.debug_level
+        if level <= self.debug_level:
             LOGGER.debug("%s:%s:%s: %s" % (self.id,self.name,name,string))
 
     id = 'ECO_CTR'
