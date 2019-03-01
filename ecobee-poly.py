@@ -37,6 +37,8 @@ class Controller(polyinterface.Controller):
         self.refreshingTokens = False
         self.pinRun = False
         self.hb = 0
+        # TODO: Get from param
+        self.debug_level = 1
         self._cloud = CLOUD
 
     def start(self):
@@ -456,6 +458,8 @@ class Controller(polyinterface.Controller):
         if not self._checkTokens():
             LOGGER.debug('getThermostat failed. Couldn\'t get tokens.')
             return False
+        self.l_debug('getThermostats',1,'opening connection')
+        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
         data = urllib.parse.quote_plus(json.dumps({
                 'selection': {
                     'selectionType': 'registered',
@@ -463,11 +467,11 @@ class Controller(polyinterface.Controller):
                     'includesEquipmentStatus': True
                 }
             }))
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
         headers = {
             'Content-Type': 'application/json',
             'Authorization': '{} {}'.format(self.token_type, self.auth_token)
         }
+        self.l_debug('getThermostats',1,'requesting thermosat summary')
         try:
             auth_conn.request('GET', '/1/thermostatSummary?json={}'.format(data), headers = headers)
         except Exception as e:
@@ -475,6 +479,7 @@ class Controller(polyinterface.Controller):
             auth_conn.close()
             self.set_ecobee_st(False)
             return False
+        self.l_debug('getThermostats',1,'getting response')
         try:
             res = auth_conn.getresponse()
         except Exception as e:
@@ -499,6 +504,7 @@ class Controller(polyinterface.Controller):
             self.set_ecobee_st(False)
             return False
         self.set_ecobee_st(True)
+        self.l_debug('getThermostats',1,'building return hash')
         thermostats = {}
         if 'revisionList' in data:
             for thermostat in data['revisionList']:
@@ -637,6 +643,19 @@ class Controller(polyinterface.Controller):
       ival = 1 if val else 0
       LOGGER.debug("{}:set_ecobee_st: {}={}".format(self.address,val,ival))
       self.setDriver('GV1',ival)
+
+    def l_info(self, name, string):
+        LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))
+
+    def l_error(self, name, string):
+        LOGGER.error("%s:%s:%s: %s" % (self.id,self.name,name,string))
+
+    def l_warning(self, name, string):
+        LOGGER.warning("%s:%s:%s: %s" % (self.id,self.name,name,string))
+
+    def l_debug(self, name, level, string, execInfo=False):
+        if level <= self.debug_level
+            LOGGER.debug("%s:%s:%s: %s" % (self.id,self.name,name,string))
 
     id = 'ECO_CTR'
     commands = {'DISCOVER': discover, 'QUERY': cmd_query, 'POLL': cmd_poll}
