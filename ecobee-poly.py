@@ -18,6 +18,7 @@ import os.path
 import re
 from copy import deepcopy
 
+from pgSession import pgSession
 from node_types import Thermostat, Sensor, Weather
 from node_funcs import *
 
@@ -38,7 +39,8 @@ class Controller(polyinterface.Controller):
         self.pinRun = False
         self.hb = 0
         # TODO: Get from param
-        self.debug_level = 1
+        self.debug_level = 2
+        self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
         self._cloud = CLOUD
 
     def start(self):
@@ -98,42 +100,22 @@ class Controller(polyinterface.Controller):
         if 'refresh_token' in self.tokenData:
             self.refreshingTokens = True
             LOGGER.debug('Refresh Token found. Attempting to refresh tokens...')
-            with open('server.json') as sf:
-                server_data = json.load(sf)
-                sf.close()
-            auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-            payload = 'grant_type=refresh_token&client_id={}&refresh_token={}'.format(server_data['api_key'], self.tokenData['refresh_token'])
-            try:
-                auth_conn.request('POST', '/token?{}'.format(payload))
-            except Exception as e:
-                LOGGER.error('getRefresh: Ecobee API Connection error: {}'.format(e))
-                auth_conn.close()
+            res = self.session.post('token',
+                params = {
+                    'grant_type':    'refresh_token',
+                    'client_id':     self.serverdata['api_key'],
+                    'refresh_token': self.tokenData['refresh_token']
+                    })
+            if res is False:
                 self.refreshingTokens = False
                 self.set_ecobee_st(False)
                 return False
-            try:
-                res = auth_conn.getresponse()
-            except Exception as e:
-                LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
-                auth_conn.close()
-                self.refreshingTokens = False
-                self.set_ecobee_st(False)
-                return False
-            try:
-                data = json.loads(res.read().decode('utf-8'))
-            except Exception as e:
-                LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
-                auth_conn.close()
-                self.refreshingTokens = False
-                self.set_ecobee_st(False)
-                return False
-            auth_conn.close()
             self.set_ecobee_st(True)
-            if 'error' in data:
-                LOGGER.error('Requesting Auth: {} :: {}'.format(data['error'], data['error_description']))
+            if 'error' in res:
+                LOGGER.error('Requesting Auth: {} :: {}'.format(res['error'], res['error_description']))
                 self.auth_token = None
                 self.refreshingTokens = False
-                if data['error'] == 'invalid_grant':
+                if res['error'] == 'invalid_grant':
                     # Need to re-auth!
                     LOGGER.error('Found {}, need to re-authorize'.format(data['error']))
                     cust_data = deepcopy(self.polyConfig['customData'])
@@ -141,8 +123,8 @@ class Controller(polyinterface.Controller):
                     self.saveCustomData(cust_data)
                     self._getPin()
                 return False
-            elif 'access_token' in data:
-                self._saveTokens(data)
+            elif 'access_token' in res:
+                self._saveTokens(res)
                 self.refreshingTokens = False
                 return True
         else:
@@ -152,78 +134,42 @@ class Controller(polyinterface.Controller):
 
     def _getTokens(self, pinData):
         LOGGER.debug('PIN: {} found. Attempting to get tokens...'.format(pinData['ecobeePin']))
-        with open('server.json') as sf:
-            server_data = json.load(sf)
-            sf.close()
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-        payload = 'grant_type=ecobeePin&client_id={}&code={}'.format(server_data['api_key'], pinData['code'])
-        try:
-            auth_conn.request('POST', '/token?{}'.format(payload))
-        except Exception as e:
-            LOGGER.error('Ecobee API Connection error: {}'.format(e))
-            auth_conn.close()
+        res = self.session.post('token',
+            params = {
+                        'grant_type':  'ecobeePin',
+                        'client_id':   self.serverdata['api_key'],
+                        'code':        pinData['code']
+                    })
+        if res is False:
+            self.set_ecobee_st(False)
             return False
-        try:
-            res = auth_conn.getresponse()
-        except Exception as e:
-            LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
-            auth_conn.close()
-            self.refreshingTokens = False
+        if 'error' in res:
+            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
             return False
-        try:
-            data = json.loads(res.read().decode('utf-8'))
-        except Exception as e:
-            LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
-            auth_conn.close()
-            self.refreshingTokens = False
-            return False
-        auth_conn.close()
-        LOGGER.debug(data)
-        if 'error' in data:
-            LOGGER.error('{} :: {}'.format(data['error'], data['error_description']))
-            return False
-        if 'access_token' in data:
+        if 'access_token' in res:
             LOGGER.debug('Got first set of tokens sucessfully.')
-            self._saveTokens(data)
+            self._saveTokens(res)
             return True
 
     def _getPin(self):
-        with open('server.json') as sf:
-            server_data = json.load(sf)
-            sf.close()
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-        payload = 'response_type=ecobeePin&client_id={}&scope=smartWrite'.format(server_data['api_key'])
-        try:
-            auth_conn.request('GET', '/authorize?{}'.format(payload))
-        except Exception as e:
-            LOGGER.error('Ecobee API Connection error: {}'.format(e))
-            auth_conn.close()
-            return False
-        try:
-            res = auth_conn.getresponse()
-        except Exception as e:
-            LOGGER.error('getRefresh: Ecobee API Response error: {}'.format(e))
-            auth_conn.close()
+        res = self.session_get('authorize',
+                              {
+                                  'response_type':  'ecobeePin',
+                                  'client_id':      self.serverdata['api_key'],
+                                  'scope':          'smartWrite'
+                              })
+        if res is False:
             self.refreshingTokens = False
             return False
-        try:
-            data = json.loads(res.read().decode('utf-8'))
-        except Exception as e:
-            LOGGER.error('getRefresh: Ecobee API Read/Parse error: {}'.format(e))
-            auth_conn.close()
-            self.refreshingTokens = False
-            return False
-        auth_conn.close()
-        LOGGER.debug(data)
-        if 'ecobeePin' in data:
-            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(data['ecobeePin'])})
+        if 'ecobeePin' in res:
+            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res['ecobeePin'])})
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
             # self.saveCustomData(cust_data)
             waitingOnPin = True
             while waitingOnPin:
-                time.sleep(60)
-                if self._getTokens(data):
+                time.sleep(15)
+                if self._getTokens(res):
                     waitingOnPin = False
                     self.discover()
 
@@ -303,7 +249,7 @@ class Controller(polyinterface.Controller):
         try:
             self.discover_st = self._discover()
         except Exception as e:
-            LOGGER.error('discover failed: {}'.format(e))
+            self.l_error('discover','failed: {}'.format(e),True)
             self.discover_st = False
         self.in_discover = False
         return self.discover_st
@@ -454,60 +400,34 @@ class Controller(polyinterface.Controller):
       nls.close()
       LOGGER.info("{} done".format(pfx))
 
+    # Calls session.get and converts params to weird ecobee formatting.
+    def session_get (self,path,data):
+        if self.auth_token is None:
+            # All calls before with have auth token, don't reformat with json
+            return self.session.get(path,data)
+        else:
+            return self.session.get(path,{ 'json': json.dumps(data) },
+                                    auth='{} {}'.format(self.token_type, self.auth_token)
+                                    )
     def getThermostats(self):
         if not self._checkTokens():
             LOGGER.debug('getThermostat failed. Couldn\'t get tokens.')
             return False
-        self.l_debug('getThermostats',1,'opening connection')
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-        data = urllib.parse.quote_plus(json.dumps({
-                'selection': {
-                    'selectionType': 'registered',
-                    'selectionMatch': '',
-                    'includesEquipmentStatus': True
-                }
-            }))
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': '{} {}'.format(self.token_type, self.auth_token)
-        }
-        self.l_debug('getThermostats',1,'requesting thermosat summary')
-        try:
-            auth_conn.request('GET', '/1/thermostatSummary?json={}'.format(data), headers = headers)
-        except Exception as e:
-            LOGGER.error('Ecobee API Connection error: {}'.format(e))
-            auth_conn.close()
-            self.set_ecobee_st(False)
-            return False
-        self.l_debug('getThermostats',1,'getting response')
-        try:
-            res = auth_conn.getresponse()
-        except Exception as e:
-            LOGGER.error('Ecobee getresponse failed: {}'.format(e))
-            auth_conn.close()
-            self.set_ecobee_st(False)
-            return False
-        if res is None:
-            LOGGER.error("Bad response {} from thermostatSummary".format(res))
-            self.set_ecobee_st(False)
-            return False
-        rdata = res.read().decode('utf-8')
-        auth_conn.close()
-        if rdata is None:
-            LOGGER.error("Bad read {} from thermostatSummary".format(rdata))
-            self.set_ecobee_st(False)
-            return False
-        try:
-            data = json.loads(rdata)
-        except Exception as e:
-            LOGGER.error('Ecobee API data format error: {} for: {}'.format(e,rdata))
+        res = self.session_get('1/thermostatSummary',
+                               {
+                                    'selection': {
+                                        'selectionType': 'registered',
+                                        'selectionMatch': '',
+                                        'includesEquipmentStatus': True
+                                    },
+                                })
+        if res is False:
             self.set_ecobee_st(False)
             return False
         self.set_ecobee_st(True)
-        self.l_debug('getThermostats',1,'building return hash')
         thermostats = {}
-        if 'revisionList' in data:
-            for thermostat in data['revisionList']:
+        if 'revisionList' in res:
+            for thermostat in res['revisionList']:
                 revisionArray = thermostat.split(':')
                 thermostats['{}'.format(revisionArray[0])] = {
                     'name': revisionArray[1],
@@ -541,54 +461,29 @@ class Controller(polyinterface.Controller):
             LOGGER.error('getThermostat failed. Couldn\'t get tokens.')
             return False
         LOGGER.info('Getting Thermostat Data for {}'.format(id))
-        data = urllib.parse.quote_plus(json.dumps({
-                'selection': {
-                    'selectionType': 'thermostats',
-                    'selectionMatch': id,
-                    'includeEvents': includeEvents,
-                    'includeProgram': includeProgram,
-                    'includeSettings': includeSettings,
-                    'includeRuntime': includeRuntime,
-                    'includeExtendedRuntime': includeExtendedRuntime,
-                    'includeLocation': includeLocation,
-                    'includeEquipmentStatus': includeEquipmentStatus,
-                    'includeVersion': includeVersion,
-                    'includeUtility': includeUtility,
-                    'includeAlerts': includeAlerts,
-                    'includeWeather': includeWeather,
-                    'includeSensors': includeSensors
-                }
-            }))
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': '{} {}'.format(self.token_type, self.auth_token)
-        }
-        try:
-            auth_conn.request('GET', '/1/thermostat?json={}'.format(data), headers = headers)
-        except Exception as e:
-            LOGGER.error('Ecobee API Connection error: {}'.format(e))
-            auth_conn.close()
-            self.set_ecobee_st(False)
-            return False
-        self.set_ecobee_st(True)
-        LOGGER.info('Reading response for {}'.format(id))
-        try:
-            res = auth_conn.getresponse()
-        except Exception as e:
-            LOGGER.error('Ecobee API Response error: {}'.format(e))
-            auth_conn.close()
-            return False
-        try:
-          data = json.loads(res.read().decode('utf-8'))
-        except Exception as e:
-            LOGGER.error('Ecobee API Read/Parse Response error: {}'.format(e))
-            auth_conn.close()
-            return False
-        auth_conn.close()
-        LOGGER.debug('getThermostatSelection {} done'.format(id))
-        LOGGER.debug('getThermostatSelection data={}'.format(data))
-        return data
+        res = self.session_get('1/thermostat',
+                               {
+                                   'selection': {
+                                       'selectionType': 'thermostats',
+                                       'selectionMatch': id,
+                                       'includeEvents': includeEvents,
+                                       'includeProgram': includeProgram,
+                                       'includeSettings': includeSettings,
+                                       'includeRuntime': includeRuntime,
+                                       'includeExtendedRuntime': includeExtendedRuntime,
+                                       'includeLocation': includeLocation,
+                                       'includeEquipmentStatus': includeEquipmentStatus,
+                                       'includeVersion': includeVersion,
+                                       'includeUtility': includeUtility,
+                                       'includeAlerts': includeAlerts,
+                                       'includeWeather': includeWeather,
+                                       'includeSensors': includeSensors
+                                       }
+                               }
+                           )
+        self.l_debug('getThermostatSelection',0,'done'.format(id))
+        self.l_debug('getThermostatSelection',1,'data={}'.format(res))
+        return res
 
     def ecobeePost(self, thermostatId, postData = {}):
         if not self._checkTokens():
@@ -599,35 +494,22 @@ class Controller(polyinterface.Controller):
             'selectionType': 'thermostats',
             'selectionMatch': thermostatId
         }
-        LOGGER.debug('Post Data : {}'.format(json.dumps(postData,sort_keys=True, indent=2)))
-        data = json.dumps(postData)
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': '{} {}'.format(self.token_type, self.auth_token),
-            'Content-Length': len(data)
-        }
-        auth_conn = http.client.HTTPSConnection(ECOBEE_API_URL)
-        try:
-            auth_conn.request('POST', '/1/thermostat?json=true', data, headers)
-        except Exception as e:
-            LOGGER.error('Ecobee API Connection error: {}'.format(e))
-            auth_conn.close()
+        res = self.session.post('1/thermostat',params={'json': 'true'},payload=postData,
+            auth='{} {}'.format(self.token_type, self.auth_token),dump=True)
+        if res is False:
+            self.refreshingTokens = False
             self.set_ecobee_st(False)
             return False
         self.set_ecobee_st(True)
-        res = auth_conn.getresponse()
-        data = json.loads(res.read().decode('utf-8'))
-        auth_conn.close()
-        #LOGGER.debug('Got : {}'.format(json.dumps(data,sort_keys=True, indent=2)))
-        if 'error' in data:
-            LOGGER.error('{} :: {}'.format(data['error'], data['error_description']))
+        if 'error' in res:
+            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
             return False
-        if 'status' in data:
-            if 'code' in data['status']:
-                if data['status']['code'] == 0:
+        if 'status' in res:
+            if 'code' in res['status']:
+                if res['status']['code'] == 0:
                     return True
                 else:
-                    LOGGER.error('Bad return code {}:{}'.format(data['status']['code'],data['status']['message']))
+                    LOGGER.error('Bad return code {}:{}'.format(res['status']['code'],res['status']['message']))
         return False
 
     def cmd_poll(self,  *args, **kwargs):
@@ -647,15 +529,15 @@ class Controller(polyinterface.Controller):
     def l_info(self, name, string):
         LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))
 
-    def l_error(self, name, string):
-        LOGGER.error("%s:%s:%s: %s" % (self.id,self.name,name,string))
+    def l_error(self, name, string, exc_info=False):
+        LOGGER.error("%s:%s:%s: %s" % (self.id,self.name,name,string), exc_info=exc_info)
 
     def l_warning(self, name, string):
         LOGGER.warning("%s:%s:%s: %s" % (self.id,self.name,name,string))
 
-    def l_debug(self, name, level, string, execInfo=False):
+    def l_debug(self, name, level, string, exc_info=False):
         if level <= self.debug_level:
-            LOGGER.debug("%s:%s:%s: %s" % (self.id,self.name,name,string))
+            LOGGER.debug("%s:%s:%s: %s" % (self.id,self.name,name,string), exc_info=exc_info)
 
     id = 'ECO_CTR'
     commands = {'DISCOVER': discover, 'QUERY': cmd_query, 'POLL': cmd_poll}
