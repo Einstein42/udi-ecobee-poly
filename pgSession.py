@@ -30,12 +30,13 @@ class pgSession():
         if auth is not None:
             headers['Authorization'] = auth
         self.l_debug('get', 1, "headers={}".format(headers))
-        self.session.headers.update(headers)
+        #self.session.headers.update(headers)
         try:
             response = self.session.get(
                 url,
                 params=payload,
-                timeout=60
+                headers=headers,
+                timeout=60,
             )
             self.l_debug('get', 1, "url={}".format(response.url))
         # This is supposed to catch all request excpetions.
@@ -76,12 +77,13 @@ class pgSession():
         if auth is not None:
             headers['Authorization'] = auth
         self.l_debug('post', 1, "headers={}".format(headers))
-        self.session.headers.update(headers)
+        #self.session.headers.update(headers)
         try:
             response = self.session.post(
                 url,
                 params=params,
                 data=payload,
+                headers=headers,
                 timeout=60
             )
             self.l_debug('post', 1, "url={}".format(response.url))
