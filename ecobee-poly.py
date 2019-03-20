@@ -16,6 +16,7 @@ import datetime
 import os
 import os.path
 import re
+import logging
 from copy import deepcopy
 
 from pgSession import pgSession
@@ -38,9 +39,6 @@ class Controller(polyinterface.Controller):
         self.refreshingTokens = False
         self.pinRun = False
         self.hb = 0
-        # TODO: Get from param
-        self.debug_level = 2
-        self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
         self._cloud = CLOUD
 
     def start(self):
@@ -51,7 +49,8 @@ class Controller(polyinterface.Controller):
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         self.removeNoticesAll()
-        self.heartbeat()
+        self.set_debug_mode()
+        self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
         # Force to false, and successful communication will fix it
         #self.set_ecobee_st(False) Causes it to always stay false.
         if 'tokenData' in self.polyConfig['customData']:
@@ -62,6 +61,8 @@ class Controller(polyinterface.Controller):
                 self.discover()
         else:
             self._getPin()
+            self.reportDrivers()
+
 
     def _checkTokens(self):
         while self.refreshingTokens:
@@ -521,6 +522,46 @@ class Controller(polyinterface.Controller):
         LOGGER.debug("{}:cmd_query".format(self.address))
         self.query()
 
+    def cmd_debug_mode(self,command):
+        val = int(command.get('value'))
+        self.l_info("cmd_debug_mode",val)
+        self.set_debug_mode(val)
+
+    def set_all_logs(self,level):
+        self.l_info("set_all_logs",level)
+        LOGGER.setLevel(level)
+        #logging.getLogger('requests').setLevel(level)
+        #logging.getLogger('urllib3').setLevel(level)
+
+    def set_debug_mode(self,level=None):
+        self.l_info("set_debug_mode",level)
+        if level is None:
+            level = self.getDriver('GV2')
+            if level is None:
+                level = 20
+        level = int(level)
+        self.debug_mode = level
+        self.setDriver('GV2', level)
+        self.debug_level = 0
+        if level < 20:
+            self.set_all_logs(logging.DEBUG)
+            # 9 & 8 incrase pgsession debug level
+            if level == 9:
+                self.debug_level = 1
+            elif level == 8:
+                self.debug_level = 2
+        elif level <= 20:
+            self.set_all_logs(logging.INFO)
+        elif level <= 30:
+            self.set_all_logs(logging.WARNING)
+        elif level <= 40:
+            self.set_all_logs(logging.ERROR)
+        elif level <= 50:
+            self.set_all_logs(logging.CRITICAL)
+        else:
+            self.l_error("set_debug_mode","Unknown level {0}".format(level))
+        self.l_info("set_debug_mode"," session debug_level={}".format(self.debug_level))
+
     def set_ecobee_st(self,val):
       ival = 1 if val else 0
       LOGGER.debug("{}:set_ecobee_st: {}={}".format(self.address,val,ival))
@@ -540,10 +581,16 @@ class Controller(polyinterface.Controller):
             LOGGER.debug("%s:%s:%s: %s" % (self.id,self.name,name,string), exc_info=exc_info)
 
     id = 'ECO_CTR'
-    commands = {'DISCOVER': discover, 'QUERY': cmd_query, 'POLL': cmd_poll}
+    commands = {
+        'DISCOVER': discover,
+        'QUERY': cmd_query,
+        'POLL': cmd_poll,
+        'DEBUG': cmd_debug_mode,
+    }
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},
-        {'driver': 'GV1', 'value': 0, 'uom': 2}
+        {'driver': 'GV1', 'value': 0, 'uom': 2},
+        {'driver': 'GV2', 'value': 50, 'uom': 25}
     ]
 
 if __name__ == "__main__":

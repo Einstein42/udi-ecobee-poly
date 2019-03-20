@@ -2,6 +2,9 @@
   <editor id="BOOL">
     <range uom="2" subset="0,1" />
   </editor>
+  <editor id="I_DEBUG">
+    <range uom="25" subset="8,9,10,20,30,40,50" nls="CDM"/>
+  </editor>
 
   <!-- io_guy Ecobee models -->
   <!-- Temperature -->

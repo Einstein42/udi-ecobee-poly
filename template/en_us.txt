@@ -4,8 +4,17 @@ ND-ECO_CTR-ICON = GenericCtl
 CMD-ECTR-DISCOVER-NAME = Discover
 CMD-ECTR-POLL-NAME = Poll
 CMD-ECTR-QUERY-NAME = Query
+CMD-ECTR-DEBUG-NAME = Logger Level
 ST-ECTR-ST-NAME = NodeServer Online
 ST-ECTR-GV1-NAME = Ecobee Connection Status
+ST-ECTR-GV2-NAME = Logger Level
+CDM-8 = Debug + Session Verbose
+CDM-9 = Debug + Session
+CDM-10 = Debug
+CDM-20 = Info
+CDM-30 = Warning
+CDM-40 = Error
+CDM-50 = Critical
 
 ND-EcobeeC-NAME = Ecobee Thermostat (C)
 ND-EcobeeC-ICON = Thermostat
