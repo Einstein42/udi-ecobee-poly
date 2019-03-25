@@ -113,7 +113,7 @@ class Controller(polyinterface.Controller):
                 return False
             self.set_ecobee_st(True)
             if 'error' in res:
-                LOGGER.error('Requesting Auth: {} :: {}'.format(res['error'], res['error_description']))
+                LOGGER.error('_getRefresh:Auth: error="{}" {}'.format(res['error'], res['error_description']))
                 self.auth_token = None
                 self.refreshingTokens = False
                 if res['error'] == 'invalid_grant':
@@ -145,7 +145,7 @@ class Controller(polyinterface.Controller):
             self.set_ecobee_st(False)
             return False
         if 'error' in res:
-            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
+            LOGGER.error('_getTokens: error="{}" error_description={}'.format(res['error'], res['error_description']))
             return False
         if 'access_token' in res:
             LOGGER.debug('Got first set of tokens sucessfully.')
@@ -503,7 +503,7 @@ class Controller(polyinterface.Controller):
             return False
         self.set_ecobee_st(True)
         if 'error' in res:
-            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
+            LOGGER.error('ecobeePost: error="{}" {}'.format(res['error'], res['error_description']))
             return False
         if 'status' in res:
             if 'code' in res['status']:
