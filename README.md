@@ -61,6 +61,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.0: JimBo
+  - Changed communcation with Ecobee to use sessions.  This has fixed the hanging issue and made network connections to Ecobee servers more robust.
+  - Added logger level to controller which defaults to warning, however polyglot doesn't udpate the DB so it's not changeable from the ISY until this magically happens, not sure when.
 - 2.0.39: JimBo
   - Add more debugging to see where hang is happening
 - 2.0.38: JimBo

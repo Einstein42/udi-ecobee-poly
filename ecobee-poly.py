@@ -538,7 +538,7 @@ class Controller(polyinterface.Controller):
         if level is None:
             level = self.getDriver('GV2')
             if level is None:
-                level = 20
+                level = 30
         level = int(level)
         self.debug_mode = level
         self.setDriver('GV2', level)
@@ -590,7 +590,7 @@ class Controller(polyinterface.Controller):
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},
         {'driver': 'GV1', 'value': 0, 'uom': 2},
-        {'driver': 'GV2', 'value': 50, 'uom': 25}
+        {'driver': 'GV2', 'value': 30, 'uom': 25}
     ]
 
 if __name__ == "__main__":
