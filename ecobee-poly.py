@@ -536,12 +536,18 @@ class Controller(polyinterface.Controller):
     def set_debug_mode(self,level=None):
         self.l_info("set_debug_mode",level)
         if level is None:
-            level = self.getDriver('GV2')
+            try:
+                level = self.getDriver('GV2')
+            except:
+                self.l_error('set_debug_mode','getDriver(GV2) failed',True)
             if level is None:
                 level = 30
         level = int(level)
         self.debug_mode = level
-        self.setDriver('GV2', level)
+        try:
+            self.setDriver('GV2', level)
+        except:
+            self.l_error('set_debug_mode','setDriver(GV2) failed',True)
         self.debug_level = 0
         if level < 20:
             self.set_all_logs(logging.DEBUG)
