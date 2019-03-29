@@ -219,10 +219,15 @@ class Thermostat(polyinterface.Node):
     def check_weather(self):
         # Initialize?
         if self.do_weather is None:
-            dval = self.getDriver('GV9')
-            LOGGER.debug('check_weather: Initial value GV9={}'.format(dval))
-            # Set False if 0, otherwise True since initially it may be None?
-            self.do_weather = False if dval == 0 else True
+            try:
+                dval = self.getDriver('GV9')
+                LOGGER.debug('check_weather: Initial value GV9={}'.format(dval))
+                dval = int(dval)
+                # Set False if 0, otherwise True since initially it may be None?
+                self.do_weather = False if dval == 0 else True
+            except:
+                LOGGER.error('check_weather: Failed to getDriver GV9, asuming do_weather=True')
+                self.do_weather = True
         if self.do_weather:
             # we want some weather
             if self.weather is None:
