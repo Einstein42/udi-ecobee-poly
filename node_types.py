@@ -172,8 +172,8 @@ class Thermostat(polyinterface.Node):
         self.id = '{}_{}'.format(self.id,thermostatId)
         self.revData = revData
         self.fullData = fullData
-        # Show weather by Default
-        self.do_weather = True
+        # Will check wether we show weather later
+        self.do_weather = None
         self.weather = None
         self.forcast = None
         # We track our driver values because we need the value before it's been pushed.
@@ -217,6 +217,12 @@ class Thermostat(polyinterface.Node):
         self.query()
 
     def check_weather(self):
+        # Initialize?
+        if self.do_weather is None:
+            dval = self.getDriver('GV9')
+            LOGGER.debug('check_weather: Initial value GV9={}'.format(dval))
+            # Set False if 0, otherwise True since initially it may be None?
+            self.do_weather = False if dval == 0 else True
         if self.do_weather:
             # we want some weather
             if self.weather is None:
