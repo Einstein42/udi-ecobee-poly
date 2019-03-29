@@ -16,6 +16,7 @@
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="BOOL" />
+      <st id="GV9" editor="I_ENABLED" />
     </sts>
     <cmds>
       <accepts>
@@ -54,6 +55,9 @@
         <cmd id="DIM">
           <p id="" editor="I_SETTEMP_C" optional="T" />
         </cmd>
+        <cmd id="GV9">
+          <p id="" editor="I_ENABLED" init="GV9" />
+        </cmd>
         <cmd id="QUERY" />
      </accepts>
       </cmds>
@@ -77,6 +81,7 @@
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="BOOL" />
+      <st id="GV9" editor="I_ENABLED" />
     </sts>
     <cmds>
       <accepts>
@@ -114,6 +119,9 @@
         </cmd>
         <cmd id="DIM">
           <p id="" editor="I_SETTEMP_F" optional="T" />
+        </cmd>
+        <cmd id="GV9">
+          <p id="" editor="I_ENABLED" init="GV9" />
         </cmd>
         <cmd id="QUERY" />
       </accepts>

@@ -303,7 +303,8 @@ class Controller(polyinterface.Controller):
         # Set Default profile version if not Found
         #
         cdata = deepcopy(self.polyConfig['customData'])
-        LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
+        LOGGER.info('check_profile: profile_info={}'.format(self.profile_info))
+        LOGGER.info('check_profile:   customData={}'.format(cdata))
         if not 'profile_info' in cdata:
             update_profile = True
         elif self.profile_info['version'] == cdata['profile_info']['version']:
