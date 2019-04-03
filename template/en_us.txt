@@ -8,6 +8,7 @@ CMD-ECTR-DEBUG-NAME = Logger Level
 ST-ECTR-ST-NAME = NodeServer Online
 ST-ECTR-GV1-NAME = Ecobee Connection Status
 ST-ECTR-GV2-NAME = Logger Level
+ST-ECTR-GV3-NAME = Authorized
 CDM-8 = Debug + Session Verbose
 CDM-9 = Debug + Session
 CDM-10 = Debug

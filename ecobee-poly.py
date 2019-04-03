@@ -73,11 +73,14 @@ class Controller(polyinterface.Controller):
                 ts_exp = datetime.datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
                 if ts_now > ts_exp:
                     LOGGER.info('Tokens have expired. Refreshing...')
+                    self.set_auth_st(False)
                     return self._getRefresh()
                 else:
                     LOGGER.debug('Tokens valid until: {}'.format(self.tokenData['expires']))
+                    self.set_auth_st(True)
                     return True
         else:
+            self.set_auth_st(False)
             LOGGER.error('tokenData or auth_token not available')
             # self.saveCustomData({})
             # this._getPin()
@@ -95,6 +98,7 @@ class Controller(polyinterface.Controller):
         cust_data['tokenData'] = data
         self.tokenData = deepcopy(data)
         self.saveCustomData(cust_data)
+        self.set_auth_st(True)
         self.removeNoticesAll()
 
     def _getRefresh(self):
@@ -145,16 +149,19 @@ class Controller(polyinterface.Controller):
                     })
         if res is False:
             self.set_ecobee_st(False)
+            self.set_auth_st(False)
             return False
         res_data = res['data']
         res_code = res['code']
         if 'error' in res_data:
             LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
+            self.set_auth_st(False)
             return False
         if 'access_token' in res_data:
             LOGGER.debug('Got first set of tokens sucessfully.')
             self._saveTokens(res_data)
             return True
+        self.set_auth_st(False)
 
     def _getPin(self):
         res = self.session_get('authorize',
@@ -586,6 +593,11 @@ class Controller(polyinterface.Controller):
       LOGGER.debug("{}:set_ecobee_st: {}={}".format(self.address,val,ival))
       self.setDriver('GV1',ival)
 
+    def set_auth_st(self,val):
+      ival = 1 if val else 0
+      LOGGER.debug("{}:set_auth_st: {}={}".format(self.address,val,ival))
+      self.setDriver('GV3',ival)
+
     def l_info(self, name, string):
         LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))
 
@@ -610,6 +622,7 @@ class Controller(polyinterface.Controller):
         {'driver': 'ST', 'value': 1, 'uom': 2},
         {'driver': 'GV1', 'value': 0, 'uom': 2},
         {'driver': 'GV2', 'value': 30, 'uom': 25}
+        {'driver': 'GV3', 'value': 0, 'uom': 2},
     ]
 
 if __name__ == "__main__":
