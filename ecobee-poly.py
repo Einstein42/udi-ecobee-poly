@@ -437,7 +437,7 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'revisionList' in res_data:
-            for thermostat in res_datat['revisionList']:
+            for thermostat in res_data['revisionList']:
                 revisionArray = thermostat.split(':')
                 thermostats['{}'.format(revisionArray[0])] = {
                     'name': revisionArray[1],
