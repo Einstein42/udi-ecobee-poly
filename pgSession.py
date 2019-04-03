@@ -1,4 +1,4 @@
-
+response.url
 """
 Work on makeing this a generic session handler for all Polyglot's
 """
@@ -53,15 +53,15 @@ class pgSession():
         if response.status_code == 200:
             self.l_debug(fname,0,' All good!')
         elif response.status_code == 400:
-            self.l_error(fname,"Bad request: %s" % (url) )
+            self.l_error(fname,"Bad request: %s" % (response.url) )
         elif response.status_code == 404:
-            self.l_error(fname,"Not Found: %s" % (url) )
+            self.l_error(fname,"Not Found: %s" % (response.url) )
         elif response.status_code == 401:
             # Authentication error
             self.l_error(fname,
                 "Failed to authenticate, please authorize")
         else:
-            self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, url, response.text) )
+            self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, response.url, response.text) )
         # No matter what, return the code and error
         try:
             json_data = json.loads(response.text)
