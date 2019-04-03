@@ -176,7 +176,7 @@ class Controller(polyinterface.Controller):
             waitingOnPin = True
             while waitingOnPin:
                 time.sleep(15)
-                if self._getTokens(res):
+                if self._getTokens(res_data):
                     waitingOnPin = False
                     self.discover()
 
