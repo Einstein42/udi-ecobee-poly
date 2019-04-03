@@ -1,4 +1,3 @@
-response.url
 """
 Work on makeing this a generic session handler for all Polyglot's
 """
