@@ -52,20 +52,21 @@ class pgSession():
         if response.status_code == 200:
             self.l_debug(fname,0,' All good!')
         elif response.status_code == 400:
-            self.l_error(fname,"Bad request: %s" % (response.url) )
+            self.l_error(fname,"Bad request: %s: text: %s" % (response.url,response.text) )
         elif response.status_code == 404:
-            self.l_error(fname,"Not Found: %s" % (response.url) )
+            self.l_error(fname,"Not Found: %s: text: %s" % (response.url,response.text) )
         elif response.status_code == 401:
             # Authentication error
-            self.l_error(fname,
-                "Failed to authenticate, please authorize")
+            self.l_error(fname,"Unauthorized: %s: text: %s" % (response.url,response.text) )
         else:
             self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, response.url, response.text) )
+            self.l_error(fname,"Check system status: https://status.ecobee.com/")
         # No matter what, return the code and error
         try:
             json_data = json.loads(response.text)
         except (Exception) as err:
             self.l_error(fname,'Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
+            json_data = False
         return { 'status_code': response.status_code, 'data': json_data }
 
     def post(self,path,payload={},params={},dump=True,auth=None):
