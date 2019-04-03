@@ -67,7 +67,7 @@ class pgSession():
         except (Exception) as err:
             self.l_error(fname,'Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
             json_data = False
-        return { 'status_code': response.status_code, 'data': json_data }
+        return { 'code': response.status_code, 'data': json_data }
 
     def post(self,path,payload={},params={},dump=True,auth=None):
         url = "https://{}{}/{}".format(self.host,self.port_s,path)

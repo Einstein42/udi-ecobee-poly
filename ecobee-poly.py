@@ -112,11 +112,13 @@ class Controller(polyinterface.Controller):
                 self.set_ecobee_st(False)
                 return False
             self.set_ecobee_st(True)
-            if 'error' in res:
-                LOGGER.error('Requesting Auth: {} :: {}'.format(res['error'], res['error_description']))
+            res_data = res['data']
+            res_code = res['code']
+            if 'error' in res_data:
+                LOGGER.error('Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
                 self.auth_token = None
                 self.refreshingTokens = False
-                if res['error'] == 'invalid_grant':
+                if res_data['error'] == 'invalid_grant':
                     # Need to re-auth!
                     LOGGER.error('Found {}, need to re-authorize'.format(data['error']))
                     cust_data = deepcopy(self.polyConfig['customData'])
@@ -124,8 +126,8 @@ class Controller(polyinterface.Controller):
                     self.saveCustomData(cust_data)
                     self._getPin()
                 return False
-            elif 'access_token' in res:
-                self._saveTokens(res)
+            elif 'access_token' in res_data:
+                self._saveTokens(res_data)
                 self.refreshingTokens = False
                 return True
         else:
