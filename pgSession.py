@@ -43,26 +43,31 @@ class pgSession():
         except requests.exceptions.RequestException as e:
             self.l_error('get',"Connection error for %s: %s" % (url, e))
             return False
-        self.l_debug('get',0,' Got: code=%s' % (response.status_code))
+        return(self.response(response,'get'))
+
+    def response(self,response,name):
+        fname = 'reponse:'+name
+        self.l_debug(fname,0,' Got: code=%s' % (response.status_code))
+        self.l_debug(fname,2,'      text=%s' % (response.text))
+        json_data = False
         if response.status_code == 200:
-            self.l_debug('get',2,"Got: text=%s" % response.text)
-            try:
-                d = json.loads(response.text)
-            except (Exception) as err:
-                self.l_error('get','Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
-                return False
-            return d
+            self.l_debug(fname,0,' All good!')
         elif response.status_code == 400:
-            self.l_error('get',"Bad request: %s" % (url) )
+            self.l_error(fname,"Bad request: %s" % (url) )
         elif response.status_code == 404:
-            self.l_error('get',"Not Found: %s" % (url) )
+            self.l_error(fname,"Not Found: %s" % (url) )
         elif response.status_code == 401:
             # Authentication error
-            self.l_error('get',
+            self.l_error(fname,
                 "Failed to authenticate, please authorize")
         else:
-            self.l_error('get',"Unknown response %s: %s %s" % (response.status_code, url, response.text) )
-        return False
+            self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, url, response.text) )
+        # No matter what, return the code and error
+        try:
+            json_data = json.loads(response.text)
+        except (Exception) as err:
+            self.l_error(fname,'Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
+        return { 'status_code': response.status_code, 'data': json_data }
 
     def post(self,path,payload={},params={},dump=True,auth=None):
         url = "https://{}{}/{}".format(self.host,self.port_s,path)
@@ -91,26 +96,7 @@ class pgSession():
         except requests.exceptions.RequestException as e:
             self.l_error('post',"Connection error for %s: %s" % (url, e))
             return False
-        self.l_debug('post',1,' Got: code=%s' % (response.status_code))
-        if response.status_code == 200:
-            self.l_debug('post',2,"Got: text=%s" % response.text)
-            try:
-                d = json.loads(response.text)
-            except (Exception) as err:
-                self.l_error('post','Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
-                return False
-            return d
-        elif response.status_code == 400:
-            self.l_error('post',"Bad request: %s" % (url) )
-        elif response.status_code == 404:
-            self.l_error('post',"Not Found: %s" % (url) )
-        elif response.status_code == 401:
-            # Authentication error
-            self.l_error('post',
-                "Failed to authenticate, please authorize")
-        else:
-            self.l_error('post',"Unknown response %s: %s %s" % (response.status_code, url, response.text) )
-        return False
+        return(self.response('post'))
 
 
     def l_info(self, name, string):
