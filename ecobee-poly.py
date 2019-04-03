@@ -115,7 +115,7 @@ class Controller(polyinterface.Controller):
             res_data = res['data']
             res_code = res['code']
             if 'error' in res_data:
-                LOGGER.error('Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
+                LOGGER.error('_getRefresh: Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
                 self.auth_token = None
                 self.refreshingTokens = False
                 if res_data['error'] == 'invalid_grant':
@@ -149,7 +149,7 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'error' in res_data:
-            LOGGER.error('{} :: {}'.format(res_data['error'], res_data['error_description']))
+            LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
             return False
         if 'access_token' in res_data:
             LOGGER.debug('Got first set of tokens sucessfully.')
@@ -309,7 +309,8 @@ class Controller(polyinterface.Controller):
         # Set Default profile version if not Found
         #
         cdata = deepcopy(self.polyConfig['customData'])
-        LOGGER.info('check_profile: profile_info={0} customData={1}'.format(self.profile_info,cdata))
+        LOGGER.info('check_profile: profile_info={}'.format(self.profile_info))
+        LOGGER.info('check_profile:   customData={}'.format(cdata))
         if not 'profile_info' in cdata:
             update_profile = True
         elif self.profile_info['version'] == cdata['profile_info']['version']:
@@ -513,7 +514,7 @@ class Controller(polyinterface.Controller):
             return False
         self.set_ecobee_st(True)
         if 'error' in res:
-            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
+            LOGGER.error('ecobeePost: error="{}" {}'.format(res['error'], res['error_description']))
             return False
         res_data = res['data']
         res_code = res['code']
@@ -548,12 +549,18 @@ class Controller(polyinterface.Controller):
     def set_debug_mode(self,level=None):
         self.l_info("set_debug_mode",level)
         if level is None:
-            level = self.getDriver('GV2')
+            try:
+                level = self.getDriver('GV2')
+            except:
+                self.l_error('set_debug_mode','getDriver(GV2) failed',True)
             if level is None:
                 level = 30
         level = int(level)
         self.debug_mode = level
-        self.setDriver('GV2', level)
+        try:
+            self.setDriver('GV2', level)
+        except:
+            self.l_error('set_debug_mode','setDriver(GV2) failed',True)
         self.debug_level = 0
         if level < 20:
             self.set_all_logs(logging.DEBUG)

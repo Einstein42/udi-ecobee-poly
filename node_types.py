@@ -77,7 +77,8 @@ driversMap = {
     { 'driver': 'GV5', 'value': 0, 'uom': '22' },
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
-    { 'driver': 'GV8', 'value': 0, 'uom': '2' }
+    { 'driver': 'GV8', 'value': 0, 'uom': '2' },
+    { 'driver': 'GV9', 'value': 1, 'uom': '25' }
   ],
   'EcobeeC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
@@ -95,8 +96,9 @@ driversMap = {
     { 'driver': 'GV5', 'value': 0, 'uom': '22' },
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
-    { 'driver': 'GV8', 'value': 0, 'uom': '2' }
- ],
+    { 'driver': 'GV8', 'value': 0, 'uom': '2' },
+    { 'driver': 'GV9', 'value': 1, 'uom': '25' }
+],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
     { 'driver': 'GV1', 'value': 0, 'uom': '25' },
@@ -170,6 +172,10 @@ class Thermostat(polyinterface.Node):
         self.id = '{}_{}'.format(self.id,thermostatId)
         self.revData = revData
         self.fullData = fullData
+        # Will check wether we show weather later
+        self.do_weather = None
+        self.weather = None
+        self.forcast = None
         # We track our driver values because we need the value before it's been pushed.
         self.driver = dict()
         super(Thermostat, self).__init__(controller, primary, address, name)
@@ -179,6 +185,8 @@ class Thermostat(polyinterface.Node):
         super(Thermostat, self).setDriver(driver,value)
 
     def getDriver(self,driver):
+        if not driver in self.driver:
+            self.driver[driver] = super(Thermostat, self).getDriver(driver)
         return self.driver[driver]
 
     def start(self):
@@ -204,15 +212,45 @@ class Thermostat(polyinterface.Node):
                         sensorName = get_valid_node_name('Ecobee - {}'.format(sensor['name']))
                         self.controller.addNode(Sensor(self.controller, self.address, sensorAddress,
                                                        sensorName, nid, self))
-        if 'weather' in self.tstat:
-            weatherAddress = 'w{}'.format(self.thermostatId)
-            weatherName = get_valid_node_name('Ecobee - Weather')
-            self.weather = self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
-            forecastAddress = 'f{}'.format(self.thermostatId)
-            forecastName = get_valid_node_name('Ecobee - Forecast')
-            self.forcast = self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
+        self.check_weather()
         self.update(self.revData, self.fullData)
         self.query()
+
+    def check_weather(self):
+        # Initialize?
+        if self.do_weather is None:
+            try:
+                dval = self.getDriver('GV9')
+                LOGGER.debug('check_weather: Initial value GV9={}'.format(dval))
+                dval = int(dval)
+                # Set False if 0, otherwise True since initially it may be None?
+                self.do_weather = False if dval == 0 else True
+            except:
+                LOGGER.error('check_weather: Failed to getDriver GV9, asuming do_weather=True')
+                self.do_weather = True
+        if self.do_weather:
+            # we want some weather
+            if self.weather is None:
+                # and we don't have the nodes yet, so add them
+                if 'weather' in self.tstat:
+                    weatherAddress = 'w{}'.format(self.thermostatId)
+                    weatherName = get_valid_node_name('Ecobee - Weather')
+                    self.weather = self.controller.addNode(Weather(self.controller, self.address, weatherAddress, weatherName, self.useCelsius, False))
+                    forecastAddress = 'f{}'.format(self.thermostatId)
+                    forecastName = get_valid_node_name('Ecobee - Forecast')
+                    self.forcast = self.controller.addNode(Weather(self.controller, self.address, forecastAddress, forecastName, self.useCelsius, True))
+            else:
+                self.weather.update(self.tstat['weather'])
+                self.forcast.update(self.tstat['weather'])
+        else:
+            # we dont want weather
+            if self.weather is not None:
+                # we have the nodes, delete them
+                self.controller.delNode(self.weather.address)
+                self.weather = None
+                self.controller.delNode(self.forcast.address)
+                self.forcast = None
+
 
     def get_sensor_nodedef(self,sensor):
         # Given the ecobee sensor data, figure out the nodedef
@@ -320,8 +358,7 @@ class Thermostat(polyinterface.Node):
                   LOGGER.debug("{}._update: remoteSensor {} is not mine.".format(self.address,saddr))
           else:
               LOGGER.error("{}._update: remoteSensor {} is not in our node list: {}".format(self.address,saddr,self.controller.nodes))
-      self.weather.update(self.tstat['weather'])
-      self.forcast.update(self.tstat['weather'])
+      self.check_weather()
 
     def getClimateIndex(self,name):
       if name in climateMap:
@@ -622,6 +659,15 @@ class Thermostat(polyinterface.Node):
         if self.ecobeePost( command):
           self.setDriver(cmd['cmd'], cmd['value'])
 
+    def cmdSetDoWeather(self, cmd):
+      value = int(cmd['value'])
+      if int(self.getDriver(cmd['cmd'])) == value:
+        LOGGER.debug("cmdSetDoWeather: {} already set to {}".format(cmd['cmd'],value))
+      else:
+        self.setDriver(cmd['cmd'], value)
+        self.do_weather = True if value == 1 else False
+        self.check_weather()
+
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
@@ -674,7 +720,8 @@ class Thermostat(polyinterface.Node):
                 'GV6': cmdSmartHome,
                 'GV7': cmdFollowMe,
                 'BRT': setPoint,
-                'DIM': setPoint
+                'DIM': setPoint,
+                'GV9': cmdSetDoWeather
                  }
 
 class Sensor(polyinterface.Node):
