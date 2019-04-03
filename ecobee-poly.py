@@ -621,8 +621,8 @@ class Controller(polyinterface.Controller):
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},
         {'driver': 'GV1', 'value': 0, 'uom': 2},
-        {'driver': 'GV2', 'value': 30, 'uom': 25}
-        {'driver': 'GV3', 'value': 0, 'uom': 2},
+        {'driver': 'GV2', 'value': 30, 'uom': 25},
+        {'driver': 'GV3', 'value': 0, 'uom': 2}
     ]
 
 if __name__ == "__main__":
