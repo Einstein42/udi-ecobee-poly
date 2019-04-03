@@ -96,7 +96,7 @@ class pgSession():
         except requests.exceptions.RequestException as e:
             self.l_error('post',"Connection error for %s: %s" % (url, e))
             return False
-        return(self.response('post'))
+        return(self.response(response,'post'))
 
 
     def l_info(self, name, string):
