@@ -146,12 +146,14 @@ class Controller(polyinterface.Controller):
         if res is False:
             self.set_ecobee_st(False)
             return False
-        if 'error' in res:
-            LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
+        res_data = res['data']
+        res_code = res['code']
+        if 'error' in res_data:
+            LOGGER.error('{} :: {}'.format(res_data['error'], res_data['error_description']))
             return False
-        if 'access_token' in res:
+        if 'access_token' in res_data:
             LOGGER.debug('Got first set of tokens sucessfully.')
-            self._saveTokens(res)
+            self._saveTokens(res_data)
             return True
 
     def _getPin(self):
@@ -164,8 +166,10 @@ class Controller(polyinterface.Controller):
         if res is False:
             self.refreshingTokens = False
             return False
-        if 'ecobeePin' in res:
-            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res['ecobeePin'])})
+        res_data = res['data']
+        res_code = res['code']
+        if 'ecobeePin' in res_data:
+            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_daa['ecobeePin'])})
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
             # self.saveCustomData(cust_data)
@@ -429,8 +433,10 @@ class Controller(polyinterface.Controller):
             return False
         self.set_ecobee_st(True)
         thermostats = {}
-        if 'revisionList' in res:
-            for thermostat in res['revisionList']:
+        res_data = res['data']
+        res_code = res['code']
+        if 'revisionList' in res_data:
+            for thermostat in res_datat['revisionList']:
                 revisionArray = thermostat.split(':')
                 thermostats['{}'.format(revisionArray[0])] = {
                     'name': revisionArray[1],
@@ -486,7 +492,9 @@ class Controller(polyinterface.Controller):
                            )
         self.l_debug('getThermostatSelection',0,'done'.format(id))
         self.l_debug('getThermostatSelection',1,'data={}'.format(res))
-        return res
+        if res is False:
+            return res
+        return res['data']
 
     def ecobeePost(self, thermostatId, postData = {}):
         if not self._checkTokens():
@@ -507,12 +515,14 @@ class Controller(polyinterface.Controller):
         if 'error' in res:
             LOGGER.error('{} :: {}'.format(res['error'], res['error_description']))
             return False
-        if 'status' in res:
-            if 'code' in res['status']:
-                if res['status']['code'] == 0:
+        res_data = res['data']
+        res_code = res['code']
+        if 'status' in res_data:
+            if 'code' in res_data['status']:
+                if res_data['status']['code'] == 0:
                     return True
                 else:
-                    LOGGER.error('Bad return code {}:{}'.format(res['status']['code'],res['status']['message']))
+                    LOGGER.error('Bad return code {}:{}'.format(res_data['status']['code'],res_data['status']['message']))
         return False
 
     def cmd_poll(self,  *args, **kwargs):
