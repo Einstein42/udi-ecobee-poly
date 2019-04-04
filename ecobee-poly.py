@@ -154,6 +154,9 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'error' in res_data:
+            if res_data['error'] == 'authorization_expired':
+                LOGGER.error('_getTokens: Exiting because: {} -> {}'.format(res_data['error'], res_data['error_description']))
+                sys.exit(1)
             LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
             self.set_auth_st(False)
             return False
