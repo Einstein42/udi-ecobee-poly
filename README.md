@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.2: JimBo
+  - Fix re-authorization, but can not completely verify because Ecobee site is flakey.
 - 2.1.1: JimBo
   - [Add setting to include/exclude weather and forcast](https://github.com/Einstein42/udi-ecobee-poly/issues/40)
 - 2.1.0: JimBo
