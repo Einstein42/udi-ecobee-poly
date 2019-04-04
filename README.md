@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.3: JimBo
+  - More fixing flakey Ecobee servers.
 - 2.1.2: JimBo
   - Fix re-authorization, but can not completely verify because Ecobee site is flakey.
 - 2.1.1: JimBo

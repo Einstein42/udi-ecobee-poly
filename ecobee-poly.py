@@ -124,7 +124,7 @@ class Controller(polyinterface.Controller):
                 self.refreshingTokens = False
                 if res_data['error'] == 'invalid_grant':
                     # Need to re-auth!
-                    LOGGER.error('Found {}, need to re-authorize'.format(data['error']))
+                    LOGGER.error('Found {}, need to re-authorize'.format(res_data['error']))
                     cust_data = deepcopy(self.polyConfig['customData'])
                     del cust_data['tokenData']
                     self.saveCustomData(cust_data)
