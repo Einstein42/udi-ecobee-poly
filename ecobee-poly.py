@@ -447,6 +447,10 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'revisionList' in res_data:
+            if res_data['revisionList'] is False:
+                self.l_error('getThermostats','revisionList is False.')
+                self.set_ecobee_st(False)
+                return False
             for thermostat in res_data['revisionList']:
                 revisionArray = thermostat.split(':')
                 thermostats['{}'.format(revisionArray[0])] = {
