@@ -1,6 +1,7 @@
   <editor id="CTA_tstatid">
-    <range uom="25" subset="0-10" nls="CT_tstatid" />
+    <range uom="25" subset="0-tstatcnta" nls="CT_tstatid" />
   </editor>
   <editor id="CT_tstatid">
-    <range uom="25" subset="0-tstatcnt" nls="CT_tstatid" />
+    <!-- Would like to use tstatcnt isntead of tstatcnta so only available selections are shown in status, but need all in programs for checking status --> 
+    <range uom="25" subset="0-tstatcnta" nls="CT_tstatid" />
   </editor>

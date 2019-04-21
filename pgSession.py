@@ -58,6 +58,8 @@ class pgSession():
         elif response.status_code == 401:
             # Authentication error
             self.l_error(fname,"Unauthorized: %s: text: %s" % (response.url,response.text) )
+        elif response.status_code == 500:
+            self.l_error(fname,"Server Error: %s: text: %s" % (response.url,response.text) )
         else:
             self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, response.url, response.text) )
             self.l_error(fname,"Check system status: https://status.ecobee.com/")

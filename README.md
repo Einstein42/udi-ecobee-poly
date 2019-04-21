@@ -61,6 +61,12 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.5: JimBo
+  - [Crash due to bad json returned from Ecobee](https://github.com/Einstein42/udi-ecobee-poly/issues/45)
+  - [Not properly recognizing expired token response?](https://github.com/Einstein42/udi-ecobee-poly/issues/44)
+  - [Track Vacation along with Smart Home/Away](https://github.com/Einstein42/udi-ecobee-poly/issues/31)
+    - Properly support Vacation, SmartAway, SmartHome and DemandResponse Events in 'Climate Type'
+  - [Support changing backlightOnIntensity](https://github.com/Einstein42/udi-ecobee-poly/issues/42)
 - 2.1.4: JimBo
   - [Crash due to bad json returned from Ecobee](https://github.com/Einstein42/udi-ecobee-poly/issues/45)
 - 2.1.3: JimBo

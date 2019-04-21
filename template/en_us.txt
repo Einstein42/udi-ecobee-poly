@@ -43,6 +43,7 @@ ST-140E-GV6-NAME = Smart Home-Away
 ST-140E-GV7-NAME = Follow Me
 ST-140E-GV8-NAME = Connected
 ST-140E-GV9-NAME = Weather
+ST-140E-GV10-NAME = Backlight On Intensity
 CMD-140E-GV3-NAME = Climate Type
 CMD-140E-GV4-NAME = Fan On Time
 CMD-140E-GV6-NAME = Smart Home-Away
@@ -50,6 +51,7 @@ CMD-140E-GV7-NAME = Follow Me
 CMD-140E-GV9-NAME = Weather
 CMD-140E-BRT-NAME = Setpoint Up
 CMD-140E-DIM-NAME = Setpoint Down
+CMD-140E-GV10-NAME = Backlight On Intensity
 PGM-CMD-140E-GV3-FMT = //${c}/to ${v}/ /HoldType//, Hold Type ${v}/
 CMDP-I_TSTAT_ECO_SCHED_OPT-HoldType-NAME = Hold Type
 

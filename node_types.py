@@ -78,7 +78,8 @@ driversMap = {
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
     { 'driver': 'GV8', 'value': 0, 'uom': '2' },
-    { 'driver': 'GV9', 'value': 1, 'uom': '25' }
+    { 'driver': 'GV9', 'value': 1, 'uom': '25' },
+    { 'driver': 'GV10', 'value': 10, 'uom': '56' }
   ],
   'EcobeeC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
@@ -97,7 +98,8 @@ driversMap = {
     { 'driver': 'GV6', 'value': 0, 'uom': '25' },
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
     { 'driver': 'GV8', 'value': 0, 'uom': '2' },
-    { 'driver': 'GV9', 'value': 1, 'uom': '25' }
+    { 'driver': 'GV9', 'value': 1, 'uom': '25' },
+    { 'driver': 'GV10', 'value': 10, 'uom': '56' }
 ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
@@ -283,7 +285,7 @@ class Thermostat(polyinterface.Node):
       equipmentStatus = self.tstat['equipmentStatus'].split(',')
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       self.runtime = self.tstat['runtime']
-      LOGGER.debug("{}:_update: runtime={}".format(self.address,json.dumps(self.runtime, sort_keys=True, indent=2)))
+      self.l_debug('_update:',' runtime={}'.format(json.dumps(self.runtime, sort_keys=True, indent=2)))
       clihcs = 0
       for status in equipmentStatus:
         if status in equipmentStatusMap:
@@ -294,27 +296,51 @@ class Thermostat(polyinterface.Node):
       # And the default mode, unless there is an event
       self.clismd = 0
       # Is there an active event?
-      LOGGER.debug("events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
-      # Why did this have   and self.events[0]['running']
-      if len(self.events) > 0:
-        if self.events[0]['type'] == 'hold':
+      self.l_debug('_update','events={}'.format(json.dumps(self.events, sort_keys=True, indent=2)))
+      # Find the first running event
+      event_running = False
+      for event in self.events:
+          if event['running'] and event_running is False:
+              event_running = event
+              self.l_debug('_update','running event: {}'.format(json.dumps(event, sort_keys=True, indent=2)))
+      if event_running is not False:
+        if event_running['type'] == 'hold':
             #LOGGER.debug("Checking: events={}".format(json.dumps(self.events, sort_keys=True, indent=2)))
-            LOGGER.debug("{}:_update: #events={} type={} holdClimateRef={}".
-                         format(self.address,len(self.events),
-                                self.events[0]['type'],
-                                self.events[0]['holdClimateRef']))
+            self.l_debug('_update'," #events={} type={} holdClimateRef={}".
+                         format(len(self.events),
+                                event_running['type'],
+                                event_running['holdClimateRef']))
             # This seems to mean an indefinite hold
             #  "endDate": "2035-01-01", "endTime": "00:00:00",
-            if self.events[0]['endTime'] == '00:00:00':
+            if event_running['endTime'] == '00:00:00':
                 self.clismd = transitionMap['indefinite']
             else:
                 self.clismd = transitionMap['nextTransition']
-            if self.events[0]['holdClimateRef'] != '':
-                climateType = self.events[0]['holdClimateRef']
-        elif self.events[0]['type'] == 'vacation':
-          climateType = 'vacation'
+            if event_running['holdClimateRef'] != '':
+                climateType = event_running['holdClimateRef']
+        elif event_running['type'] == 'vacation':
+            climateType = 'vacation'
+        elif event_running['type'] == 'autoAway':
+            # name will alwys smartAway or smartAway?
+            climateType = event_running['name']
+            if climateType != 'smartAway':
+                self.l_error('_update','autoAway event name is "{}" which is not supported, using smartAway. Please notify developer.'.format(climateType))
+                climateType = 'smartAway'
+        elif event_running['type'] == 'autoHome':
+            # name will alwys smartAway or smartHome?
+            climateType = event_running['name']
+            if climateType != 'smartHome':
+                self.l_error('_update','autoHome event name is "{}" which is not supported, using smartHome. Please notify developer.'.format(climateType))
+                climateType = 'smartHome'
+        elif event_running['type'] == 'demandResponse':
+            # What are thse names?
+            climateType = event_running['name']
+            self.l_error('_update','demandResponse event name is "{}" which is not supported, using demandResponse. Please notify developer.'.format(climateType))
+            climateType = 'demandResponse'
+        else:
+            self.l_error('_update','Unknown event type "{}" name "{}" for event: {}'.format(event_running['type'],event_running['name'],event))
 
-      LOGGER.debug("{}:_update: climateType={}".format(self.address,climateType))
+      self.l_debug('_update','climateType={}'.format(climateType))
       #LOGGER.debug("program['climates']={}".format(self.program['climates']))
       #LOGGER.debug("settings={}".format(json.dumps(self.settings, sort_keys=True, indent=2)))
       #LOGGER.debug("program={}".format(json.dumps(self.program, sort_keys=True, indent=2)))
@@ -324,9 +350,10 @@ class Thermostat(polyinterface.Node):
         clifrs = 1
       else:
         clifrs = 0
-      LOGGER.debug("{}:_update: clifrs={} (equipmentStatus={} or clihcs={}, fanControlRequired={}"
-                   .format(self.address,clifrs,equipmentStatus,clihcs,self.settings['fanControlRequired'])
+      self.l_debug('_update','clifrs={} (equipmentStatus={} or clihcs={}, fanControlRequired={}'
+                   .format(clifrs,equipmentStatus,clihcs,self.settings['fanControlRequired'])
                    )
+      self.l_debug('_update','backlightOnIntensity={}'.format(self.settings['backlightOnIntensity']))
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
@@ -343,10 +370,12 @@ class Thermostat(polyinterface.Node):
         'GV5': self.runtime['desiredDehumidity'],
         'GV6': 1 if self.settings['autoAway'] else 0,
         'GV7': 1 if self.settings['followMeComfort'] else 0,
-        'GV8': 1 if self.runtime['connected'] else 0
+        'GV8': 1 if self.runtime['connected'] else 0,
+        'GV10': self.settings['backlightOnIntensity']
       }
       for key, value in updates.items():
-        self.setDriver(key, value)
+          self.l_debug('_update','setDriver({},{})'.format(key,value))
+          self.setDriver(key, value)
 
       # Update my remote sensors.
       for sensor in self.tstat['remoteSensors']:
@@ -473,6 +502,25 @@ class Thermostat(polyinterface.Node):
             self.setFanState(1)
           else:
             self.setFanState(0)
+
+    def pushBacklight(self,val):
+        self.l_debug('pushBacklight','{}'.format(val))
+        #
+        # Push settings test
+        #
+        params = {
+            "thermostat": {
+                "settings": {
+                    "backlightOnIntensity":val
+                    }
+                }
+        }
+        if self.ecobeePost(params):
+            self.setBacklight(val)
+
+    def setBacklight(self,val):
+      self.setDriver('GV10', val)
+
     #
     # Set Methods for drivers so they are set the same way
     #
@@ -668,6 +716,9 @@ class Thermostat(polyinterface.Node):
         self.do_weather = True if value == 1 else False
         self.check_weather()
 
+    def cmdSetBacklight(self,cmd):
+      self.pushBacklight(cmd['value'])
+
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
@@ -708,6 +759,18 @@ class Thermostat(polyinterface.Node):
         self.setDriver(driver, newTemp)
         self.setDriver('CLISMD',transitionMap[self.getHoldType()])
 
+    def l_info(self, name, string):
+        LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))
+
+    def l_error(self, name, string):
+        LOGGER.error("%s:%s:%s: %s" % (self.id,self.name,name,string))
+
+    def l_warning(self, name, string):
+        LOGGER.warning("%s:%s:%s: %s" % (self.id,self.name,name,string))
+
+    def l_debug(self, name, string):
+        LOGGER.debug("%s:%s:%s:%s: %s" % (self.id,self.address,self.name,name,string))
+
     hint = '0x010c0100'
     commands = { 'QUERY': query,
                 'CLISPH': cmdSetPF,
@@ -721,7 +784,8 @@ class Thermostat(polyinterface.Node):
                 'GV7': cmdFollowMe,
                 'BRT': setPoint,
                 'DIM': setPoint,
-                'GV9': cmdSetDoWeather
+                'GV9': cmdSetDoWeather,
+                'GV10': cmdSetBacklight,
                  }
 
 class Sensor(polyinterface.Node):

@@ -154,9 +154,6 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'error' in res_data:
-            if res_data['error'] == 'authorization_expired':
-                LOGGER.error('_getTokens: Exiting because: {} -> {}'.format(res_data['error'], res_data['error_description']))
-                sys.exit(1)
             LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
             self.set_auth_st(False)
             return False
@@ -213,7 +210,7 @@ class Controller(polyinterface.Controller):
             self.reportCmd("DOF",2)
             self.hb = 0
 
-    def updateThermostats(self):
+    def updateThermostats(self,force=False):
         LOGGER.debug("{}:updateThermostats:".format(self.address))
         thermostats = self.getThermostats()
         if not isinstance(thermostats, dict):
@@ -387,8 +384,10 @@ class Controller(polyinterface.Controller):
         for line in in_h:
             line = re.sub(r'tstatid',r'{0}'.format(id),line)
             line = re.sub(r'tstatcnta',r'{0}'.format(len(climateList)-1),line)
-            # This is minus 2 because we don't allow selecting vacation.
-            line = re.sub(r'tstatcnt',r'{0}'.format(len(climateList)-2),line)
+            # This is minus 3 because we don't allow selecting vacation or smartAway, ...
+            # But not currently using this because we don't have different list for
+            # status and programs?
+            line = re.sub(r'tstatcnt',r'{0}'.format(len(climateList)-5),line)
             editor_h.write(line)
         in_h.close()
         # Then the NLS lines.
@@ -446,11 +445,11 @@ class Controller(polyinterface.Controller):
         thermostats = {}
         res_data = res['data']
         res_code = res['code']
+        if res_data is False:
+            self.l_error('getThermostats','Ecobee returned code {} but no data? ({})'.format(res_code,res_data))
         if 'revisionList' in res_data:
             if res_data['revisionList'] is False:
-                self.l_error('getThermostats','revisionList is False.')
-                self.set_ecobee_st(False)
-                return False
+                self.l_error('getThermostats','Ecobee returned code {} but no revisionList? ({})'.format(res_code,res_data['revisionList']))
             for thermostat in res_data['revisionList']:
                 revisionArray = thermostat.split(':')
                 thermostats['{}'.format(revisionArray[0])] = {
@@ -542,7 +541,7 @@ class Controller(polyinterface.Controller):
 
     def cmd_poll(self,  *args, **kwargs):
         LOGGER.debug("{}:cmd_poll".format(self.address))
-        self.updateThermostats()
+        self.updateThermostats(force=True)
         self.query()
 
     def cmd_query(self, *args, **kwargs):
@@ -568,7 +567,7 @@ class Controller(polyinterface.Controller):
             except:
                 self.l_error('set_debug_mode','getDriver(GV2) failed',True)
             if level is None:
-                level = 30
+                level = 10
         level = int(level)
         self.debug_mode = level
         try:
