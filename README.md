@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.6: JimBo
+  - [Crash due to bad json returned from Ecobee](https://github.com/Einstein42/udi-ecobee-poly/issues/45)
 - 2.1.5: JimBo
   - [Crash due to bad json returned from Ecobee](https://github.com/Einstein42/udi-ecobee-poly/issues/45)
   - [Not properly recognizing expired token response?](https://github.com/Einstein42/udi-ecobee-poly/issues/44)

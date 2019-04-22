@@ -447,6 +447,7 @@ class Controller(polyinterface.Controller):
         res_code = res['code']
         if res_data is False:
             self.l_error('getThermostats','Ecobee returned code {} but no data? ({})'.format(res_code,res_data))
+            return thermostats
         if 'revisionList' in res_data:
             if res_data['revisionList'] is False:
                 self.l_error('getThermostats','Ecobee returned code {} but no revisionList? ({})'.format(res_code,res_data['revisionList']))
