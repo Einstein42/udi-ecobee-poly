@@ -533,7 +533,7 @@ class Thermostat(polyinterface.Node):
         params = {
             "thermostat": {
                 "settings": {
-                'backlightOnIntensity':val
+                'backlightSleepIntensity':val
                     }
                 }
         }
