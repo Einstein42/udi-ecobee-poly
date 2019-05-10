@@ -2,7 +2,7 @@
 Work on makeing this a generic session handler for all Polyglot's
 """
 
-import requests,json
+import requests,json,warnings
 
 class pgSession():
 
@@ -29,6 +29,8 @@ class pgSession():
         if auth is not None:
             headers['Authorization'] = auth
         self.l_debug('get', 1, "headers={}".format(headers))
+        # Some are getting unclosed socket warnings due to garbage collection?? no idea why, so just ignore them since we dont' care
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<socket.socket.*>")
         #self.session.headers.update(headers)
         try:
             response = self.session.get(
@@ -85,6 +87,8 @@ class pgSession():
             headers['Authorization'] = auth
         self.l_debug('post', 1, "headers={}".format(headers))
         #self.session.headers.update(headers)
+        # Some are getting unclosed socket warnings due to garbage collection?? no idea why, so just ignore them since we dont' care
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<socket.socket.*>")
         try:
             response = self.session.post(
                 url,
