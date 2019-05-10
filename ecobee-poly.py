@@ -549,6 +549,10 @@ class Controller(polyinterface.Controller):
         LOGGER.debug("{}:cmd_query".format(self.address))
         self.query()
 
+    def cmd_upload_profile(self, *args, **kwargs):
+        LOGGER.debug("{}:cmd_upload_profile".format(self.address))
+        self.poly.installprofile()
+
     def cmd_debug_mode(self,command):
         val = int(command.get('value'))
         self.l_info("cmd_debug_mode",val)
@@ -624,6 +628,7 @@ class Controller(polyinterface.Controller):
         'QUERY': cmd_query,
         'POLL': cmd_poll,
         'DEBUG': cmd_debug_mode,
+        'UPLOAD_PROFILE': cmd_upload_profile,
     }
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},

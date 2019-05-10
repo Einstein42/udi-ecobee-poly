@@ -4,7 +4,7 @@
     <sts>
       <st id="ST" editor="BOOL" />
       <st id="GV1" editor="BOOL" />
-      <st id="GV3" editor="BOOL" />      
+      <st id="GV3" editor="BOOL" />
       <st id="GV2" editor="I_DEBUG" />
     </sts>
     <cmds>
@@ -17,6 +17,7 @@
           <p id="" editor="I_DEBUG" init="GV2" />
         </cmd>
         <cmd id="DISCOVER" />
+        <cmd id="UPLOAD_PROFILE" />
         <cmd id="POLL" />
         <cmd id="QUERY" />
       </accepts>

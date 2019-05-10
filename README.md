@@ -61,6 +61,12 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.9: JimBo 05/05/2019
+  - Fixed backlightSleepIntensity
+- 2.1.8: JimBo 04/23/2019
+  - Add backlightSleepIntensity
+- 2.1.7: JimBo 04/22/2019
+  - Add Upload Profile to Controller, should never be needed, but just in case.
 - 2.1.6: JimBo
   - [Crash due to bad json returned from Ecobee](https://github.com/Einstein42/udi-ecobee-poly/issues/45)
 - 2.1.5: JimBo

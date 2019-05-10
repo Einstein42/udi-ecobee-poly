@@ -17,7 +17,6 @@
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="BOOL" />
       <st id="GV9" editor="I_ENABLED" />
-      <st id="GV10" editor="I_BACKLIGHT" />
     </sts>
     <cmds>
       <accepts>
@@ -62,6 +61,9 @@
         <cmd id="GV10">
           <p id="" editor="I_BACKLIGHT" init="GV10" />
         </cmd>
+        <cmd id="GV11">
+          <p id="" editor="I_BACKLIGHT" init="GV11" />
+        </cmd>
         <cmd id="QUERY" />
      </accepts>
       </cmds>
@@ -86,7 +88,6 @@
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="BOOL" />
       <st id="GV9" editor="I_ENABLED" />
-      <st id="GV10" editor="I_BACKLIGHT" />
     </sts>
     <cmds>
       <accepts>
@@ -130,6 +131,9 @@
         </cmd>
         <cmd id="GV10">
           <p id="" editor="I_BACKLIGHT" init="GV10" />
+        </cmd>
+        <cmd id="GV11">
+          <p id="" editor="I_BACKLIGHT" init="GV11" />
         </cmd>
         <cmd id="QUERY" />
       </accepts>

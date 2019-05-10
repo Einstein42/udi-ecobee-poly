@@ -79,7 +79,8 @@ driversMap = {
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
     { 'driver': 'GV8', 'value': 0, 'uom': '2' },
     { 'driver': 'GV9', 'value': 1, 'uom': '25' },
-    { 'driver': 'GV10', 'value': 10, 'uom': '56' }
+    { 'driver': 'GV10', 'value': 10, 'uom': '56' },
+    { 'driver': 'GV11', 'value': 10, 'uom': '56' }
   ],
   'EcobeeC': [
     { 'driver': 'ST', 'value': 0, 'uom': '4' },
@@ -99,7 +100,8 @@ driversMap = {
     { 'driver': 'GV7', 'value': 0, 'uom': '25' },
     { 'driver': 'GV8', 'value': 0, 'uom': '2' },
     { 'driver': 'GV9', 'value': 1, 'uom': '25' },
-    { 'driver': 'GV10', 'value': 10, 'uom': '56' }
+    { 'driver': 'GV10', 'value': 10, 'uom': '56' },
+    { 'driver': 'GV11', 'value': 10, 'uom': '56' }
 ],
   'EcobeeSensorF': [
     { 'driver': 'ST', 'value': 0, 'uom': '17' },
@@ -353,7 +355,8 @@ class Thermostat(polyinterface.Node):
       self.l_debug('_update','clifrs={} (equipmentStatus={} or clihcs={}, fanControlRequired={}'
                    .format(clifrs,equipmentStatus,clihcs,self.settings['fanControlRequired'])
                    )
-      self.l_debug('_update','backlightOnIntensity={}'.format(self.settings['backlightOnIntensity']))
+      self.l_debug('_update','backlightOnIntensity={} backlightSleepIntensisty={}'.
+                    format(self.settings['backlightOnIntensity'],self.settings['backlightSleepIntensity']))
       updates = {
         'ST': self.tempToDriver(self.runtime['actualTemperature'],True,False),
         'CLISPH': self.tempToDriver(self.runtime['desiredHeat'],True),
@@ -371,7 +374,8 @@ class Thermostat(polyinterface.Node):
         'GV6': 1 if self.settings['autoAway'] else 0,
         'GV7': 1 if self.settings['followMeComfort'] else 0,
         'GV8': 1 if self.runtime['connected'] else 0,
-        'GV10': self.settings['backlightOnIntensity']
+        'GV10': self.settings['backlightOnIntensity'],
+        'GV11': self.settings['backlightSleepIntensity']
       }
       for key, value in updates.items():
           self.l_debug('_update','setDriver({},{})'.format(key,value))
@@ -520,6 +524,24 @@ class Thermostat(polyinterface.Node):
 
     def setBacklight(self,val):
       self.setDriver('GV10', val)
+
+    def pushBacklightSleep(self,val):
+        self.l_debug('pushBacklightSleep','{}'.format(val))
+        #
+        # Push settings test
+        #
+        params = {
+            "thermostat": {
+                "settings": {
+                'backlightSleepIntensity':val
+                    }
+                }
+        }
+        if self.ecobeePost(params):
+            self.setBacklightSleep(val)
+
+    def setBacklightSleep(self,val):
+      self.setDriver('GV11', val)
 
     #
     # Set Methods for drivers so they are set the same way
@@ -719,6 +741,9 @@ class Thermostat(polyinterface.Node):
     def cmdSetBacklight(self,cmd):
       self.pushBacklight(cmd['value'])
 
+    def cmdSetBacklightSleep(self,cmd):
+      self.pushBacklightSleep(cmd['value'])
+
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
@@ -786,6 +811,7 @@ class Thermostat(polyinterface.Node):
                 'DIM': setPoint,
                 'GV9': cmdSetDoWeather,
                 'GV10': cmdSetBacklight,
+                'GV11': cmdSetBacklightSleep,
                  }
 
 class Sensor(polyinterface.Node):
