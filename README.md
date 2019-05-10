@@ -61,6 +61,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.10: JimBo 05/09/2019
+  - Ignore socket not closed warnings (hopefully for @larryllix)
 - 2.1.9: JimBo 05/05/2019
   - Fixed backlightSleepIntensity
 - 2.1.8: JimBo 04/23/2019
