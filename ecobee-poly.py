@@ -136,8 +136,8 @@ class Controller(polyinterface.Controller):
                 return True
         else:
             LOGGER.info('Refresh Token not Found...')
-            self.refreshingTokens = False
-            return False
+        self.refreshingTokens = False
+        return False
 
     def _getTokens(self, pinData):
         LOGGER.debug('PIN: {} found. Attempting to get tokens...'.format(pinData['ecobeePin']))
@@ -423,9 +423,22 @@ class Controller(polyinterface.Controller):
             # All calls before with have auth token, don't reformat with json
             return self.session.get(path,data)
         else:
-            return self.session.get(path,{ 'json': json.dumps(data) },
+            res = self.session.get(path,{ 'json': json.dumps(data) },
                                     auth='{} {}'.format(self.token_type, self.auth_token)
                                     )
+            if res is False:
+                return res
+            if res['data'] is False:
+                return False
+            self.l_debug(session_get, 0, 'res={}'.format(res))
+            if int(res['data']['status']['code']) == 14:
+                self.l_error('session_get', 'Token has expired, will refresh')
+                # TODO: Should this be a loop instead ?
+                if self._getRefresh() is True:
+                    res = self.session.get(path,{ 'json': json.dumps(data) },
+                                     auth='{} {}'.format(self.token_type, self.auth_token)
+            return res
+
     def getThermostats(self):
         if not self._checkTokens():
             LOGGER.debug('getThermostat failed. Couldn\'t get tokens.')

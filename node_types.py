@@ -269,11 +269,11 @@ class Thermostat(polyinterface.Node):
         return 'EcobeeSensor{}{}'.format(HorN,CorF)
 
     def update(self, revData, fullData):
-      LOGGER.debug("{}:update: ".format(self.address))
+      self.l_debug('update','')
       #LOGGER.debug("fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
       #LOGGER.debug("revData={}".format(json.dumps(revData, sort_keys=True, indent=2)))
       if not 'thermostatList' in fullData:
-        LOGGER.error("No thermostatList in fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
+        self.l_error('update',"No thermostatList in fullData={}".format(json.dumps(fullData, sort_keys=True, indent=2)))
         return False
       self.revData = revData
       self.fullData = fullData
