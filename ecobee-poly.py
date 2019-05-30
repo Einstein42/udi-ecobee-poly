@@ -436,7 +436,7 @@ class Controller(polyinterface.Controller):
                 # TODO: Should this be a loop instead ?
                 if self._getRefresh() is True:
                     res = self.session.get(path,{ 'json': json.dumps(data) },
-                                     auth='{} {}'.format(self.token_type, self.auth_token)
+                                     auth='{} {}'.format(self.token_type, self.auth_token))
             return res
 
     def getThermostats(self):
