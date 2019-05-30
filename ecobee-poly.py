@@ -430,7 +430,7 @@ class Controller(polyinterface.Controller):
                 return res
             if res['data'] is False:
                 return False
-            self.l_debug(session_get, 0, 'res={}'.format(res))
+            self.l_debug('session_get', 0, 'res={}'.format(res))
             if int(res['data']['status']['code']) == 14:
                 self.l_error('session_get', 'Token has expired, will refresh')
                 # TODO: Should this be a loop instead ?
