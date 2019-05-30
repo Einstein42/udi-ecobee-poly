@@ -72,16 +72,18 @@ class Controller(polyinterface.Controller):
             if 'expires' in self.tokenData:
                 ts_exp = datetime.datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
                 if ts_now > ts_exp:
-                    LOGGER.info('Tokens have expired. Refreshing...')
+                    self.l_info('_checkTokens','Tokens have expired. Refreshing...')
                     self.set_auth_st(False)
                     return self._getRefresh()
                 else:
-                    LOGGER.debug('Tokens valid until: {}'.format(self.tokenData['expires']))
+                    self.l_debug('_checkTokens','Tokens valid until: {}'.format(self.tokenData['expires']))
                     self.set_auth_st(True)
                     return True
+            else:
+                self.l_error('_checkTokens', 'No expires in tokenData:{}'.format(self.tokenData))
         else:
             self.set_auth_st(False)
-            LOGGER.error('tokenData or auth_token not available')
+            self.l_error('_checkTokens''tokenData or auth_token not available')
             # self.saveCustomData({})
             # this._getPin()
             return False
