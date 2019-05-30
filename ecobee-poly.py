@@ -76,14 +76,14 @@ class Controller(polyinterface.Controller):
                     self.set_auth_st(False)
                     return self._getRefresh()
                 else:
-                    self.l_debug('_checkTokens','Tokens valid until: {}'.format(self.tokenData['expires']))
+                    self.l_debug('_checkTokens',0,'Tokens valid until: {}'.format(self.tokenData['expires']))
                     self.set_auth_st(True)
                     return True
             else:
                 self.l_error('_checkTokens', 'No expires in tokenData:{}'.format(self.tokenData))
         else:
             self.set_auth_st(False)
-            self.l_error('_checkTokens''tokenData or auth_token not available')
+            self.l_error('_checkTokens','tokenData or auth_token not available')
             # self.saveCustomData({})
             # this._getPin()
             return False
