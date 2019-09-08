@@ -61,6 +61,10 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.12: JimBo 09/08/2019
+  - Added simple fix for [ClimateType of 'wakeup' not found, halts further processing](https://github.com/Einstein42/udi-ecobee-poly/issues/46)
+  - Proper fix is defered for later [climateList should be pulled from API](https://github.com/Einstein42/udi-ecobee-poly/issues/47)
+  - New profile will be generated on restart, make sure to close and re-open admin console
 - 2.1.11: JimBo 06/19/2019
   - Better trapping for expired tokens
 - 2.1.10: JimBo 05/09/2019

@@ -12,6 +12,11 @@ def ltom(list):
         i += 1
     return map
 
+# Wake up is not on all thermostats, so should only be included when supported
+# https://www.ecobee.com/home/developer/api/documentation/v1/objects/Climate.shtml
+# Should get this list from the thermostat
+#  https://www.ecobee.com/home/developer/api/documentation/v1/objects/Program.shtml
+# And add unknown since some code relies on that name existing.
 climateList = [
     'away',
     'home',
@@ -27,6 +32,8 @@ climateList = [
     'smartAway',
     'smartHome',
     'demandResponse',
+    'unknown',
+    'wakeup',
   ]
 climateMap = ltom(climateList)
 
