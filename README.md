@@ -54,7 +54,8 @@ When a new release is published, it should be released to the polyglot web store
 ### Manual Upgrade
 
 If you already have it installed and want the update before it's in the store.
-1. cd ~/.polyglot/nodeservers/Ecobee
+1. Polisy: cd /var/spolyglot/nodeservers/Ecobee
+1. Others: cd ~/.polyglot/nodeservers/Ecobee
 1. git pull
 1. Go to the polyglot dashboard, select Details for the Ecobee Nodeserver
 1. Click Restart
