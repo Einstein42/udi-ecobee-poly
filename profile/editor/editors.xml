@@ -79,7 +79,7 @@
     <range uom="25" subset="0,1" nls="EN_LOC" />
   </editor>
   <editor id="I_TSTAT_MODE">
-    <range uom="67" subset="0-3" />
+    <range uom="67" subset="0-4" />
   </editor>
   <editor id="I_TSTAT_OCC">
     <range uom="25" subset="0-2" nls="EN_OCC" />

@@ -61,6 +61,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.14: JimBo 02/02/2020
+  - Add Support for auxHeat https://github.com/Einstein42/udi-ecobee-poly/issues/50
+  - profile update required, must restart AC after retarting Nodeserver
 - 2.1.13: JimBo 09/09/2019
   - Fix issue with new installs where profile/nls didn't exist on initial start
 - 2.1.12: JimBo 09/08/2019

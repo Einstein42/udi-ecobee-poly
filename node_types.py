@@ -14,7 +14,8 @@ modeMap = {
   'off': 0,
   'heat': 1,
   'cool': 2,
-  'auto': 3
+  'auto': 3,
+  'auxHeatOnly': 4
 }
 
 equipmentStatusMap = {

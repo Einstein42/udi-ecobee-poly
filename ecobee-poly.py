@@ -344,7 +344,7 @@ class Controller(polyinterface.Controller):
                 update_profile = True
         else:
             update_profile = True
-        LOGGER.info('check_profile: update_profile={}'.format(update_profile))
+        LOGGER.warning('check_profile: update_profile={}'.format(update_profile))
         if update_profile:
             self.write_profile(climates)
             self.poly.installprofile()
