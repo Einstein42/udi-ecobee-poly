@@ -112,7 +112,7 @@ class Controller(polyinterface.Controller):
                     'grant_type':    'refresh_token',
                     'client_id':     self.serverdata['api_key'],
                     'refresh_token': self.tokenData['refresh_token']
-                    })
+                })
             if res is False:
                 self.refreshingTokens = False
                 self.set_ecobee_st(False)
@@ -120,22 +120,25 @@ class Controller(polyinterface.Controller):
             self.set_ecobee_st(True)
             res_data = res['data']
             res_code = res['code']
-            if 'error' in res_data:
-                LOGGER.error('_getRefresh: Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
-                self.auth_token = None
-                self.refreshingTokens = False
-                if res_data['error'] == 'invalid_grant':
-                    # Need to re-auth!
-                    LOGGER.error('Found {}, need to re-authorize'.format(res_data['error']))
-                    cust_data = deepcopy(self.polyConfig['customData'])
-                    del cust_data['tokenData']
-                    self.saveCustomData(cust_data)
-                    self._getPin()
-                return False
-            elif 'access_token' in res_data:
-                self._saveTokens(res_data)
-                self.refreshingTokens = False
-                return True
+            if res_data is False:
+                LOGGER.error('_getRefresh: No data returned.')
+            else:
+                if 'error' in res_data:
+                    LOGGER.error('_getRefresh: Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
+                    self.auth_token = None
+                    self.refreshingTokens = False
+                    if res_data['error'] == 'invalid_grant':
+                        # Need to re-auth!
+                        LOGGER.error('Found {}, need to re-authorize'.format(res_data['error']))
+                        cust_data = deepcopy(self.polyConfig['customData'])
+                        del cust_data['tokenData']
+                        self.saveCustomData(cust_data)
+                        self._getPin()
+                    return False
+                elif 'access_token' in res_data:
+                    self._saveTokens(res_data)
+                    self.refreshingTokens = False
+                    return True
         else:
             LOGGER.info('Refresh Token not Found...')
         self.refreshingTokens = False

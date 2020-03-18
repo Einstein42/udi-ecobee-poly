@@ -51,6 +51,7 @@ class pgSession():
         self.l_debug(fname,0,' Got: code=%s' % (response.status_code))
         self.l_debug(fname,2,'      text=%s' % (response.text))
         json_data = False
+        st = False
         if response.status_code == 200:
             self.l_debug(fname,0,' All good!')
             st = True
@@ -63,6 +64,8 @@ class pgSession():
             self.l_error(fname,"Unauthorized: %s: text: %s" % (response.url,response.text) )
         elif response.status_code == 500:
             self.l_error(fname,"Server Error: %s %s: text: %s" % (response.status_code,response.url,response.text) )
+        elif response.status_code == 522:
+            self.l_error(fname,"Timeout Error: %s %s: text: %s" % (response.status_code,response.url,response.text) )
         else:
             self.l_error(fname,"Unknown response %s: %s %s" % (response.status_code, response.url, response.text) )
             self.l_error(fname,"Check system status: https://status.ecobee.com/")
@@ -70,7 +73,9 @@ class pgSession():
         try:
             json_data = json.loads(response.text)
         except (Exception) as err:
-            self.l_error(fname,'Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
+            # Only complain about this error if we didn't have an error above
+            if st:
+                self.l_error(fname,'Failed to convert to json {0}: {1}'.format(response.text,err), exc_info=True)
             json_data = False
         return { 'code': response.status_code, 'data': json_data }
 
