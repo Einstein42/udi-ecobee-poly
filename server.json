@@ -10,11 +10,12 @@
     "shortPoll": "60",
     "longPoll": "180",
     "api_key": "19j5o2QheoDIYeuwPGOCWV80hI07lbDC",
+    "testMode": false,
     "credits": [
         {
             "title": "ecobee: Polyglot NodeServer for Ecobee",
             "author": "James Milne (Einstein.42)",
-            "version": "2.1.15",
+            "version": "2.1.16",
             "date": "July 25, 2018",
             "source": "https://github.com/Einstein42/udi-ecobee-poly",
             "license": "https://github.com/Einstein42/udi-ecobee-poly/master/LICENSE"
