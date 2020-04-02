@@ -62,7 +62,7 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
-- 2.1.16: JimBo 03/17/2016
+- 2.1.16: JimBo 02/17/2020
   - Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/52
 - 2.1.15: JimBo 02/06/2020
   - Add fix for https://github.com/Einstein42/udi-ecobee-poly/issues/51 not fully tested since I can't repeat, but should trap the error.
