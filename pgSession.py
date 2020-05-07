@@ -19,6 +19,10 @@ class pgSession():
             self.port_s = ':{}'.format(port)
         self.session = requests.Session()
 
+    def close(self):
+        self.session.close()
+        return
+        
     def get(self,path,payload,auth=None):
         url = "https://{}{}/{}".format(self.host,self.port_s,path)
         self.l_debug('get',0,"Sending: url={0} payload={1}".format(url,payload))
