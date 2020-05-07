@@ -62,6 +62,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.18: JimBo 05/07/20202
+  - When refresh_token goes missing, force a reAuth.  No idea how that happens, but we can track it now.
 - 2.1.17: JimBo 05/07/2020
   - Keep track of old tokenData when it becomes invalid, along with the reason in the DB.
 - 2.1.16: JimBo 03/17/2020

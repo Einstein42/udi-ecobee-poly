@@ -130,7 +130,7 @@ class Controller(polyinterface.Controller):
                 if 'error' in res_data:
                     LOGGER.error('_getRefresh: Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
                     self.refreshingTokens = False
-                    # 2.2.17: JimBo: This can only happen if our refresh_token is bad, so we need to force a re-auth
+                    # JimBo: This can only happen if our refresh_token is bad, so we need to force a re-auth
                     if res_data['error'] == 'invalid_grant':
                         self._reAuth('_getRefresh {}'.format(res_data['error']))
                     return False
@@ -139,7 +139,7 @@ class Controller(polyinterface.Controller):
                     self.refreshingTokens = False
                     return True
         else:
-            LOGGER.info('Refresh Token not Found...')
+            self._reAuth('_getRefresh: refresh_token not Found in tokenData={}'.format(self.tokenData))
         self.refreshingTokens = False
         return False
 
@@ -156,7 +156,6 @@ class Controller(polyinterface.Controller):
         else:
             LOGGER.error('No tokenData in customData?')
         self.saveCustomData(cust_data)
-        LOGGER.warning('Starting new session to Ecobee servers...')
         self.auth_token = None
         self._getPin()
 
@@ -470,7 +469,7 @@ class Controller(polyinterface.Controller):
                     res = self.session.get(path,{ 'json': json.dumps(data) },
                                      auth='{} {}'.format(self.token_type, self.auth_token))
             elif res_st_code == 16:
-                self._reAuth("session_get: Token dauthorized by user: {}".format(res))
+                self._reAuth("session_get: Token deauthorized by user: {}".format(res))
                 return False
 
     def getThermostats(self):
