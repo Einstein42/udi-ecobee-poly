@@ -554,8 +554,8 @@ class Controller(polyinterface.Controller):
                            )
         self.l_debug('getThermostatSelection',0,'done'.format(id))
         self.l_debug('getThermostatSelection',1,'data={}'.format(res))
-        if res is False:
-            return res
+        if res is False or res is None:
+            return False
         return res['data']
 
     def ecobeePost(self, thermostatId, postData = {}):
