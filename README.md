@@ -62,6 +62,11 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.20: JimBo 06/03/2020
+  - Print msg to log when requesting a pin in case it doesn't show up in Polyglot UI
+  - Print customData on restart
+  - Store current nodeserver version in customData for reference
+  - Increase waitingOnPin sleep time to 30 and increment by 30 on each loop up to 180
 - 2.1.19: JimBo 05/26/2020
   - Fix another crash when Ecobee servers are not responding
 - 2.1.18: JimBo 05/07/20202

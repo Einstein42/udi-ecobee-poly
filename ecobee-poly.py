@@ -45,9 +45,22 @@ class Controller(polyinterface.Controller):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         self.heartbeat()
-        #LOGGER.debug(self.polyConfig['customData'])
+        cust_data = self.polyConfig['customData']
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
+        nsv = 'nodeserver_version'
+        ud  = False
+        if not nsv in cust_data:
+            LOGGER.info("Adding {}={} to customData".format(nsv,self.serverdata['version']))
+            cust_data[nsv] = self.serverdata['version']
+            ud = True
+        elif cust_data[nsv] != self.serverdata['version']:
+            LOGGER.info("Update {} from {} to {} in customData".format(nsv,cust_data[nsv],self.serverdata['version']))
+            cust_data[nsv] = self.serverdata['version']
+            ud = True
+        if ud:
+            self.saveCustomData(cust_data)
+        LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
         self.removeNoticesAll()
         self.set_debug_mode()
         self.get_session()
@@ -154,7 +167,7 @@ class Controller(polyinterface.Controller):
             cust_data[tk]['reason'] = reason
             del cust_data['tokenData']
         else:
-            LOGGER.error('No tokenData in customData?')
+            LOGGER.error('No tokenData in customData: {}'.format(cust_data))
         self.saveCustomData(cust_data)
         self.auth_token = None
         self._getPin()
@@ -201,16 +214,22 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'ecobeePin' in res_data:
-            self.addNotice({'myNotice': 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])})
+            msg = 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            LOGGER.info('_getPin: {}'.format(msg))
+            self.addNotice({'myNotice': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
             # self.saveCustomData(cust_data)
             waitingOnPin = True
+            stime = 30
             while waitingOnPin:
-                time.sleep(15)
+                time.sleep(stime)
                 if self._getTokens(res_data):
                     waitingOnPin = False
                     self.discover()
+                else:
+                    if stime < 180:
+                        stime += 30
 
     def shortPoll(self):
         pass
