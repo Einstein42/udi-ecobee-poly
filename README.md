@@ -62,6 +62,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.21: JimBo 06/04/2020
+  - Fix crash for another authentication issue.
 - 2.1.20: JimBo 06/03/2020
   - Print msg to log when requesting a pin in case it doesn't show up in Polyglot UI
   - Print customData on restart

@@ -485,11 +485,11 @@ class Controller(polyinterface.Controller):
                 self.l_error('session_get', 'Token has expired, will refresh')
                 # TODO: Should this be a loop instead ?
                 if self._getRefresh() is True:
-                    res = self.session.get(path,{ 'json': json.dumps(data) },
+                    return self.session.get(path,{ 'json': json.dumps(data) },
                                      auth='{} {}'.format(self.token_type, self.auth_token))
             elif res_st_code == 16:
                 self._reAuth("session_get: Token deauthorized by user: {}".format(res))
-                return False
+            return False
 
     def getThermostats(self):
         if not self._checkTokens():
