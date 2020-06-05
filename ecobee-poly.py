@@ -87,12 +87,13 @@ class Controller(polyinterface.Controller):
             ts_now = datetime.datetime.now()
             if 'expires' in self.tokenData:
                 ts_exp = datetime.datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
-                if ts_now > ts_exp:
-                    self.l_info('_checkTokens','Tokens have expired. Refreshing...')
+                exp_d  = ts_exp - ts_now
+                if exp_d.seconds < int(self.polyConfig['longPoll']) * 2:
+                    self.l_info('_checkTokens','Tokens wil expire in {} seconds, so refreshing now...'.format(exp_d.seconds))
                     self.set_auth_st(False)
                     return self._getRefresh()
                 else:
-                    self.l_debug('_checkTokens',0,'Tokens valid until: {}'.format(self.tokenData['expires']))
+                    self.l_debug('_checkTokens',0,'Tokens valid until: {} ({} seconds, longPoll={})'.format(self.tokenData['expires'],exp_d.seconds,int(self.polyConfig['longPoll'])))
                     self.set_auth_st(True)
                     return True
             else:
@@ -160,13 +161,7 @@ class Controller(polyinterface.Controller):
         # Need to re-auth!
         LOGGER.error('_reAuth because: {}'.format(reason))
         cust_data = deepcopy(self.polyConfig['customData'])
-        if 'tokenData' in cust_data:
-            tk = 'tokenData' + datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
-            LOGGER.info('Saving current tokenData in {}'.format(tk))
-            cust_data[tk] = cust_data['tokenData']
-            cust_data[tk]['reason'] = reason
-            del cust_data['tokenData']
-        else:
+        if not 'tokenData' in cust_data:
             LOGGER.error('No tokenData in customData: {}'.format(cust_data))
         self.saveCustomData(cust_data)
         self.auth_token = None

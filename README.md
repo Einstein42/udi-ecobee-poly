@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.22: JimBo 06/05/2020
+  - Refresh token before it expires,
+  - Don't save tokenData in customData because it will increase PGC cost.
 - 2.1.21: JimBo 06/04/2020
   - Fix crash for another authentication issue.
 - 2.1.20: JimBo 06/03/2020
