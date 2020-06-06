@@ -89,8 +89,7 @@ class Controller(polyinterface.Controller):
                 ts_exp = datetime.datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
                 exp_d  = ts_exp - ts_now
                 if exp_d.seconds < int(self.polyConfig['longPoll']) * 2:
-                    self.l_info('_checkTokens','Tokens wil expire in {} seconds, so refreshing now...'.format(exp_d.seconds))
-                    self.set_auth_st(False)
+                    self.l_info('_checkTokens','Tokens will expire in {} seconds, so refreshing now...'.format(exp_d.seconds))
                     return self._getRefresh()
                 else:
                     self.l_debug('_checkTokens',0,'Tokens valid until: {} ({} seconds, longPoll={})'.format(self.tokenData['expires'],exp_d.seconds,int(self.polyConfig['longPoll'])))
