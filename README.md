@@ -62,6 +62,26 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.23: JImBo 06/06/2020
+  - Fix to not set auth status False when starting refresh
+- 2.1.22: JimBo 06/05/2020
+  - Refresh token before it expires,
+  - Don't save tokenData in customData because it will increase PGC cost.
+- 2.1.21: JimBo 06/04/2020
+  - Fix crash for another authentication issue.
+- 2.1.20: JimBo 06/03/2020
+  - Print msg to log when requesting a pin in case it doesn't show up in Polyglot UI
+  - Print customData on restart
+  - Store current nodeserver version in customData for reference
+  - Increase waitingOnPin sleep time to 30 and increment by 30 on each loop up to 180
+- 2.1.19: JimBo 05/26/2020
+  - Fix another crash when Ecobee servers are not responding
+- 2.1.18: JimBo 05/07/20202
+  - When refresh_token goes missing, force a reAuth.  No idea how that happens, but we can track it now.
+- 2.1.17: JimBo 05/07/2020
+  - Keep track of old tokenData when it becomes invalid, along with the reason in the DB.
+- 2.1.16: JimBo 03/17/2020
+  - Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/52
 - 2.1.15: JimBo 02/06/2020
   - Add fix for https://github.com/Einstein42/udi-ecobee-poly/issues/51 not fully tested since I can't repeat, but should trap the error.
 - 2.1.14: JimBo 02/02/2020
