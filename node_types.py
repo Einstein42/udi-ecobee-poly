@@ -884,7 +884,7 @@ class Weather(polyinterface.Node):
       try:
         currentWeather = weather['forecasts'][self.forecastNum]
       except IndexError:
-        LOGGER.error("Weather can not update no weather['forcasts'][{}] in weather={}".format(self.forecastNum,weather))
+        LOGGER.error("Weather can not update no weather['forecasts'][{}] in weather={}".format(self.forecastNum,weather))
         return
       windSpeed = 0
       if self.type == 'weather' and currentWeather['windSpeed'] == 0 and weather['forecasts'][5]['windSpeed'] > 0:
