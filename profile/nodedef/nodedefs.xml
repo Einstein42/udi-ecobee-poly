@@ -20,6 +20,8 @@
         <cmd id="UPLOAD_PROFILE" />
         <cmd id="POLL" />
         <cmd id="QUERY" />
+        <!-- Below is only for testing by developer -->
+        <!-- <cmd id="TEST" /> -->
       </accepts>
     </cmds>
   </nodeDef>

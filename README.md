@@ -62,6 +62,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.24: JimBo 08/30/2020
+  - Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
 - 2.1.23: JImBo 06/06/2020
   - Fix to not set auth status False when starting refresh
 - 2.1.22: JimBo 06/05/2020

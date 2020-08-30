@@ -12,7 +12,7 @@ import json
 import time
 import http.client
 import urllib.parse
-import datetime
+from datetime import datetime
 import os
 import os.path
 import re
@@ -31,9 +31,8 @@ class Controller(polyinterface.Controller):
     def __init__(self, polyglot):
         super().__init__(polyglot)
         self.name = 'Ecobee Controller'
-        self.auth_token = None
-        self.token_type = None
         self.tokenData = {}
+        self.msgi = {}
         self.in_discover = False
         self.discover_st = False
         self.refreshingTokens = False
@@ -45,11 +44,11 @@ class Controller(polyinterface.Controller):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         self.heartbeat()
-        cust_data = self.polyConfig['customData']
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
         nsv = 'nodeserver_version'
         ud  = False
+        cust_data = self.polyConfig['customData']
         if not nsv in cust_data:
             LOGGER.info("Adding {}={} to customData".format(nsv,self.serverdata['version']))
             cust_data[nsv] = self.serverdata['version']
@@ -58,6 +57,14 @@ class Controller(polyinterface.Controller):
             LOGGER.info("Update {} from {} to {} in customData".format(nsv,cust_data[nsv],self.serverdata['version']))
             cust_data[nsv] = self.serverdata['version']
             ud = True
+        # Delete the saved token data we were doing for a while
+        # For PG3 we can start doing it again, but not in PG2 since it costs $$
+        # Can't iterate over keys, since the keys get removed, causes python crash
+        keys = list(cust_data.keys())
+        for key in keys:
+            if re.match('tokenData2020.*',key):
+                LOGGER.info("Deleting old customData key {}".format(key))
+                del cust_data[key]
         if ud:
             self.saveCustomData(cust_data)
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
@@ -68,8 +75,6 @@ class Controller(polyinterface.Controller):
         #self.set_ecobee_st(False) Causes it to always stay false.
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
-            self.auth_token = self.tokenData['access_token']
-            self.token_type = self.tokenData['token_type']
             if self._checkTokens():
                 self.discover()
         else:
@@ -81,48 +86,113 @@ class Controller(polyinterface.Controller):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
 
     def _checkTokens(self):
-        while self.refreshingTokens:
-            time.sleep(.1)
+        if self.refreshingTokens:
+            LOGGER.error('Waiting for token refresh to complete...')
+            while self.refreshingTokens:
+                time.sleep(.1)
         if 'access_token' in self.tokenData:
-            ts_now = datetime.datetime.now()
+            ts_now = datetime.now()
             if 'expires' in self.tokenData:
-                ts_exp = datetime.datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
+                ts_exp = datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
                 exp_d  = ts_exp - ts_now
-                if exp_d.seconds < int(self.polyConfig['longPoll']) * 2:
-                    self.l_info('_checkTokens','Tokens will expire in {} seconds, so refreshing now...'.format(exp_d.seconds))
+                if exp_d.total_seconds() < int(self.polyConfig['longPoll']) * 2:
+                    self.l_info('_checkTokens','Tokens {} expires {} will expire in {} seconds, so refreshing now...'.format(self.tokenData['refresh_token'],self.tokenData['expires'],exp_d.total_seconds()))
                     return self._getRefresh()
                 else:
-                    self.l_debug('_checkTokens',0,'Tokens valid until: {} ({} seconds, longPoll={})'.format(self.tokenData['expires'],exp_d.seconds,int(self.polyConfig['longPoll'])))
+                    # Only print this ones, then once a minute at most...
+                    sd = True
+                    if 'ctdt' in self.msgi:
+                        md = datetime.now() - self.msgi['ctdt']
+                        if md.total_seconds() < 60:
+                            sd = False
+                    if sd:
+                        self.l_debug('_checkTokens',0,'Tokens valid until: {} ({} seconds, longPoll={})'.format(self.tokenData['expires'],exp_d.seconds,int(self.polyConfig['longPoll'])))
+                    self.msgi['ctdt'] = ts_now
                     self.set_auth_st(True)
                     return True
             else:
                 self.l_error('_checkTokens', 'No expires in tokenData:{}'.format(self.tokenData))
         else:
             self.set_auth_st(False)
-            self.l_error('_checkTokens','tokenData or auth_token not available')
+            self.l_error('_checkTokens','tokenData or access_token not available')
             # self.saveCustomData({})
             # this._getPin()
             return False
 
-    def _saveTokens(self, data):
-        cust_data = deepcopy(self.polyConfig['customData'])
-        self.auth_token = data['access_token']
-        self.token_type = data['token_type']
-        if 'pinData' in cust_data:
-            del cust_data['pinData']
-        if 'expires_in' in data:
-            ts = time.time() + data['expires_in']
-            data['expires'] = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
-        cust_data['tokenData'] = data
-        self.tokenData = deepcopy(data)
-        self.saveCustomData(cust_data)
-        self.set_auth_st(True)
-        self.removeNoticesAll()
-
-    def _getRefresh(self):
-        if 'refresh_token' in self.tokenData:
+    _tname = 'refresh_status'
+    def _startRefresh(self,test=False):
+        # Someone else already refreshing?
+        rval = False
+        cdata = deepcopy(self.polyConfig['customData'])
+        # See if someone else already refreshed it?  Very small chance of this happening on PGC, but it could.
+        if 'tokenData' in cdata:
+            if 'refresh_token' in cdata['tokenData']:
+                if self.tokenData['refresh_token'] != cdata['tokenData']['refresh_token']:
+                    LOGGER.error("Someone already refreshed the token!")
+                    LOGGER.error(" Old: {}".format(self.tokenData))
+                    LOGGER.error(" New: {}".format(cdata['tokenData']))
+                    LOGGER.error("We will use the new tokens...")
+                    self.tokenData = deepcopy(cdata['tokenData'])
+                    return False
+        # Now see if someone is trying to refresh it.
+        uparam = cdata.get(self._tname)
+        LOGGER.debug('uparam={}'.format(uparam))
+        if uparam is None or uparam is False:
+            LOGGER.debug('We can do it!')
+            rval = True
+        else:
+            LOGGER.error("Someone is already refreshing at {}...".format(uparam))
+            # See if it has expired
+            ts_now = datetime.now()
+            try:
+                ts_start = datetime.strptime(uparam,'%Y-%m-%dT%H:%M:%S')
+            except Exception as e:
+                LOGGER.error('convert time {} failed {}, will grab the lock'.format(uparam,e))
+                rval = True
+            else:
+                ts_diff  = ts_now - ts_start
+                if ts_diff.total_seconds() > 120:
+                    LOGGER.error("But their attempt was {} seconds ago, so we will grab the lock...".format(ts_diff.total_seconds()))
+                    rval = True
+        if rval:
+            cdata[self._tname] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            self.saveCustomData(cdata)
             self.refreshingTokens = True
-            LOGGER.debug('Refresh Token found. Attempting to refresh tokens...')
+        return rval
+
+    # This is only called when refresh fails, when it works saveTokens clears
+    # it, otherwise we get_ a race on who's customData is saved...
+    def _endRefresh(self,refresh_data=False,test=False):
+        cdata = deepcopy(self.polyConfig['customData'])
+        # Old stuff
+        if 'pinData' in cdata:
+            del cdata['pinData']
+        if refresh_data is not False:
+            if 'expires_in' in refresh_data:
+                ts = time.time() + refresh_data['expires_in']
+                refresh_data['expires'] = datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
+            # Save new token data in customData
+            cdata['tokenData'] = refresh_data
+            # And save in our variable for checking, unless in test mode...
+            if not test:
+                self.tokenData = deepcopy(refresh_data)
+            self.set_auth_st(True)
+            self.removeNoticesAll()
+        # This says we are clearing the lock...
+        cdata[self._tname] = False
+        LOGGER.debug("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
+        self.saveCustomData(cdata)
+        LOGGER.debug('cleared lock')
+        self.refreshingTokens = False
+
+    # test option is passed in to force a refresh and save to db, but not our
+    # locally saved self.tokenData.  This makes it look like someone else
+    # refreshed the token, so we just grab from the db.
+    def _getRefresh(self,test=False):
+        if 'refresh_token' in self.tokenData:
+            if not self._startRefresh(test=test):
+                return False
+            LOGGER.debug('Attempting to refresh tokens...')
             res = self.session.post('token',
                 params = {
                     'grant_type':    'refresh_token',
@@ -130,40 +200,42 @@ class Controller(polyinterface.Controller):
                     'refresh_token': self.tokenData['refresh_token']
                 })
             if res is False:
-                self.refreshingTokens = False
                 self.set_ecobee_st(False)
+                self._endRefresh(test=test)
                 return False
             self.set_ecobee_st(True)
             res_data = res['data']
             res_code = res['code']
             if res_data is False:
-                LOGGER.error('_getRefresh: No data returned.')
+                LOGGER.error('No data returned.')
             else:
                 # https://www.ecobee.com/home/developer/api/documentation/v1/auth/auth-req-resp.shtml
                 if 'error' in res_data:
-                    LOGGER.error('_getRefresh: Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
-                    self.refreshingTokens = False
+                    self.addNotice({'grant_error': "{}: {} ".format(res_data['error'], res_data['error_description'])})
+                    self.addNotice({'grant_info': "For access_token={} refresh_token={} expires={}".format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires'])})
+                    LOGGER.error('Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
+                    LOGGER.error('For access_token={} refresh_token={} expires={}'.format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires']))
                     # JimBo: This can only happen if our refresh_token is bad, so we need to force a re-auth
                     if res_data['error'] == 'invalid_grant':
-                        self._reAuth('_getRefresh {}'.format(res_data['error']))
+                        self._reAuth('{}'.format(res_data['error']))
+                        self._endRefresh(test=test)
                     return False
                 elif 'access_token' in res_data:
-                    self._saveTokens(res_data)
-                    self.refreshingTokens = False
+                    self._endRefresh(res_data,test=test)
                     return True
         else:
-            self._reAuth('_getRefresh: refresh_token not Found in tokenData={}'.format(self.tokenData))
-        self.refreshingTokens = False
+            self._reAuth(' refresh_token not Found in tokenData={}'.format(self.tokenData))
+        self._endRefresh(test=test)
         return False
 
     def _reAuth(self, reason):
         # Need to re-auth!
         LOGGER.error('_reAuth because: {}'.format(reason))
-        cust_data = deepcopy(self.polyConfig['customData'])
-        if not 'tokenData' in cust_data:
-            LOGGER.error('No tokenData in customData: {}'.format(cust_data))
-        self.saveCustomData(cust_data)
-        self.auth_token = None
+        cdata = deepcopy(self.polyConfig['customData'])
+        if not 'tokenData' in cdata:
+            LOGGER.error('No tokenData in customData: {}'.format(cdata))
+        cdata[self._tname] = False
+        self.saveCustomData(cdata)
         self._getPin()
 
 
@@ -191,7 +263,7 @@ class Controller(polyinterface.Controller):
             return False
         if 'access_token' in res_data:
             LOGGER.debug('Got first set of tokens sucessfully.')
-            self._saveTokens(res_data)
+            self._endRefresh(res_data)
             return True
         self.set_auth_st(False)
 
@@ -210,7 +282,7 @@ class Controller(polyinterface.Controller):
         if 'ecobeePin' in res_data:
             msg = 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
             LOGGER.info('_getPin: {}'.format(msg))
-            self.addNotice({'myNotice': msg})
+            self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
             # self.saveCustomData(cust_data)
@@ -224,6 +296,9 @@ class Controller(polyinterface.Controller):
                 else:
                     if stime < 180:
                         stime += 30
+        else:
+            msg = 'ecobeePin Failed code={}: {}'.format(res_code,res_data)
+            self.addNotice({'getPin': msg})
 
     def shortPoll(self):
         pass
@@ -249,12 +324,13 @@ class Controller(polyinterface.Controller):
             self.hb = 0
 
     def updateThermostats(self,force=False):
-        LOGGER.debug("{}:updateThermostats:".format(self.address))
+        LOGGER.debug("{}:updateThermostats: start".format(self.address))
         thermostats = self.getThermostats()
         if not isinstance(thermostats, dict):
             LOGGER.error('Thermostats instance wasn\'t dictionary. Skipping...')
             return
         for thermostatId, thermostat in thermostats.items():
+            LOGGER.debug("{}:updateThermostats: {}".format(self.address,thermostatId))
             if self.checkRev(thermostat):
                 address = self.thermostatIdToAddress(thermostatId)
                 if address in self.nodes:
@@ -268,6 +344,7 @@ class Controller(polyinterface.Controller):
                     LOGGER.error("Thermostat id '{}' address '{}' is not in our node list. thermostat: {}".format(thermostatId,address,thermostat))
             else:
                 LOGGER.info("No {} '{}' update detected".format(thermostatId,thermostat['name']))
+        LOGGER.debug("{}:updateThermostats: done".format(self.address))
 
     def checkRev(self, tstat):
         if tstat['thermostatId'] in self.revData:
@@ -308,7 +385,7 @@ class Controller(polyinterface.Controller):
 
     def _discover(self, *args, **kwargs):
         LOGGER.info('Discovering Ecobee Thermostats')
-        if self.auth_token is None:
+        if not 'access_token' in self.tokenData:
             return False
         self.revData = {} # Intialize in case we fail
         thermostats = self.getThermostats()
@@ -457,12 +534,12 @@ class Controller(polyinterface.Controller):
 
     # Calls session.get and converts params to weird ecobee formatting.
     def session_get (self,path,data):
-        if self.auth_token is None:
+        if path == 'authorize':
             # All calls before with have auth token, don't reformat with json
             return self.session.get(path,data)
         else:
             res = self.session.get(path,{ 'json': json.dumps(data) },
-                                    auth='{} {}'.format(self.token_type, self.auth_token)
+                                    auth='{} {}'.format(self.tokenData['token_type'], self.tokenData['access_token'])
                                     )
             if res is False:
                 return res
@@ -480,7 +557,7 @@ class Controller(polyinterface.Controller):
                 # TODO: Should this be a loop instead ?
                 if self._getRefresh() is True:
                     return self.session.get(path,{ 'json': json.dumps(data) },
-                                     auth='{} {}'.format(self.token_type, self.auth_token))
+                                     auth='{} {}'.format(self.tokenData['token_type'], self.tokenData['access_token']))
             elif res_st_code == 16:
                 self._reAuth("session_get: Token deauthorized by user: {}".format(res))
             return False
@@ -581,7 +658,7 @@ class Controller(polyinterface.Controller):
             'selectionMatch': thermostatId
         }
         res = self.session.post('1/thermostat',params={'json': 'true'},payload=postData,
-            auth='{} {}'.format(self.token_type, self.auth_token),dump=True)
+            auth='{} {}'.format(self.tokenData['token_type'], self.tokenData['access_token']),dump=True)
         if res is False:
             self.refreshingTokens = False
             self.set_ecobee_st(False)
@@ -617,6 +694,10 @@ class Controller(polyinterface.Controller):
         val = int(command.get('value'))
         self.l_info("cmd_debug_mode",val)
         self.set_debug_mode(val)
+
+    def cmd_test(self,  *args, **kwargs):
+        LOGGER.debug("{}".format(self.address))
+        self._getRefresh(test=True)
 
     def set_all_logs(self,level):
         self.l_info("set_all_logs",level)
@@ -689,6 +770,7 @@ class Controller(polyinterface.Controller):
         'POLL': cmd_poll,
         'DEBUG': cmd_debug_mode,
         'UPLOAD_PROFILE': cmd_upload_profile,
+        'TEST': cmd_test,
     }
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},
