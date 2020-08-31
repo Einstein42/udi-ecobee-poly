@@ -180,7 +180,7 @@ class Controller(polyinterface.Controller):
             self.removeNoticesAll()
         # This says we are clearing the lock...
         cdata[self._tname] = False
-        LOGGER.debug("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
+        LOGGER.info("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
         self.saveCustomData(cdata)
         LOGGER.debug('cleared lock')
         self.refreshingTokens = False
@@ -192,7 +192,7 @@ class Controller(polyinterface.Controller):
         if 'refresh_token' in self.tokenData:
             if not self._startRefresh(test=test):
                 return False
-            LOGGER.debug('Attempting to refresh tokens...')
+            LOGGER.info('Attempting to refresh tokens...')
             res = self.session.post('token',
                 params = {
                     'grant_type':    'refresh_token',
