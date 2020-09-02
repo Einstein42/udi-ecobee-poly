@@ -182,7 +182,7 @@ class Controller(polyinterface.Controller):
         cdata[self._tname] = False
         LOGGER.info("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
         self.saveCustomData(cdata)
-        LOGGER.debug('cleared lock')
+        LOGGER.info('cleared lock')
         self.refreshingTokens = False
 
     # test option is passed in to force a refresh and save to db, but not our
