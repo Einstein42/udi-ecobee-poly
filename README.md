@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.25: JimBo 09/04/2020
+  - Enhance Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
+    - To workaround possible DB write order issue, do not continue until DB data is confirmed to be saved when locking/unlocking
 - 2.1.24: JimBo 08/30/2020
   - Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
 - 2.1.23: JImBo 06/06/2020

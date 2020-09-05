@@ -66,7 +66,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.info("Deleting old customData key {}".format(key))
                 del cust_data[key]
         if ud:
-            self.saveCustomData(cust_data)
+            self.saveCustomDataWait(cust_data)
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
         self.removeNoticesAll()
         self.set_debug_mode()
@@ -81,6 +81,11 @@ class Controller(polyinterface.Controller):
             LOGGER.info('No tokenData, will need to authorize...')
             self._getPin()
             self.reportDrivers()
+
+    # sends a stop command for the nodeserver to Polyglot
+    def exit(self):
+        LOGGER.info('Asking Polyglot to stop me.')
+        self.poly.send({"stop": {}})    # sends a stop command for the nodeserver to Polyglot
 
     def get_session(self):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
@@ -115,9 +120,24 @@ class Controller(polyinterface.Controller):
         else:
             self.set_auth_st(False)
             self.l_error('_checkTokens','tokenData or access_token not available')
-            # self.saveCustomData({})
+            # self.saveCustomDataWait({})
             # this._getPin()
             return False
+
+    _data_tag = '_data_dtm'
+    def saveCustomDataWait(self,ndata):
+        dtns = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        ndata[self._data_tag] = dtns
+        LOGGER.info("saveCustomData: {}".format(dtns))
+        self.saveCustomData(ndata)
+        done = False
+        while (not done):
+            cd = deepcopy(self.polyConfig['customData'])
+            if cd.get(self._data_tag) == dtns:
+                done = True
+            else:
+                LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+                time.sleep(1)
 
     _tname = 'refresh_status'
     def _startRefresh(self,test=False):
@@ -129,8 +149,8 @@ class Controller(polyinterface.Controller):
             if 'refresh_token' in cdata['tokenData']:
                 if self.tokenData['refresh_token'] != cdata['tokenData']['refresh_token']:
                     LOGGER.error("Someone already refreshed the token!")
-                    LOGGER.error(" Old: {}".format(self.tokenData))
-                    LOGGER.error(" New: {}".format(cdata['tokenData']))
+                    LOGGER.error(" Mine:    {}".format(self.tokenData))
+                    LOGGER.error(" Current: {}".format(cdata['tokenData']))
                     LOGGER.error("We will use the new tokens...")
                     self.tokenData = deepcopy(cdata['tokenData'])
                     return False
@@ -155,8 +175,8 @@ class Controller(polyinterface.Controller):
                     LOGGER.error("But their attempt was {} seconds ago, so we will grab the lock...".format(ts_diff.total_seconds()))
                     rval = True
         if rval:
-            cdata[self._tname] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            self.saveCustomData(cdata)
+            cdata[self._tname] = True
+            self.saveCustomDataWait(cdata)
             self.refreshingTokens = True
         return rval
 
@@ -181,7 +201,7 @@ class Controller(polyinterface.Controller):
         # This says we are clearing the lock...
         cdata[self._tname] = False
         LOGGER.info("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
-        self.saveCustomData(cdata)
+        self.saveCustomDataWait(cdata)
         LOGGER.info('cleared lock')
         self.refreshingTokens = False
 
@@ -235,9 +255,8 @@ class Controller(polyinterface.Controller):
         if not 'tokenData' in cdata:
             LOGGER.error('No tokenData in customData: {}'.format(cdata))
         cdata[self._tname] = False
-        self.saveCustomData(cdata)
+        self.saveCustomDataWait(cdata)
         self._getPin()
-
 
     def _getTokens(self, pinData):
         LOGGER.debug('PIN: {} found. Attempting to get tokens...'.format(pinData['ecobeePin']))
@@ -260,6 +279,12 @@ class Controller(polyinterface.Controller):
         if 'error' in res_data:
             LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
             self.set_auth_st(False)
+            if res_data['error'] == 'authorization_expired':
+                msg = 'Nodeserver exiting because {}, please restart when you are ready to authorize.'.format(res_data['error'])
+                LOGGER.error('_getTokens: {}'.format(msg))
+                self.removeNoticesAll()
+                self.addNotice({'getTokens': msg})
+                self.exit()
             return False
         if 'access_token' in res_data:
             LOGGER.debug('Got first set of tokens sucessfully.')
@@ -285,7 +310,7 @@ class Controller(polyinterface.Controller):
             self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
             # cust_data['pinData'] = data
-            # self.saveCustomData(cust_data)
+            # self.saveCustomDataWait(cust_data)
             waitingOnPin = True
             stime = 30
             while waitingOnPin:
@@ -463,7 +488,7 @@ class Controller(polyinterface.Controller):
             self.poly.installprofile()
             cdata['profile_info'] = self.profile_info
             cdata['climates'] = climates
-            self.saveCustomData(cdata)
+            self.saveCustomDataWait(cdata)
 
     def write_profile(self,climates):
       pfx = '{}:write_profile:'.format(self.address)
