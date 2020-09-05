@@ -126,7 +126,7 @@ class Controller(polyinterface.Controller):
 
     _data_tag = '_data_dtm'
     def saveCustomDataWait(self,ndata):
-        dtns = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        dtns = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
         ndata[self._data_tag] = dtns
         LOGGER.info("saveCustomData: {}".format(dtns))
         self.saveCustomData(ndata)
