@@ -131,13 +131,20 @@ class Controller(polyinterface.Controller):
         LOGGER.info("saveCustomData: {}".format(dtns))
         self.saveCustomData(ndata)
         done = False
-        while (not done):
+        cnt = 0
+        while (not done and cnt < 10):
             cd = deepcopy(self.polyConfig['customData'])
             if cd.get(self._data_tag) == dtns:
                 done = True
             else:
                 LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
                 time.sleep(1)
+                cnt += 1
+        if (not done):
+            LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+            # No idea what to do in this case...
+            return False
+        return True
 
     _tname = 'refresh_status'
     def _startRefresh(self,test=False):

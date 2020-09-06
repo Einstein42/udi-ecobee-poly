@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.26: JimBo 09/06/2020
+  - Enhance Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
+    - Add timeout in saveCustomDataWait method
 - 2.1.25: JimBo 09/04/2020
   - Enhance Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
     - To workaround possible DB write order issue, do not continue until DB data is confirmed to be saved when locking/unlocking
