@@ -62,6 +62,11 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.27: JimBo 09/07/2020
+  - More fixes for https://github.com/Einstein42/udi-ecobee-poly/issues/57
+    - Clean up DB lock/unlock more
+    - Add retry if save custom data doesn't seem to happen
+    - Set Auth driver to False to trigger programs
 - 2.1.26: JimBo 09/06/2020
   - Enhance Fix for https://github.com/Einstein42/udi-ecobee-poly/issues/57
     - Add timeout in saveCustomDataWait method

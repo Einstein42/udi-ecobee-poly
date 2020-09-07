@@ -124,66 +124,97 @@ class Controller(polyinterface.Controller):
             # this._getPin()
             return False
 
-    _data_tag = '_data_dtm'
-    def saveCustomDataWait(self,ndata):
-        dtns = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
-        ndata[self._data_tag] = dtns
-        LOGGER.info("saveCustomData: {}".format(dtns))
-        self.saveCustomData(ndata)
-        done = False
-        cnt = 0
-        while (not done and cnt < 10):
-            cd = deepcopy(self.polyConfig['customData'])
-            if cd.get(self._data_tag) == dtns:
-                done = True
-            else:
-                LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
-                time.sleep(1)
-                cnt += 1
-        if (not done):
-            LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
-            # No idea what to do in this case...
-            return False
-        return True
-
-    _tname = 'refresh_status'
-    def _startRefresh(self,test=False):
-        # Someone else already refreshing?
-        rval = False
+    #
+    # This method "locks" the DB by adding setting _data_lock to true.
+    # There is no unlock method, currently it's done in saveCustomDataWait
+    # because don't want to do multipe writes to save the data, then unlock it.
+    #
+    # TODO: Add a "wait" function with "timeout"?
+    #
+    # This holds the lock.
+    _data_lock = '_data_lock'
+    _lock_fmt  = '%Y-%m-%dT%H:%M:%S.%f'
+    def lockCustomData(self):
         cdata = deepcopy(self.polyConfig['customData'])
-        # See if someone else already refreshed it?  Very small chance of this happening on PGC, but it could.
-        if 'tokenData' in cdata:
-            if 'refresh_token' in cdata['tokenData']:
-                if self.tokenData['refresh_token'] != cdata['tokenData']['refresh_token']:
-                    LOGGER.error("Someone already refreshed the token!")
-                    LOGGER.error(" Mine:    {}".format(self.tokenData))
-                    LOGGER.error(" Current: {}".format(cdata['tokenData']))
-                    LOGGER.error("We will use the new tokens...")
-                    self.tokenData = deepcopy(cdata['tokenData'])
-                    return False
         # Now see if someone is trying to refresh it.
-        uparam = cdata.get(self._tname)
-        LOGGER.debug('uparam={}'.format(uparam))
-        if uparam is None or uparam is False:
-            LOGGER.debug('We can do it!')
+        lock = cdata.get(self._data_lock)
+        rval = False
+        if lock is None or lock is False:
             rval = True
         else:
-            LOGGER.error("Someone is already refreshing at {}...".format(uparam))
+            LOGGER.error("Someone is already refreshing at {}...".format(lock))
             # See if it has expired
             ts_now = datetime.now()
             try:
-                ts_start = datetime.strptime(uparam,'%Y-%m-%dT%H:%M:%S')
+                ts_start = datetime.strptime(lock,self._lock_fmt)
             except Exception as e:
-                LOGGER.error('convert time {} failed {}, will grab the lock'.format(uparam,e))
+                LOGGER.error('convert time {} failed {}, will grab the lock'.format(lock,e))
                 rval = True
             else:
                 ts_diff  = ts_now - ts_start
                 if ts_diff.total_seconds() > 120:
                     LOGGER.error("But their attempt was {} seconds ago, so we will grab the lock...".format(ts_diff.total_seconds()))
                     rval = True
-        if rval:
-            cdata[self._tname] = True
-            self.saveCustomDataWait(cdata)
+        if (rval):
+            rval = self.saveCustomDataWait(cdata,lock=True)
+        return rval
+
+    # This holds the last date time we did saveCustomData
+    _data_tag  = '_data_dtm'
+    def saveCustomDataWait(self,ndata,lock=False,timeout=10):
+        dtns = datetime.now().strftime(self._lock_fmt)
+        ndata[self._data_tag] = dtns
+        LOGGER.info("saveCustomData: {}".format(dtns))
+        # Old stuff
+        if 'pinData' in ndata:
+            del ndata['pinData']
+        if 'refresh_status' in ndata:
+            del ndata['refresh_status']
+        # lock=None means do nothing to the lock.
+        if lock is not None:
+            # If True then set to curent date/time
+            # Otherwise set to what they desired, typically False
+            ndata[self._data_lock] = dtns if lock else lock
+        # Save it...
+        done = False
+        tcnt = 0
+        while (not done):
+            tcnt += 1
+            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock])+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
+            self.saveCustomData(ndata)
+            cnt = 0
+            while (not done and cnt < 15):
+                cd = deepcopy(self.polyConfig['customData'])
+                if cd.get(self._data_tag) == dtns:
+                    done = True
+                else:
+                    LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+                    time.sleep(1)
+                    cnt += 1
+            if (done):
+                # IF we set auth false then set it back to true
+                if (tcnt > 1):
+                    self.set_auth_st(True)
+            else:
+                LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+                # No idea what to do in this case?  For now set auto false so can trigger a failure...
+                self.set_auth_st(False)
+        LOGGER.info("Done\n{}={}\n{}={}\ntokenData=".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock])+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
+        return True
+
+    def _startRefresh(self,test=False):
+        # See if someone else already refreshed it?  Very small chance of this happening on PGC, but it could.
+        if 'tokenData' in self.polyConfig['customData']:
+            if 'refresh_token' in self.polyConfig['customData']['tokenData']:
+                if self.tokenData['refresh_token'] != self.polyConfig['customData']['tokenData']['refresh_token']:
+                    LOGGER.error("Someone already refreshed the token!")
+                    LOGGER.error(" Mine:    {}".format(self.tokenData))
+                    LOGGER.error(" Current: {}".format(self.polyConfig['customData']['tokenData']))
+                    LOGGER.error("We will use the new tokens...")
+                    self.tokenData = deepcopy(self.polyConfig['customData']['tokenData'])
+                    return False
+        rval = self.lockCustomData()
+        if (rval):
             self.refreshingTokens = True
         return rval
 
@@ -191,9 +222,6 @@ class Controller(polyinterface.Controller):
     # it, otherwise we get_ a race on who's customData is saved...
     def _endRefresh(self,refresh_data=False,test=False):
         cdata = deepcopy(self.polyConfig['customData'])
-        # Old stuff
-        if 'pinData' in cdata:
-            del cdata['pinData']
         if refresh_data is not False:
             if 'expires_in' in refresh_data:
                 ts = time.time() + refresh_data['expires_in']
@@ -205,9 +233,6 @@ class Controller(polyinterface.Controller):
                 self.tokenData = deepcopy(refresh_data)
             self.set_auth_st(True)
             self.removeNoticesAll()
-        # This says we are clearing the lock...
-        cdata[self._tname] = False
-        LOGGER.info("Sending customData=\n"+json.dumps(cdata,sort_keys=True,indent=2))
         self.saveCustomDataWait(cdata)
         LOGGER.info('cleared lock')
         self.refreshingTokens = False
@@ -261,7 +286,6 @@ class Controller(polyinterface.Controller):
         cdata = deepcopy(self.polyConfig['customData'])
         if not 'tokenData' in cdata:
             LOGGER.error('No tokenData in customData: {}'.format(cdata))
-        cdata[self._tname] = False
         self.saveCustomDataWait(cdata)
         self._getPin()
 
@@ -727,9 +751,18 @@ class Controller(polyinterface.Controller):
         self.l_info("cmd_debug_mode",val)
         self.set_debug_mode(val)
 
-    def cmd_test(self,  *args, **kwargs):
+    # This does a refresh, but doesn't record it to the local data structure so
+    # the next time the NS tries to update it's runtime token will be invalid so
+    # it will try to refresh, then see the DB has a new one and users it.
+    # This is to manually test Issue #57
+    def cmd_test_refresh(self,  *args, **kwargs):
         LOGGER.debug("{}".format(self.address))
         self._getRefresh(test=True)
+
+    # This locks the DB, to test the auto-unlock timout feature for an old lock
+    def cmd_test_lock(self,  *args, **kwargs):
+        LOGGER.debug("{}".format(self.address))
+        self.lockCustomData()
 
     def set_all_logs(self,level):
         self.l_info("set_all_logs",level)
@@ -802,7 +835,8 @@ class Controller(polyinterface.Controller):
         'POLL': cmd_poll,
         'DEBUG': cmd_debug_mode,
         'UPLOAD_PROFILE': cmd_upload_profile,
-        'TEST': cmd_test,
+        'TESTREFRESH': cmd_test_refresh,
+        'TESTLOCK': cmd_test_lock
     }
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 2},
