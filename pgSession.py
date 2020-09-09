@@ -17,7 +17,23 @@ class pgSession():
             self.port_s = ""
         else:
             self.port_s = ':{}'.format(port)
+        # Create our session
         self.session = requests.Session()
+        # Allow for retries on all connections.
+        retries = 5
+        backoff_factor = .3
+        status_force_list = (500, 502, 503, 504, 505, 506)
+        adapter = HTTPAdapter(
+                    max_retries=Retry(
+                        total=retries,
+                        read=retries,
+                        connect=retries,
+                        backoff_factor=backoff_factor,
+                        status_forcelist=status_force_list,
+                    )
+                )
+        for prefix in "http://", "https://":
+            self.session.mount(prefix, adapter)
 
     def close(self):
         self.session.close()
