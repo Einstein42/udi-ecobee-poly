@@ -3,6 +3,7 @@ Work on makeing this a generic session handler for all Polyglot's
 """
 
 import requests,json,warnings
+from requests.adapters import HTTPAdapter
 
 class pgSession():
 
