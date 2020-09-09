@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.28: JimBo 09/09/2020
+  - Change timeout from 60 to 10,61 to see if that stops read timeout issue
+  - Also added connect retries
 - 2.1.27: JimBo 09/07/2020
   - More fixes for https://github.com/Einstein42/udi-ecobee-poly/issues/57
     - Clean up DB lock/unlock more
