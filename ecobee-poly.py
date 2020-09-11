@@ -201,7 +201,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
                 # No idea what to do in this case?  For now set auto false so can trigger a failure...
                 self.set_auth_st(False)
-        LOGGER.info("Done\n{}={}\n{}={}\ntokenData=".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock])+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
+        LOGGER.info("Done\n{}={}\n{}={}".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock]))
         if 'tokenData' in cd:
             LOGGER.info("tokenData="+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
         return True
