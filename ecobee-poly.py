@@ -202,6 +202,8 @@ class Controller(polyinterface.Controller):
                 # No idea what to do in this case?  For now set auto false so can trigger a failure...
                 self.set_auth_st(False)
         LOGGER.info("Done\n{}={}\n{}={}\ntokenData=".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock])+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
+        if 'tokenData' in cd:
+            LOGGER.info("tokenData="+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
         return True
 
     def _startRefresh(self,test=False):
