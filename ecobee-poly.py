@@ -340,7 +340,7 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'ecobeePin' in res_data:
-            msg = 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
             LOGGER.info('_getPin: {}'.format(msg))
             self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
