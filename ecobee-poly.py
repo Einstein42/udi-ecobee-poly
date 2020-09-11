@@ -180,7 +180,9 @@ class Controller(polyinterface.Controller):
         tcnt = 0
         while (not done):
             tcnt += 1
-            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock])+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
+            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock]))
+            if 'tokenData' in ndata:
+                LOGGER.info("tokenData=".+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
             self.saveCustomData(ndata)
             cnt = 0
             while (not done and cnt < 15):
