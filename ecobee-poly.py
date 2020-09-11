@@ -180,7 +180,9 @@ class Controller(polyinterface.Controller):
         tcnt = 0
         while (not done):
             tcnt += 1
-            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock])+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
+            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock]))
+            if 'tokenData' in ndata:
+                LOGGER.info("tokenData="+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
             self.saveCustomData(ndata)
             cnt = 0
             while (not done and cnt < 15):
@@ -199,7 +201,9 @@ class Controller(polyinterface.Controller):
                 LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
                 # No idea what to do in this case?  For now set auto false so can trigger a failure...
                 self.set_auth_st(False)
-        LOGGER.info("Done\n{}={}\n{}={}\ntokenData=".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock])+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
+        LOGGER.info("Done\n{}={}\n{}={}".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock]))
+        if 'tokenData' in cd:
+            LOGGER.info("tokenData="+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
         return True
 
     def _startRefresh(self,test=False):
@@ -336,7 +340,7 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'ecobeePin' in res_data:
-            msg = 'Click <a target="_blank" href="https://www.ecobee.com/home/ecobeeLogin.jsp">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
             LOGGER.info('_getPin: {}'.format(msg))
             self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
