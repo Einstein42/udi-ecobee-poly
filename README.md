@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.29: JimBo 09/11/2020
+  - Fix bug introduced in previous version that only affects a new install
+  - Also fix ecobee login url
 - 2.1.28: JimBo 09/09/2020
   - Change timeout from 60 to 10,61 to see if that stops read timeout issue
   - Also added connect retries
