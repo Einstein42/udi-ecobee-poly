@@ -62,6 +62,9 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.30: JimBo 09/13/2020
+  - Temporary fix for https://github.com/Einstein42/udi-ecobee-poly/issues/60
+    - May have to update after hearing back from Ecobee.
 - 2.1.29: JimBo 09/11/2020
   - Fix bug introduced in previous version that only affects a new install
   - Also fix ecobee login url

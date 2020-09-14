@@ -267,14 +267,20 @@ class Controller(polyinterface.Controller):
             else:
                 # https://www.ecobee.com/home/developer/api/documentation/v1/auth/auth-req-resp.shtml
                 if 'error' in res_data:
+                    self.set_ecobee_st(False)
                     self.addNotice({'grant_error': "{}: {} ".format(res_data['error'], res_data['error_description'])})
                     self.addNotice({'grant_info': "For access_token={} refresh_token={} expires={}".format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires'])})
                     LOGGER.error('Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
                     LOGGER.error('For access_token={} refresh_token={} expires={}'.format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires']))
+                    # Set auth to false for now, so user sees the error, even if we correct it later...
                     # JimBo: This can only happen if our refresh_token is bad, so we need to force a re-auth
                     if res_data['error'] == 'invalid_grant':
                         self._reAuth('{}'.format(res_data['error']))
-                        self._endRefresh(test=test)
+                    elif res_data['error'] == 'invalid_client':
+                        # We will Ignore it because it may correct itself on the next poll?
+                        LOGGER.error('Ignoring invalid_client error, will try again later for now, but may need to mark it invalid if we see more than once?  See: https://github.com/Einstein42/udi-ecobee-poly/issues/60')
+                    else:
+                        LOGGER.error('Unknown error, not sure what to do here.  Please Generate Log Package and Notify Author with a github issue: https://github.com/Einstein42/udi-ecobee-poly/issues')
                     return False
                 elif 'access_token' in res_data:
                     self._endRefresh(res_data,test=test)
