@@ -287,10 +287,10 @@ class Controller(polyinterface.Controller):
                             self._reAuth('{} No token expire data available'.format(res_data['error']))
                         else:
                             if exp_d.total_seconds() > 0:
-                                self.addNotice({'grant_info': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
+                                self.addNotice({'grant_info_2': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
                                 LOGGER.error("But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds()))
                             else:
-                                self.addNotice({'grant_info': "Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds())})
+                                self.addNotice({'grant_info_2': "Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds())})
                                 LOGGER.error("Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds()))
                                 # May need to remove the re-auth requirement because we get these and they don't seem to be real?
                                 self._reAuth('{} and Token expired'.format(res_data['error']))
