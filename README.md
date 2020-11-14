@@ -62,8 +62,14 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
-- 2.1.29: JimBo 11/14/2020
+- 2.1.31: JimBo 11/14/2020
   - Don't force user reauthorization when invalid_grant is returned and token has not expired.  This is to hopefully get around the issue where Ecobee servers return invalid_grant when it's really not.  Ecobee support is no longer responding to us for help on this issue.
+- 2.1.30: JimBo 09/13/2020
+  - Temporary fix for https://github.com/Einstein42/udi-ecobee-poly/issues/60
+    - May have to update after hearing back from Ecobee.
+- 2.1.29: JimBo 09/11/2020
+  - Fix bug introduced in previous version that only affects a new install
+  - Also fix ecobee login url
 - 2.1.28: JimBo 09/09/2020
   - Change timeout from 60 to 10,61 to see if that stops read timeout issue
   - Also added connect retries
