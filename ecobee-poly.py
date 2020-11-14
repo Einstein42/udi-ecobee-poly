@@ -286,7 +286,7 @@ class Controller(polyinterface.Controller):
                             LOGGER.error("No token expire data available, so will have to re-auth...".format(exp_d.total_seconds()))
                             self._reAuth('{} No token expire data available'.format(res_data['error']))
                         else:
-                            if exp_d > 0:
+                            if exp_d.total_seconds() > 0:
                                 self.addNotice({'grant_info': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
                                 LOGGER.error("But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds()))
                             else:
