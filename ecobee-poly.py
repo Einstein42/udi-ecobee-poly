@@ -90,17 +90,22 @@ class Controller(polyinterface.Controller):
     def get_session(self):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
 
+    def _expire_delta(self):
+        if not 'expires' in self.tokenData:
+            return False
+        ts_exp = datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
+        return ts_exp - datetime.now()
+
     def _checkTokens(self):
         if self.refreshingTokens:
             LOGGER.error('Waiting for token refresh to complete...')
             while self.refreshingTokens:
                 time.sleep(.1)
         if 'access_token' in self.tokenData:
-            ts_now = datetime.now()
-            if 'expires' in self.tokenData:
-                ts_exp = datetime.strptime(self.tokenData['expires'], '%Y-%m-%dT%H:%M:%S')
-                exp_d  = ts_exp - ts_now
-                if exp_d.total_seconds() < int(self.polyConfig['longPoll']) * 2:
+            exp_d = self._expire_delta()
+            if exp_d is not False:
+                # We allow for 10 long polls to refresh the token...
+                if exp_d.total_seconds() < int(self.polyConfig['longPoll']) * 10:
                     self.l_info('_checkTokens','Tokens {} expires {} will expire in {} seconds, so refreshing now...'.format(self.tokenData['refresh_token'],self.tokenData['expires'],exp_d.total_seconds()))
                     return self._getRefresh()
                 else:
@@ -112,7 +117,7 @@ class Controller(polyinterface.Controller):
                             sd = False
                     if sd:
                         self.l_debug('_checkTokens',0,'Tokens valid until: {} ({} seconds, longPoll={})'.format(self.tokenData['expires'],exp_d.seconds,int(self.polyConfig['longPoll'])))
-                    self.msgi['ctdt'] = ts_now
+                    self.msgi['ctdt'] = datetime.now()
                     self.set_auth_st(True)
                     return True
             else:
@@ -273,8 +278,25 @@ class Controller(polyinterface.Controller):
                     LOGGER.error('For access_token={} refresh_token={} expires={}'.format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires']))
                     # JimBo: This can only happen if our refresh_token is bad, so we need to force a re-auth
                     if res_data['error'] == 'invalid_grant':
-                        self._reAuth('{}'.format(res_data['error']))
-                        self._endRefresh(test=test)
+                        exp_d = self._expire_delta()
+                        if exp_d is False:
+                            self.addNotice({'grant_info': "No token expire data available, so will have to re-auth...".format(exp_d.total_seconds())})
+                            LOGGER.error("No token expire data available, so will have to re-auth...".format(exp_d.total_seconds()))
+                            self._reAuth('{} No token expire data available'.format(res_data['error']))
+                        else:
+                            if exp_d > 0:
+                                self.addNotice({'grant_info': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
+                                LOGGER.error("But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds()))
+                            else:
+                                self.addNotice({'grant_info': "Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds())})
+                                LOGGER.error("Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds()))
+                                # May need to remove the re-auth requirement because we get these and they don't seem to be real?
+                                self._reAuth('{} and Token expired'.format(res_data['error']))
+                    else:
+                        # Should all other errors require re-auth?
+                        #self._reAuth('{}'.format(res_data['error']))
+                        pass
+                    self._endRefresh(test=test)
                     return False
                 elif 'access_token' in res_data:
                     self._endRefresh(res_data,test=test)
@@ -340,7 +362,7 @@ class Controller(polyinterface.Controller):
         res_data = res['data']
         res_code = res['code']
         if 'ecobeePin' in res_data:
-            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. Then restart the nodeserver. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
             LOGGER.info('_getPin: {}'.format(msg))
             self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
