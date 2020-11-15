@@ -62,6 +62,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.32: JImBo 11/14/2020
+  - Fix syntax error in last release when token is expired on startup.
 - 2.1.31: JimBo 11/14/2020
   - Don't force user reauthorization when invalid_grant is returned and token has not expired.  This is to hopefully get around the issue where Ecobee servers return invalid_grant when it's really not.  Ecobee support is no longer responding to us for help on this issue.
 - 2.1.30: JimBo 09/13/2020
