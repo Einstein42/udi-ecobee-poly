@@ -62,7 +62,10 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
-- 2.1.32: JImBo 11/14/2020
+- 2.1.33: JimBo 11/17/2020
+  - Increased DB write/verify timeout from 15seconds to 15minutes since we have seen issue where retrying a write causes issues
+  - Also, if we see the DB was written, but the date/time is older than what we wrote, then ignore it.
+- 2.1.32: JimBo 11/14/2020
   - Fix syntax error in last release when token is expired on startup.
 - 2.1.31: JimBo 11/14/2020
   - Don't force user reauthorization when invalid_grant is returned and token has not expired.  This is to hopefully get around the issue where Ecobee servers return invalid_grant when it's really not.  Ecobee support is no longer responding to us for help on this issue.

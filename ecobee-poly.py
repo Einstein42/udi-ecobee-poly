@@ -37,6 +37,7 @@ class Controller(polyinterface.Controller):
         self.discover_st = False
         self.refreshingTokens = False
         self.pinRun = False
+        self._last_dtns = False
         self.hb = 0
         self._cloud = CLOUD
 
@@ -190,7 +191,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.info("tokenData="+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
             self.saveCustomData(ndata)
             cnt = 0
-            while (not done and cnt < 15):
+            while (not done and cnt < 900):
                 cd = deepcopy(self.polyConfig['customData'])
                 if cd.get(self._data_tag) == dtns:
                     done = True
@@ -199,6 +200,7 @@ class Controller(polyinterface.Controller):
                     time.sleep(1)
                     cnt += 1
             if (done):
+                self._last_dtns = dtns
                 # IF we set auth false then set it back to true
                 if (tcnt > 1):
                     self.set_auth_st(True)
@@ -215,13 +217,25 @@ class Controller(polyinterface.Controller):
         # See if someone else already refreshed it?  Very small chance of this happening on PGC, but it could.
         if 'tokenData' in self.polyConfig['customData']:
             if 'refresh_token' in self.polyConfig['customData']['tokenData']:
-                if self.tokenData['refresh_token'] != self.polyConfig['customData']['tokenData']['refresh_token']:
-                    LOGGER.error("Someone already refreshed the token!")
-                    LOGGER.error(" Mine:    {}".format(self.tokenData))
-                    LOGGER.error(" Current: {}".format(self.polyConfig['customData']['tokenData']))
-                    LOGGER.error("We will use the new tokens...")
-                    self.tokenData = deepcopy(self.polyConfig['customData']['tokenData'])
-                    return False
+                LOGGER.debug("{}= {}".format(self._data_tag,self.polyConfig['customData'][self._data_tag]))
+                LOGGER.debug("_last_dtns={}".format(self._last_dtns))
+                if self._last_dtns is not False:
+                    # Check that it was ours
+                    if not self._last_dtns == self.polyConfig['customData'][self._data_tag]:
+                        LOGGER.error("Someone changed the db?")
+                        LOGGER.error("{}= {}".format(self._data_tag,self.polyConfig['customData'][self._data_tag]))
+                        LOGGER.error("_last_dtns={}".format(self._last_dtns))
+                        l_dt = datetime.fromtimestamp(self._last_dtns).strftime(self._lock_fmt)
+                        c_dt = datetime.fromtimestamp(self.polyConfig['customData'][self._data_tag]).strftime(self._lock_fmt)
+                        if c_dt < l_dt:
+                            LOGGER.error("But it is older than what we wrote, so will ignore it...")
+                        else:
+                            LOGGER.error("And it's newer than what we wrote so will use it?")
+                            LOGGER.error(" Mine:    {}".format(self.tokenData))
+                            LOGGER.error(" Current: {}".format(self.polyConfig['customData']['tokenData']))
+                            LOGGER.error("We will use the new tokens...")
+                            self.tokenData = deepcopy(self.polyConfig['customData']['tokenData'])
+                            return False
         rval = self.lockCustomData()
         if (rval):
             self.refreshingTokens = True
