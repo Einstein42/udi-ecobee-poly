@@ -62,6 +62,8 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+- 2.1.34: jimBo 11/19/2020
+  - Stop longPoll from running if node start has not completed.  This is a rare case when startup takes a long time due to Polyglot/PBC running very slow
 - 2.1.33: JimBo 11/17/2020
   - Increased DB write/verify timeout from 15seconds to 15minutes since we have seen issue where retrying a write causes issues
   - Also, if we see the DB was written, but the date/time is older than what we wrote, then ignore it.

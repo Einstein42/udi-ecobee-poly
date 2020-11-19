@@ -39,6 +39,7 @@ class Controller(polyinterface.Controller):
         self.pinRun = False
         self._last_dtns = False
         self.hb = 0
+        self.ready = False
         self._cloud = CLOUD
 
     def start(self):
@@ -77,11 +78,14 @@ class Controller(polyinterface.Controller):
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             if self._checkTokens():
+                LOGGER.info("Calling discover...")
                 self.discover()
         else:
             LOGGER.info('No tokenData, will need to authorize...')
             self._getPin()
             self.reportDrivers()
+        self.ready = True
+        LOGGER.debug('done')
 
     # sends a stop command for the nodeserver to Polyglot
     def exit(self):
@@ -311,6 +315,8 @@ class Controller(polyinterface.Controller):
                     elif res_data['error'] == 'invalid_client':
                         # We will Ignore it because it may correct itself on the next poll?
                         LOGGER.error('Ignoring invalid_client error, will try again later for now, but may need to mark it invalid if we see more than once?  See: https://github.com/Einstein42/udi-ecobee-poly/issues/60')
+                    #elif res_data['error'] == 'authorization_expired':
+                    #    self._reAuth('{}'.format(res_data['error']))
                     else:
                         # Should all other errors require re-auth?
                         #self._reAuth('{}'.format(res_data['error']))
@@ -393,6 +399,7 @@ class Controller(polyinterface.Controller):
                 time.sleep(stime)
                 if self._getTokens(res_data):
                     waitingOnPin = False
+                    LOGGER.info("Calling discover...")
                     self.discover()
                 else:
                     if stime < 180:
@@ -408,10 +415,14 @@ class Controller(polyinterface.Controller):
         # Call discovery if it failed on startup
         LOGGER.debug("{}:longPoll".format(self.address))
         self.heartbeat()
+        if not self.ready:
+            LOGGER.debug("{}:longPoll: not run, not ready...".format(self.address))
+            return False
         if self.in_discover:
             LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
             return
         if self.discover_st is False:
+            LOGGER.info("Calling discover...")
             self.discover()
         self.updateThermostats()
 
