@@ -21,7 +21,7 @@ class pgSession():
         # Create our session
         self.session = requests.Session()
         # Allow for retries on all connections.
-        retries = 5
+        retries = 30
         backoff_factor = .3
         status_force_list = (500, 502, 503, 504, 505, 506)
         adapter = HTTPAdapter(
