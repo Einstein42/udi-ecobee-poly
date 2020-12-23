@@ -131,6 +131,34 @@ class pgSession():
             return False
         return(self.response(response,'post'))
 
+    def delete(self,path,auth=None):
+        url = "https://{}{}/{}".format(self.host,self.port_s,path)
+        self.l_debug('delete',0,"Sending: url={0}".format(url))
+        # No speical headers?
+        headers = {
+            "Content-Type": "application/json"
+        }
+        if auth is not None:
+            headers['Authorization'] = auth
+        self.l_debug('delete', 1, "headers={}".format(headers))
+        # Some are getting unclosed socket warnings due to garbage collection?? no idea why, so just ignore them since we dont' care
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<socket.socket.*>")
+        #self.session.headers.update(headers)
+        try:
+            response = self.session.delete(
+                url,
+                headers=headers,
+                timeout=(61,10)
+            )
+            self.l_debug('delete', 1, "url={}".format(response.url))
+            self.logger.debug('delete got: {}'.format(response))
+        # This is supposed to catch all request excpetions.
+        except requests.exceptions.RequestException as e:
+            self.l_error('delete',"Connection error for %s: %s" % (url, e))
+            return False
+        return(self.response(response,'delete'))
+
+
 
     def l_info(self, name, string):
         self.logger.info("%s:%s: %s" %  (self.l_name,name,string))

@@ -142,6 +142,12 @@ class Controller(Controller):
         LOGGER.info('Asking Polyglot to stop me.')
         self.poly.send({"stop": {}})    # sends a stop command for the nodeserver to Polyglot
 
+    def delete(self):
+        LOGGER.warning("Nodeserver is being deleted...")
+        # Ecobee delete tokens not working, need info from Ecobee
+        #if self.ecobeeDelete():
+        #    self.tokenData = {}
+
     def get_session(self):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
 
@@ -224,7 +230,7 @@ class Controller(Controller):
             self.serverdata['api_client'] = sdata['api_client']
         else:
             #LOGGER.error(self.poly.init)
-            url = 'https://api.ecobee.com/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(self.api_key,self.redirect_url,self.poly.init['worker'])
+            url = 'https://{}/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(ECOBEE_API_URL,self.api_key,self.redirect_url,self.poly.init['worker'])
             msg = 'No existing Authorization found, Please <a target="_blank" href="{}">Authorize acess to your Ecobee Account</a>'.format(url)
             self.addNotice({'oauth': msg})
             LOGGER.warning(msg)
@@ -778,6 +784,27 @@ class Controller(Controller):
                     return True
                 else:
                     LOGGER.error('Bad return code {}:{}'.format(res_data['status']['code'],res_data['status']['message']))
+        return False
+
+    def ecobeeDelete(self):
+        if 'access_token' in self.tokenData:
+            res = self.session.delete("/oauth2/acess_tokens/"+self.tokenData['access_token'])
+            if res is False:
+                return False
+            if 'error' in res:
+                LOGGER.error('ecobeePost: error="{}" {}'.format(res['error'], res['error_description']))
+                return False
+            res_data = res['data']
+            res_code = res['code']
+            if 'status' in res_data:
+                if 'code' in res_data['status']:
+                    if res_data['status']['code'] == 204:
+                        LOGGER.info("Revoke successful")
+                        return True
+                    else:
+                        LOGGER.error('Bad return code {}:{}'.format(res_data['status']['code'],res_data['status']['message']))
+        else:
+            LOGGER.warning("No access_token to revoke...")
         return False
 
     #
