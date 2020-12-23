@@ -93,6 +93,7 @@ class Controller(Controller):
         else:
             self.grant_type = 'ecobeePin'
             self.api_key    = self.serverdata['api_key_pin']
+            self.redirect_url = None
         # Force to false, and successful communication will fix it
         #self.set_ecobee_st(False) Causes it to always stay false.
         if 'tokenData' in self.polyConfig['customData']:
