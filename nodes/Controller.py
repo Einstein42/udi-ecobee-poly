@@ -45,11 +45,13 @@ class Controller(Controller):
         self._last_dtns = False
         self.hb = 0
         self.ready = False
+        self.waiting_on_tokens = False
         self._cloud = CLOUD
 
     def start(self):
         #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
+        self.removeNoticesAll()
         self.heartbeat()
         self.serverdata = get_server_data(LOGGER)
         LOGGER.info('Ecobee NodeServer Version {}'.format(self.serverdata['version']))
@@ -75,22 +77,65 @@ class Controller(Controller):
         if ud:
             self.saveCustomDataWait(cust_data)
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
-        self.removeNoticesAll()
         self.set_debug_mode()
-        self.get_session()
+        self.get_session() 
+        #
+        # Cloud uses OAuth, local users PIN
+        #
+        if self._cloud:
+            self.grant_type = 'authorization_code'
+            self.api_key    = self.serverdata['api_key']
+            if self.poly.init['development']:
+                LOGGER.warning("Development Mode, will authorize to pgtest")
+                self.redirect_url = 'https://pgtest.isy.io/api/oauth/callback'
+            else:
+                self.redirect_url = 'https://polyglot.isy.io/api/oauth/callback'
+        else:
+            self.grant_type = 'ecobeePin'
+            self.api_key    = self.serverdata['api_key_pin']
         # Force to false, and successful communication will fix it
         #self.set_ecobee_st(False) Causes it to always stay false.
         if 'tokenData' in self.polyConfig['customData']:
             self.tokenData = self.polyConfig['customData']['tokenData']
             if self._checkTokens():
-                LOGGER.info("Calling discover...")
+                LOGGER.info("start: Calling discover...")
                 self.discover()
         else:
             LOGGER.info('No tokenData, will need to authorize...')
-            self._getPin()
+            self.authorize()
             self.reportDrivers()
         self.ready = True
         LOGGER.debug('done')
+
+    def shortPoll(self):
+        pass
+
+    def longPoll(self):
+        # Call discovery if it failed on startup
+        LOGGER.debug("{}:longPoll".format(self.address))
+        self.heartbeat()
+        if not self.ready:
+            LOGGER.debug("{}:longPoll: not run, not ready...".format(self.address))
+            return False
+        if self.waiting_on_tokens:
+            LOGGER.debug("{}:longPoll: not run, waiting for user to authorize...".format(self.address))
+            return False
+        if self.in_discover:
+            LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
+            return
+        if self.discover_st is False:
+            LOGGER.info("longPoll: Calling discover...")
+            self.discover()
+        self.updateThermostats()
+
+    def heartbeat(self):
+        LOGGER.debug('heartbeat hb={}'.format(self.hb))
+        if self.hb == 0:
+            self.reportCmd("DON",2)
+            self.hb = 1
+        else:
+            self.reportCmd("DOF",2)
+            self.hb = 0
 
     # sends a stop command for the nodeserver to Polyglot
     def exit(self):
@@ -99,6 +144,98 @@ class Controller(Controller):
 
     def get_session(self):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
+
+    def authorize(self):
+        if self._cloud is True:
+            self._getOAuth()
+        else:
+            self._getPin()
+
+    def _reAuth(self, reason):
+        # Need to re-auth!
+        LOGGER.error('_reAuth because: {}'.format(reason))
+        cdata = deepcopy(self.polyConfig['customData'])
+        if not 'tokenData' in cdata:
+            LOGGER.error('No tokenData in customData: {}'.format(cdata))
+        self.saveCustomDataWait(cdata)
+        self.authorize()
+
+    def _getPin(self):
+        # Ask Ecobee for our Pin and present it to the user in a notice
+        res = self.session_get('authorize',
+                              {
+                                  'response_type':  'ecobeePin',
+                                  'client_id':      self.api_key,
+                                  'scope':          'smartWrite'
+                              })
+        if res is False:
+            self.refreshingTokens = False
+            return False
+        res_data = res['data']
+        res_code = res['code']
+        if 'ecobeePin' in res_data:
+            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            LOGGER.info('_getPin: {}'.format(msg))
+            self.addNotice({'getPin': msg})
+            # cust_data = deepcopy(self.polyConfig['customData'])
+            # cust_data['pinData'] = data
+            # self.saveCustomDataWait(cust_data)
+            self.waiting_on_tokens = True
+            stime = 30
+            while waitingOnPin:
+                time.sleep(stime)
+                if self._getTokens(res_data):
+                    LOGGER.info("_getPin: Calling discover...")
+                    self.discover()
+                else:
+                    if stime < 180:
+                        stime += 30
+        else:
+            msg = 'ecobeePin Failed code={}: {}'.format(res_code,res_data)
+            self.addNotice({'getPin': msg})
+
+    def _getOAuthInit(self):
+        """
+        See if we have the oauth data stored already
+        """
+        sdata = {}
+        if self._cloud:
+            error = False
+            if 'clientId' in self.poly.init['oauth']:
+                sdata['api_client'] =  self.poly.init['oauth']['clientId']
+            else:
+                LOGGER.warning('Unable to find Client ID in the init oauth data: {}'.format(self.poly.init['oauth']))
+                error = True
+            if 'clientSecret' in self.poly.init['oauth']:
+                sdata['api_key'] =  self.poly.init['oauth']['clientSecret']
+            else:
+                LOGGER.warning('Unable to find Client Secret in the init oauth data: {}'.format(self.poly.init['oauth']))
+                error = True
+            if error:
+                return False
+        return sdata
+        
+    def _getOAuth(self):
+        # Do we have it?
+        sdata = self._getOAuthInit()
+        if sdata is not False:
+            LOGGER.debug('Init={}'.format(sdata))
+            self.serverdata['api_key'] = sdata['api_key']
+            self.serverdata['api_client'] = sdata['api_client']
+        else:
+            #LOGGER.error(self.poly.init)
+            url = 'https://api.ecobee.com/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(self.api_key,self.redirect_url,self.poly.init['worker'])
+            msg = 'No existing Authorization found, Please <a target="_blank" href="{}">Authorize acess to your Ecobee Account</a>'.format(url)
+            self.addNotice({'oauth': msg})
+            LOGGER.warning(msg)
+            self.waiting_on_tokens = True
+
+    def oauth(self, oauth):
+        LOGGER.info('OAUTH Received: {}'.format(oauth))
+        if 'code' in oauth:
+            if self._getTokens(oauth):
+                self.removeNoticesAll()
+                self.discover()
 
     def _expire_delta(self):
         if not 'expires' in self.tokenData:
@@ -138,89 +275,6 @@ class Controller(Controller):
             # self.saveCustomDataWait({})
             # this._getPin()
             return False
-
-    #
-    # This method "locks" the DB by adding setting _data_lock to true.
-    # There is no unlock method, currently it's done in saveCustomDataWait
-    # because don't want to do multipe writes to save the data, then unlock it.
-    #
-    # TODO: Add a "wait" function with "timeout"?
-    #
-    # This holds the lock.
-    _data_lock = '_data_lock'
-    _lock_fmt  = '%Y-%m-%dT%H:%M:%S.%f'
-    def lockCustomData(self):
-        cdata = deepcopy(self.polyConfig['customData'])
-        # Now see if someone is trying to refresh it.
-        lock = cdata.get(self._data_lock)
-        rval = False
-        if lock is None or lock is False:
-            rval = True
-        else:
-            LOGGER.error("Someone is already refreshing at {}...".format(lock))
-            # See if it has expired
-            ts_now = datetime.now()
-            try:
-                ts_start = datetime.strptime(lock,self._lock_fmt)
-            except Exception as e:
-                LOGGER.error('convert time {} failed {}, will grab the lock'.format(lock,e))
-                rval = True
-            else:
-                ts_diff  = ts_now - ts_start
-                if ts_diff.total_seconds() > 120:
-                    LOGGER.error("But their attempt was {} seconds ago, so we will grab the lock...".format(ts_diff.total_seconds()))
-                    rval = True
-        if (rval):
-            rval = self.saveCustomDataWait(cdata,lock=True)
-        return rval
-
-    # This holds the last date time we did saveCustomData
-    _data_tag  = '_data_dtm'
-    def saveCustomDataWait(self,ndata,lock=False,timeout=10):
-        dtns = datetime.now().strftime(self._lock_fmt)
-        ndata[self._data_tag] = dtns
-        LOGGER.info("saveCustomData: {}".format(dtns))
-        # Old stuff
-        if 'pinData' in ndata:
-            del ndata['pinData']
-        if 'refresh_status' in ndata:
-            del ndata['refresh_status']
-        # lock=None means do nothing to the lock.
-        if lock is not None:
-            # If True then set to curent date/time
-            # Otherwise set to what they desired, typically False
-            ndata[self._data_lock] = dtns if lock else lock
-        # Save it...
-        done = False
-        tcnt = 0
-        while (not done):
-            tcnt += 1
-            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock]))
-            if 'tokenData' in ndata:
-                LOGGER.info("tokenData="+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
-            self.saveCustomData(ndata)
-            cnt = 0
-            while (not done and cnt < 900):
-                cd = deepcopy(self.polyConfig['customData'])
-                if cd.get(self._data_tag) == dtns:
-                    done = True
-                else:
-                    LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
-                    time.sleep(1)
-                    cnt += 1
-            if (done):
-                self._last_dtns = dtns
-                # IF we set auth false then set it back to true
-                if (tcnt > 1):
-                    self.set_auth_st(True)
-            else:
-                LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
-                # No idea what to do in this case?  For now set auto false so can trigger a failure...
-                self.set_auth_st(False)
-        LOGGER.info("Done\n{}={}\n{}={}".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock]))
-        if 'tokenData' in cd:
-            LOGGER.info("tokenData="+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
-        return True
 
     def _startRefresh(self,test=False):
         # See if someone else already refreshed it?  Very small chance of this happening on PGC, but it could.
@@ -280,7 +334,7 @@ class Controller(Controller):
             res = self.session.post('token',
                 params = {
                     'grant_type':    'refresh_token',
-                    'client_id':     self.serverdata['api_key'],
+                    'client_id':     self.api_key,
                     'refresh_token': self.tokenData['refresh_token']
                 })
             if res is False:
@@ -336,22 +390,14 @@ class Controller(Controller):
         self._endRefresh(test=test)
         return False
 
-    def _reAuth(self, reason):
-        # Need to re-auth!
-        LOGGER.error('_reAuth because: {}'.format(reason))
-        cdata = deepcopy(self.polyConfig['customData'])
-        if not 'tokenData' in cdata:
-            LOGGER.error('No tokenData in customData: {}'.format(cdata))
-        self.saveCustomDataWait(cdata)
-        self._getPin()
-
     def _getTokens(self, pinData):
-        LOGGER.debug('PIN: {} found. Attempting to get tokens...'.format(pinData['ecobeePin']))
+        LOGGER.debug('Attempting to get tokens for {}'.format(pinData))
         res = self.session.post('token',
             params = {
-                        'grant_type':  'ecobeePin',
-                        'client_id':   self.serverdata['api_key'],
-                        'code':        pinData['code']
+                        'grant_type':  self.grant_type,
+                        'client_id':   self.api_key,
+                        'code':        pinData['code'],
+                        'redirect_uri': self.redirect_url
                     })
         if res is False:
             self.set_ecobee_st(False)
@@ -374,71 +420,11 @@ class Controller(Controller):
                 self.exit()
             return False
         if 'access_token' in res_data:
+            self.waiting_on_tokens = False
             LOGGER.debug('Got first set of tokens sucessfully.')
             self._endRefresh(res_data)
             return True
         self.set_auth_st(False)
-
-    def _getPin(self):
-        res = self.session_get('authorize',
-                              {
-                                  'response_type':  'ecobeePin',
-                                  'client_id':      self.serverdata['api_key'],
-                                  'scope':          'smartWrite'
-                              })
-        if res is False:
-            self.refreshingTokens = False
-            return False
-        res_data = res['data']
-        res_code = res['code']
-        if 'ecobeePin' in res_data:
-            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
-            LOGGER.info('_getPin: {}'.format(msg))
-            self.addNotice({'getPin': msg})
-            # cust_data = deepcopy(self.polyConfig['customData'])
-            # cust_data['pinData'] = data
-            # self.saveCustomDataWait(cust_data)
-            waitingOnPin = True
-            stime = 30
-            while waitingOnPin:
-                time.sleep(stime)
-                if self._getTokens(res_data):
-                    waitingOnPin = False
-                    LOGGER.info("Calling discover...")
-                    self.discover()
-                else:
-                    if stime < 180:
-                        stime += 30
-        else:
-            msg = 'ecobeePin Failed code={}: {}'.format(res_code,res_data)
-            self.addNotice({'getPin': msg})
-
-    def shortPoll(self):
-        pass
-
-    def longPoll(self):
-        # Call discovery if it failed on startup
-        LOGGER.debug("{}:longPoll".format(self.address))
-        self.heartbeat()
-        if not self.ready:
-            LOGGER.debug("{}:longPoll: not run, not ready...".format(self.address))
-            return False
-        if self.in_discover:
-            LOGGER.debug("{}:longPoll: Skipping since discover is still running".format(self.address))
-            return
-        if self.discover_st is False:
-            LOGGER.info("Calling discover...")
-            self.discover()
-        self.updateThermostats()
-
-    def heartbeat(self):
-        LOGGER.debug('heartbeat hb={}'.format(self.hb))
-        if self.hb == 0:
-            self.reportCmd("DON",2)
-            self.hb = 1
-        else:
-            self.reportCmd("DOF",2)
-            self.hb = 0
 
     def updateThermostats(self,force=False):
         LOGGER.debug("{}:updateThermostats: start".format(self.address))
@@ -794,6 +780,89 @@ class Controller(Controller):
                     LOGGER.error('Bad return code {}:{}'.format(res_data['status']['code'],res_data['status']['message']))
         return False
 
+    #
+    # This method "locks" the DB by adding setting _data_lock to true.
+    # There is no unlock method, currently it's done in saveCustomDataWait
+    # because don't want to do multipe writes to save the data, then unlock it.
+    #
+    # TODO: Add a "wait" function with "timeout"?
+    #
+    # This holds the lock.
+    _data_lock = '_data_lock'
+    _lock_fmt  = '%Y-%m-%dT%H:%M:%S.%f'
+    def lockCustomData(self):
+        cdata = deepcopy(self.polyConfig['customData'])
+        # Now see if someone is trying to refresh it.
+        lock = cdata.get(self._data_lock)
+        rval = False
+        if lock is None or lock is False:
+            rval = True
+        else:
+            LOGGER.error("Someone is already refreshing at {}...".format(lock))
+            # See if it has expired
+            ts_now = datetime.now()
+            try:
+                ts_start = datetime.strptime(lock,self._lock_fmt)
+            except Exception as e:
+                LOGGER.error('convert time {} failed {}, will grab the lock'.format(lock,e))
+                rval = True
+            else:
+                ts_diff  = ts_now - ts_start
+                if ts_diff.total_seconds() > 120:
+                    LOGGER.error("But their attempt was {} seconds ago, so we will grab the lock...".format(ts_diff.total_seconds()))
+                    rval = True
+        if (rval):
+            rval = self.saveCustomDataWait(cdata,lock=True)
+        return rval
+
+    # This holds the last date time we did saveCustomData
+    _data_tag  = '_data_dtm'
+    def saveCustomDataWait(self,ndata,lock=False,timeout=10):
+        dtns = datetime.now().strftime(self._lock_fmt)
+        ndata[self._data_tag] = dtns
+        LOGGER.info("saveCustomData: {}".format(dtns))
+        # Old stuff
+        if 'pinData' in ndata:
+            del ndata['pinData']
+        if 'refresh_status' in ndata:
+            del ndata['refresh_status']
+        # lock=None means do nothing to the lock.
+        if lock is not None:
+            # If True then set to curent date/time
+            # Otherwise set to what they desired, typically False
+            ndata[self._data_lock] = dtns if lock else lock
+        # Save it...
+        done = False
+        tcnt = 0
+        while (not done):
+            tcnt += 1
+            LOGGER.info("Sending try={}\n{}={}\n{}={}\ntokenData=".format(tcnt,self._data_tag,ndata[self._data_tag],self._data_lock,ndata[self._data_lock]))
+            if 'tokenData' in ndata:
+                LOGGER.info("tokenData="+json.dumps(ndata['tokenData'],sort_keys=True,indent=2))
+            self.saveCustomData(ndata)
+            cnt = 0
+            while (not done and cnt < 900):
+                cd = deepcopy(self.polyConfig['customData'])
+                if cd.get(self._data_tag) == dtns:
+                    done = True
+                else:
+                    LOGGER.info("Waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+                    time.sleep(1)
+                    cnt += 1
+            if (done):
+                self._last_dtns = dtns
+                # IF we set auth false then set it back to true
+                if (tcnt > 1):
+                    self.set_auth_st(True)
+            else:
+                LOGGER.error("This may cause problems... timeout waiting for custom data save to happen {}={} expecting {}".format(self._data_tag,cd.get(self._data_tag),dtns))
+                # No idea what to do in this case?  For now set auto false so can trigger a failure...
+                self.set_auth_st(False)
+        LOGGER.info("Done\n{}={}\n{}={}".format(self._data_tag,cd[self._data_tag],self._data_lock,cd[self._data_lock]))
+        if 'tokenData' in cd:
+            LOGGER.info("tokenData="+json.dumps(cd['tokenData'],sort_keys=True,indent=2))
+        return True
+
     def cmd_poll(self,  *args, **kwargs):
         LOGGER.debug("{}:cmd_poll".format(self.address))
         self.updateThermostats(force=True)
@@ -837,7 +906,7 @@ class Controller(Controller):
             try:
                 level = self.getDriver('GV2')
             except:
-                self.l_error('set_debug_mode','getDriver(GV2) failed',True)
+                self.l_error('set_debug_mode','getDriver(GV2) failed',False)
             if level is None:
                 level = 20
         level = int(level)
