@@ -188,7 +188,7 @@ class Controller(Controller):
             # self.saveCustomDataWait(cust_data)
             self.waiting_on_tokens = True
             stime = 30
-            while waitingOnPin:
+            while self.waiting_on_tokens:
                 time.sleep(stime)
                 if self._getTokens(res_data):
                     LOGGER.info("_getPin: Calling discover...")
