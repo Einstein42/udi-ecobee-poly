@@ -193,7 +193,7 @@ class Controller(Controller):
     def _reAuth(self, reason):
         # Need to re-auth!
         LOGGER.error('_reAuth because: {}'.format(reason))
-        self.addNotice("Must Re-Authorize because {}".format(reason))
+        self.addNotice({'reauth': "Must Re-Authorize because {}".format(reason)})
         cdata = deepcopy(self.polyConfig['customData'])
         if not 'tokenData' in cdata:
             LOGGER.error('No tokenData in customData: {}'.format(cdata))
