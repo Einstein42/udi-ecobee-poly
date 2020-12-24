@@ -331,8 +331,8 @@ class Controller(Controller):
                         LOGGER.error("Someone changed the db?")
                         LOGGER.error("{}= {}".format(self._data_tag,self.polyConfig['customData'][self._data_tag]))
                         LOGGER.error("_last_dtns={}".format(self._last_dtns))
-                        l_dt = datetime.fromtimestamp(self._last_dtns).strftime(self._lock_fmt)
-                        c_dt = datetime.fromtimestamp(self.polyConfig['customData'][self._data_tag]).strftime(self._lock_fmt)
+                        l_dt = datetime.fromtimestamp(int(self._last_dtns)).strftime(self._lock_fmt)
+                        c_dt = datetime.fromtimestamp(int(self.polyConfig['customData'][self._data_tag])).strftime(self._lock_fmt)
                         if c_dt < l_dt:
                             LOGGER.error("But it is older than what we wrote, so will ignore it...")
                         else:
