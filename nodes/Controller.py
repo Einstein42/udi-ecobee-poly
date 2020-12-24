@@ -175,7 +175,7 @@ class Controller(Controller):
             if self.polyConfig['customData']['api_key'] != self.api_key:
                 msg = 'You are using old api key "{}".'.format(self.polyConfig['customData']['api_key'])
                 return False
-        else:
+        elif 'tokenData' in self.polyConfig['customData']:
             msg = 'No api key found, if you have previously authorized, '
         if msg is not None:
             msg += ' Please <a target="_blank" href="https://www.ecobee.com/consumerportal/">Signin to your Ecobee account</a>. Click on Profile > My Apps > Remove App of the old Nodeserver, and resart this NodeServer'
@@ -259,6 +259,7 @@ class Controller(Controller):
     def _getOAuth(self):
         # Do we have it?
         sdata = self._getOAuthInit()
+        LOGGER.debug("_getOAuth: sdata={}".format(sdata))
         if sdata is not False:
             LOGGER.debug('Init={}'.format(sdata))
             self.serverdata['api_key'] = sdata['api_key']
