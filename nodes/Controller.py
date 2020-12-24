@@ -49,7 +49,6 @@ class Controller(Controller):
         self._cloud = CLOUD
 
     def start(self):
-        #self.removeNoticesAll()
         LOGGER.info('Started Ecobee v2 NodeServer')
         self.removeNoticesAll()
         self.heartbeat()
@@ -96,15 +95,20 @@ class Controller(Controller):
             self.redirect_url = None
         # Force to false, and successful communication will fix it
         #self.set_ecobee_st(False) Causes it to always stay false.
-        if 'tokenData' in self.polyConfig['customData']:
-            self.tokenData = self.polyConfig['customData']['tokenData']
-            if self._checkTokens():
-                LOGGER.info("start: Calling discover...")
-                self.discover()
+        # Make sure they are using the latest API
+        if self.check_api():
+            if 'tokenData' in self.polyConfig['customData']:
+                self.tokenData = self.polyConfig['customData']['tokenData']
+                if self._checkTokens():
+                    LOGGER.info("start: Calling discover...")
+                    self.discover()
+            else:
+                LOGGER.info('No tokenData, will need to authorize...')
+                self.authorize()
+                self.reportDrivers()
         else:
             LOGGER.info('No tokenData, will need to authorize...')
-            self.authorize()
-            self.reportDrivers()
+            self._reAuth("Using old api key.")
         self.ready = True
         LOGGER.debug('done')
 
@@ -114,6 +118,7 @@ class Controller(Controller):
     def longPoll(self):
         # Call discovery if it failed on startup
         LOGGER.debug("{}:longPoll".format(self.address))
+        self.check_api() # In case the message went away...
         self.heartbeat()
         if not self.ready:
             LOGGER.debug("{}:longPoll: not run, not ready...".format(self.address))
@@ -152,6 +157,23 @@ class Controller(Controller):
     def get_session(self):
         self.session = pgSession(self,self.name,LOGGER,ECOBEE_API_URL,debug_level=self.debug_level)
 
+    def check_api(self):
+        """
+        Check if api being used is old and user needs to re-auth
+        """
+        msg = None
+        if 'api_key' in self.polyConfig['customData']:
+            if self.polyConfig['customData']['api_key'] != self.api_key:
+                msg = 'You are using old api key "{}".'.format(self.polyConfig['customData']['api_key'])
+        else:
+            msg = 'You are using old api key.'
+        if msg is not None:
+            msg += ' Please <a target="_blank" href="https://www.ecobee.com/consumerportal/">Signin to your Ecobee account</a>. Click on Profile > My Apps > Remove App of the old Nodeserver, and resart this NodeServer'
+            LOGGER.warning(msg)
+            self.addNotice({'check_api': msg})
+            return False
+        return True
+
     def authorize(self):
         if self._cloud is True:
             self._getOAuth()
@@ -161,6 +183,7 @@ class Controller(Controller):
     def _reAuth(self, reason):
         # Need to re-auth!
         LOGGER.error('_reAuth because: {}'.format(reason))
+        self.addNotice("Must Re-Authorize because {}".format(reason))
         cdata = deepcopy(self.polyConfig['customData'])
         if not 'tokenData' in cdata:
             LOGGER.error('No tokenData in customData: {}'.format(cdata))
@@ -181,7 +204,7 @@ class Controller(Controller):
         res_data = res['data']
         res_code = res['code']
         if 'ecobeePin' in res_data:
-            msg = 'Click <a target="_blank" href="https://www.ecobee.com">here</a> to login to your Ecobee account. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
+            msg = 'Please <a target="_blank" href="https://www.ecobee.com/consumerportal/">Signin to your Ecobee account</a>. Click on Profile > My Apps > Add Application and enter PIN: <b>{}</b>. You have 10 minutes to complete this. The NodeServer will check every 60 seconds.'.format(res_data['ecobeePin'])
             LOGGER.info('_getPin: {}'.format(msg))
             self.addNotice({'getPin': msg})
             # cust_data = deepcopy(self.polyConfig['customData'])
@@ -192,6 +215,7 @@ class Controller(Controller):
             while self.waiting_on_tokens:
                 time.sleep(stime)
                 if self._getTokens(res_data):
+                    self.removeNoticesAll()
                     LOGGER.info("_getPin: Calling discover...")
                     self.discover()
                 else:
@@ -242,6 +266,7 @@ class Controller(Controller):
         if 'code' in oauth:
             if self._getTokens(oauth):
                 self.removeNoticesAll()
+                self.polyConfig['customData']['api_key'] = self.api_key
                 self.discover()
 
     def _expire_delta(self):
@@ -429,6 +454,8 @@ class Controller(Controller):
         if 'access_token' in res_data:
             self.waiting_on_tokens = False
             LOGGER.debug('Got first set of tokens sucessfully.')
+            self.polyConfig['customData']['api_key'] = self.api_key
+            self.polyConfig['customData']['api_code'] = pinData['code']
             self._endRefresh(res_data)
             return True
         self.set_auth_st(False)
