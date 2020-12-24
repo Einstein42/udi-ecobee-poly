@@ -95,6 +95,7 @@ class Controller(Controller):
                 LOGGER.warning("Looks like we are running on to pgtest")
                 self.redirect_url = 'https://pgtest.isy.io/api/oauth/callback'
             else:
+                LOGGER.warning("Looks like we are running on to pgc")
                 self.redirect_url = 'https://polyglot.isy.io/api/oauth/callback'
         else:
             self.grant_type = 'ecobeePin'
