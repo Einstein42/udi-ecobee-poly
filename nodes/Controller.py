@@ -79,14 +79,20 @@ class Controller(Controller):
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
         self.set_debug_mode()
         self.get_session() 
+        # Anything special to do in pgtest development mode?
+        #if self.poly.init['development']:
         #
         # Cloud uses OAuth, local users PIN
         #
+        self.pg_test = False
         if self._cloud:
             self.grant_type = 'authorization_code'
             self.api_key    = self.serverdata['api_key']
-            if self.poly.init['development']:
-                LOGGER.warning("Development Mode, will authorize to pgtest")
+            # TODO: Need a better way to tell if we are on pgtest!
+            #       "logBucket": "pgc-test-logbucket-19y0vctj4zlk5",
+            if re.match('pgc-test-.*',self.poly.init['logBucket']):
+                self.pg_test = True
+                LOGGER.warning("Looks like we are running on to pgtest")
                 self.redirect_url = 'https://pgtest.isy.io/api/oauth/callback'
             else:
                 self.redirect_url = 'https://polyglot.isy.io/api/oauth/callback'
