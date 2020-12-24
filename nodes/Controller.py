@@ -165,6 +165,7 @@ class Controller(Controller):
         if 'api_key' in self.polyConfig['customData']:
             if self.polyConfig['customData']['api_key'] != self.api_key:
                 msg = 'You are using old api key "{}".'.format(self.polyConfig['customData']['api_key'])
+                return False
         else:
             msg = 'You are using old api key.'
         if msg is not None:
