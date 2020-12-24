@@ -90,7 +90,7 @@ class Controller(Controller):
             self.api_key    = self.serverdata['api_key']
             # TODO: Need a better way to tell if we are on pgtest!
             #       "logBucket": "pgc-test-logbucket-19y0vctj4zlk5",
-            if re.match('pgc-test-.*',self.poly.init['logBucket']):
+            if self.poly.stage == 'test':
                 self.pg_test = True
                 LOGGER.warning("Looks like we are running on to pgtest")
                 self.redirect_url = 'https://pgtest.isy.io/api/oauth/callback'
