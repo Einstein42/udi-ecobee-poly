@@ -75,7 +75,7 @@ class Controller(Controller):
                 del cust_data[key]
         if ud:
             self.saveCustomDataWait(cust_data)
-        LOGGER.debug("init=\n"+json.dumps(self.poly.init,sort_keys=True,indent=2))
+        #LOGGER.debug("init=\n"+json.dumps(self.poly.init,sort_keys=True,indent=2))
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
         self.set_debug_mode()
         self.get_session() 
