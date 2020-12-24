@@ -75,6 +75,7 @@ class Controller(Controller):
                 del cust_data[key]
         if ud:
             self.saveCustomDataWait(cust_data)
+        LOGGER.debug("init=\n"+json.dumps(self.poly.init,sort_keys=True,indent=2))
         LOGGER.debug("customData=\n"+json.dumps(cust_data,sort_keys=True,indent=2))
         self.set_debug_mode()
         self.get_session() 
@@ -113,7 +114,8 @@ class Controller(Controller):
         LOGGER.debug('done')
 
     def shortPoll(self):
-        pass
+        if self.waiting_on_tokens:
+            LOGGER.debug("{}:shortPoll: Waiting for user to authorize...".format(self.address))
 
     def longPoll(self):
         # Call discovery if it failed on startup
