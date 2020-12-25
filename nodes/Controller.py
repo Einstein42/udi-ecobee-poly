@@ -129,14 +129,14 @@ class Controller(Controller):
             return
         if self.waiting_on_tokens is False:
             return
-        elif self.waiting_on_tokens == "PIN":
-            if self._getTokens(res_data):
+        elif self.waiting_on_tokens == "OAuth":
+            LOGGER.debug("{}:shortPoll: Waiting for user to authorize...".format(self.address))
+        else:
+            # Must be waiting on our PIN Authorization
+            if self._getTokens({"code": self.waiting_on_tokens}):
                 self.removeNoticesAll()
                 LOGGER.info("shortPoll: Calling discover now that we have authorization...")
                 self.discover()
-        else:
-            # Must be oauth which is handled by the oauth method.
-            LOGGER.debug("{}:shortPoll: Waiting for user to authorize...".format(self.address))
 
     def longPoll(self):
         # Call discovery if it failed on startup
@@ -235,7 +235,7 @@ class Controller(Controller):
             # cust_data['pinData'] = data
             # self.saveCustomDataWait(cust_data)
             # This will tell shortPoll to check for PIN
-            self.waiting_on_tokens = "PIN"
+            self.waiting_on_tokens = res_code
         else:
             msg = 'ecobeePin Failed code={}: {}'.format(res_code,res_data)
             self.addNotice({'getPin': msg})
