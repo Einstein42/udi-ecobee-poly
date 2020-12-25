@@ -45,13 +45,17 @@ class Thermostat(Node):
         self.driver = dict()
         super(Thermostat, self).__init__(controller, primary, address, name)
 
-    def setDriver(self,driver,value):
+    def set_driver(self,driver,value):
         self.driver[driver] = value
-        super(Thermostat, self).setDriver(driver,value)
+        self.setDriver(driver,value)
 
-    def getDriver(self,driver):
+    def get_driver(self,driver):
         if not driver in self.driver:
-            self.driver[driver] = super(Thermostat, self).getDriver(driver)
+          try:
+            self.driver[driver] = self.getDriver(driver)
+          except:
+            self.l_error('get_dirver','does not exist {}'.format(driver))
+            return None
         return self.driver[driver]
 
     def start(self):
@@ -85,13 +89,13 @@ class Thermostat(Node):
         # Initialize?
         if self.do_weather is None:
             try:
-                dval = self.getDriver('GV9')
+                dval = self.get_driver('GV9')
                 LOGGER.debug('check_weather: Initial value GV9={}'.format(dval))
                 dval = int(dval)
                 # Set False if 0, otherwise True since initially it may be None?
                 self.do_weather = False if dval == 0 else True
             except:
-                LOGGER.error('check_weather: Failed to getDriver GV9, asuming do_weather=True')
+                LOGGER.error('check_weather: Failed to get_driver GV9, asuming do_weather=True')
                 self.do_weather = True
         if self.do_weather:
             # we want some weather
@@ -257,8 +261,8 @@ class Thermostat(Node):
         'GV11': self.settings['backlightSleepIntensity']
       }
       for key, value in updates.items():
-          self.l_debug('_update','setDriver({},{})'.format(key,value))
-          self.setDriver(key, value)
+          self.l_debug('_update','set_driver({},{})'.format(key,value))
+          self.set_driver(key, value)
 
       # Update my remote sensors.
       for sensor in self.tstat['remoteSensors']:
@@ -320,7 +324,7 @@ class Thermostat(Node):
     def getHoldType(self,val=None):
       if val is None:
           # They want the current value
-          val = self.getDriver('CLISMD')
+          val = self.get_driver('CLISMD')
       # Return the holdType name, if set to Hold, return indefinite
       # Otherwise return nextTransition
       return getMapName(transitionMap,2) if int(val) == 2 else getMapName(transitionMap,1)
@@ -362,15 +366,15 @@ class Thermostat(Node):
     def pushScheduleMode(self,clismd=None,coolTemp=None,heatTemp=None,fanMode=None):
       LOGGER.debug("pushScheduleMode: clismd={} coolTemp={} heatTemp={}".format(clismd,coolTemp,heatTemp))
       if clismd is None:
-          clismd = int(self.getDriver('CLISMD'))
+          clismd = int(self.get_driver('CLISMD'))
       elif int(clismd) == 0:
         return self.pushResume()
       # Get the new schedule mode, current if in a hold, or hold next
       clismd_name = self.getHoldType(clismd)
       if heatTemp is None:
-          heatTemp = self.getDriver('CLISPH')
+          heatTemp = self.get_driver('CLISPH')
       if coolTemp is None:
-          coolTemp = self.getDriver('CLISPC')
+          coolTemp = self.get_driver('CLISPC')
       params = {
         'holdType': clismd_name,
         'heatHoldTemp': self.tempToEcobee(heatTemp),
@@ -409,7 +413,7 @@ class Thermostat(Node):
             self.setBacklight(val)
 
     def setBacklight(self,val):
-      self.setDriver('GV10', val)
+      self.set_driver('GV10', val)
 
     def pushBacklightSleep(self,val):
         self.l_debug('pushBacklightSleep','{}'.format(val))
@@ -427,7 +431,7 @@ class Thermostat(Node):
             self.setBacklightSleep(val)
 
     def setBacklightSleep(self,val):
-      self.setDriver('GV11', val)
+      self.set_driver('GV11', val)
 
     #
     # Set Methods for drivers so they are set the same way
@@ -440,7 +444,7 @@ class Thermostat(Node):
           else:
             logger.ERROR("{}:setScheduleMode: Unknown transitionMap name {}".format(self.address,val))
             return False
-      self.setDriver('CLISMD',int(val))
+      self.set_driver('CLISMD',int(val))
       self.clismd = int(val)
 
     # Set current climateType
@@ -456,7 +460,7 @@ class Thermostat(Node):
         else:
           LOGGER.error("Unknown climate name {}".format(val))
           return False
-      self.setDriver('GV3',int(val))
+      self.set_driver('GV3',int(val))
 
     # Convert Tempearture used by ISY to Ecobee API value
     def tempToEcobee(self,temp):
@@ -490,12 +494,12 @@ class Thermostat(Node):
     def setCool(self,val,fromE=False,FtoInt=True):
       dval = self.tempToDriver(val,fromE,FtoInt)
       LOGGER.debug('{}:setCool: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
-      self.setDriver('CLISPC',dval)
+      self.set_driver('CLISPC',dval)
 
     def setHeat(self,val,fromE=False,FtoInt=True):
       dval = self.tempToDriver(val,fromE,FtoInt)
       LOGGER.debug('{}:setHeat: {}={} fromE={} FtoInt={}'.format(self.address,val,dval,fromE,FtoInt))
-      self.setDriver('CLISPH',dval)
+      self.set_driver('CLISPH',dval)
 
     def setFanMode(self,val):
       if is_int(val):
@@ -507,7 +511,7 @@ class Thermostat(Node):
             logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
             return False
       LOGGER.debug('{}:setFanMode: {}={}'.format(self.address,val,dval))
-      self.setDriver('CLIFS',dval)
+      self.set_driver('CLIFS',dval)
       return dval
 
     def setFanState(self,val):
@@ -520,7 +524,7 @@ class Thermostat(Node):
             logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
             return False
       LOGGER.debug('{}:setFanState: {}={}'.format(self.address,val,dval))
-      self.setDriver('CLIFRS',dval)
+      self.set_driver('CLIFRS',dval)
 
     def cmdSetPF(self, cmd):
       # Set a hold:  https://www.ecobee.com/home/developer/api/examples/ex5.shtml
@@ -539,19 +543,19 @@ class Thermostat(Node):
       '''
         Set the Schedule Mode, like running, or a hold
       '''
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
-        LOGGER.debug("cmdSetScheduleMode: {}={} already set to {}".format(cmd['cmd'],self.getDriver(cmd['cmd']),cmd['value']))
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
+        LOGGER.debug("cmdSetScheduleMode: {}={} already set to {}".format(cmd['cmd'],self.get_driver(cmd['cmd']),cmd['value']))
       else:
         self.pushScheduleMode(cmd['value'])
 
     def cmdSetMode(self, cmd):
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetMode: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         name = getMapName(modeMap,int(cmd['value']))
         LOGGER.info('Setting Thermostat {} to mode: {} (value={})'.format(self.name, name, cmd['value']))
         if self.ecobeePost( {'thermostat': {'settings': {'hvacMode': name}}}):
-          self.setDriver(cmd['cmd'], cmd['value'])
+          self.set_driver(cmd['cmd'], cmd['value'])
 
     def cmdSetClimateType(self, cmd):
       LOGGER.debug('{}:cmdSetClimateType: {}={}'.format(self.address,cmd['cmd'],cmd['value']))
@@ -567,14 +571,14 @@ class Thermostat(Node):
         }]
       }
       if self.ecobeePost(command):
-        self.setDriver(cmd['cmd'], cmd['value'])
-        self.setDriver('CLISMD',transitionMap[self.getHoldType()])
+        self.set_driver(cmd['cmd'], cmd['value'])
+        self.set_driver('CLISMD',transitionMap[self.getHoldType()])
         # If we went back to current climate name that will reset temps, so reset isy
         #if self.program['currentClimateRef'] == climateName:
         self.setClimateSettings(climateName)
 
     def cmdSetFanOnTime(self, cmd):
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetFanOnTime: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
@@ -585,10 +589,10 @@ class Thermostat(Node):
           }
         }
         if self.ecobeePost( command):
-          self.setDriver(cmd['cmd'], cmd['value'])
+          self.set_driver(cmd['cmd'], cmd['value'])
 
     def cmdSmartHome(self, cmd):
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdSetSmartHome: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
@@ -599,10 +603,10 @@ class Thermostat(Node):
           }
         }
         if self.ecobeePost( command):
-          self.setDriver(cmd['cmd'], cmd['value'])
+          self.set_driver(cmd['cmd'], cmd['value'])
 
     def cmdFollowMe(self, cmd):
-      if int(self.getDriver(cmd['cmd'])) == int(cmd['value']):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
         LOGGER.debug("cmdFollowMe: {} already set to {}".format(cmd['cmd'],int(cmd['value'])))
       else:
         command = {
@@ -613,14 +617,14 @@ class Thermostat(Node):
           }
         }
         if self.ecobeePost( command):
-          self.setDriver(cmd['cmd'], cmd['value'])
+          self.set_driver(cmd['cmd'], cmd['value'])
 
     def cmdSetDoWeather(self, cmd):
       value = int(cmd['value'])
-      if int(self.getDriver(cmd['cmd'])) == value:
+      if int(self.get_driver(cmd['cmd'])) == value:
         LOGGER.debug("cmdSetDoWeather: {} already set to {}".format(cmd['cmd'],value))
       else:
-        self.setDriver(cmd['cmd'], value)
+        self.set_driver(cmd['cmd'], value)
         self.do_weather = True if value == 1 else False
         self.check_weather()
 
@@ -633,8 +637,8 @@ class Thermostat(Node):
     # TODO: This should set the drivers and call pushHold...
     def setPoint(self, cmd):
       LOGGER.debug(cmd)
-      coolTemp = self.tempToDriver(self.getDriver('CLISPC'))
-      heatTemp = self.tempToDriver(self.getDriver('CLISPH'))
+      coolTemp = self.tempToDriver(self.get_driver('CLISPC'))
+      heatTemp = self.tempToDriver(self.get_driver('CLISPH'))
       if 'value' in cmd:
         value = float(cmd['value'])
       else:
@@ -652,7 +656,7 @@ class Thermostat(Node):
         driver = 'CLISPC'
         coolTemp += value
         newTemp = coolTemp
-      LOGGER.debug('{} {} {} {}'.format(cmdtype, driver, self.getDriver(driver), newTemp))
+      LOGGER.debug('{} {} {} {}'.format(cmdtype, driver, self.get_driver(driver), newTemp))
       #LOGGER.info('Setting {} {} Set Point to {}{}'.format(self.name, cmdtype, cmd['value'], 'C' if self.useCelsius else 'F'))
       if self.ecobeePost(
         {
@@ -667,8 +671,8 @@ class Thermostat(Node):
             }
           ]
         }):
-        self.setDriver(driver, newTemp)
-        self.setDriver('CLISMD',transitionMap[self.getHoldType()])
+        self.set_driver(driver, newTemp)
+        self.set_driver('CLISMD',transitionMap[self.getHoldType()])
 
     def l_info(self, name, string):
         LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))

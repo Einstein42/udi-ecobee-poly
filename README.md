@@ -70,12 +70,13 @@ __IMPORTANT__ Starting with version 2.2.0 users should to re-authorize
 
 - 2.2.0: JimBo 12/22/2020
   - Change Authorization to use use new Ecobee UDI Authorization, see __IMPORTANT__ message above!
-   - PGC now uses OAuth so no PIN required
-   - Hopefully this will resolve users having to re-authorize, but only time will tell for sure.
-   - Should fix [The client was authorized, but Ecobee returned an invalid_client error](https://github.com/Einstein42/udi-ecobee-poly/issues/60)
+    - PGC now uses OAuth so no PIN required
+    - Hopefully this will resolve users having to re-authorize, but only time will tell for sure.
+    - Should fix [The client was authorized, but Ecobee returned an invalid_client error](https://github.com/Einstein42/udi-ecobee-poly/issues/60)
   - Add traceback for [ClimateType smart14 Error](https://github.com/Einstein42/udi-ecobee-poly/issues/63) to help debug the issue
     - Also, will only print the error once per run instead of constantly
   - Fix [Crash getting date/time](https://github.com/Einstein42/udi-ecobee-poly/issues/65)
+  - Initial support for [Add support for dryContact sensors](https://github.com/Einstein42/udi-ecobee-poly/issues/24)
 - 2.1.34: jimBo 11/19/2020
   - Stop longPoll from running if node start has not completed.  This is a rare case when startup takes a long time due to Polyglot/PBC running very slow
 - 2.1.33: JimBo 11/17/2020
