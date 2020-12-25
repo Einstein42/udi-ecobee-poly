@@ -393,7 +393,7 @@ class Controller(Controller):
                 if 'error' in res_data:
                     self.set_ecobee_st(False)
                     self.addNotice({'grant_error': "{}: {} ".format(res_data['error'], res_data['error_description'])})
-                    self.addNotice({'grant_info': "For access_token={} refresh_token={} expires={}".format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires'])})
+                    #self.addNotice({'grant_info': "For access_token={} refresh_token={} expires={}".format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires'])})
                     LOGGER.error('Requesting Auth: {} :: {}'.format(res_data['error'], res_data['error_description']))
                     LOGGER.error('For access_token={} refresh_token={} expires={}'.format(self.tokenData['access_token'],self.tokenData['refresh_token'],self.tokenData['expires']))
                     # Set auth to false for now, so user sees the error, even if we correct it later...
