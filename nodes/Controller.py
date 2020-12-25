@@ -133,7 +133,7 @@ class Controller(Controller):
             LOGGER.debug("{}:shortPoll: Waiting for user to authorize...".format(self.address))
         else:
             # Must be waiting on our PIN Authorization
-            if self._getTokens({"code": self.waiting_on_tokens}):
+            if self._getTokens():
                 self.removeNoticesAll()
                 LOGGER.info("shortPoll: Calling discover now that we have authorization...")
                 self.discover()
@@ -235,7 +235,7 @@ class Controller(Controller):
             # cust_data['pinData'] = data
             # self.saveCustomDataWait(cust_data)
             # This will tell shortPoll to check for PIN
-            self.waiting_on_tokens = res_code
+            self.waiting_on_tokens = res_data
         else:
             msg = 'ecobeePin Failed code={}: {}'.format(res_code,res_data)
             self.addNotice({'getPin': msg})
