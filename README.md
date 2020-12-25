@@ -62,14 +62,17 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
+__IMPORTANT__ Starting with version 2.2.0 users should to re-authorize 
+  - Go to ecobee.com -> My Apps -> Remove App for the current UDI
+  - Local: Update in the store and restart
+  - Polyglot Cloud: Restart
+  - After restarting you may get a message in the Polyglot UI saying that the token is invalid, but has not some number of seconds remaining, so you will need to let it expire then you will be asked to re-authorize
+
 - 2.2.0: JimBo 12/22/2020
-  - __IMPORTANT__ All users will need to re-authorize 
-    - Go to ecobee.com -> My Apps -> Remove App for the current UDI
-    - Local: Update in the store and restart
-    - PGC: Restart
-  - Change Authorization to use use new Ecobee UDI Authorization
+  - Change Authorization to use use new Ecobee UDI Authorization, see __IMPORTANT__ message above!
    - PGC now uses OAuth so no PIN required
    - Hopefully this will resolve users having to re-authorize, but only time will tell for sure.
+   - Should fix [The client was authorized, but Ecobee returned an invalid_client error](https://github.com/Einstein42/udi-ecobee-poly/issues/60)
   - Add traceback for [ClimateType smart14 Error](https://github.com/Einstein42/udi-ecobee-poly/issues/63) to help debug the issue
     - Also, will only print the error once per run instead of constantly
   - Fix [Crash getting date/time](https://github.com/Einstein42/udi-ecobee-poly/issues/65)
