@@ -68,8 +68,11 @@ If you already have it installed and want the update before it's in the store.
     - Local: Update in the store and restart
     - PGC: Restart
   - Change Authorization to use use new Ecobee UDI Authorization
-  - PGC now uses OAuth so no PIN required
-  - Hopefully this will resolve users having to re-authorize, but only time will tell for sure.
+   - PGC now uses OAuth so no PIN required
+   - Hopefully this will resolve users having to re-authorize, but only time will tell for sure.
+  - Add traceback for [ClimateType smart14 Error](https://github.com/Einstein42/udi-ecobee-poly/issues/63) to help debug the issue
+    - Also, will only print the error once per run instead of constantly
+  - Fix [Crash getting date/time](https://github.com/Einstein42/udi-ecobee-poly/issues/65)
 - 2.1.34: jimBo 11/19/2020
   - Stop longPoll from running if node start has not completed.  This is a rare case when startup takes a long time due to Polyglot/PBC running very slow
 - 2.1.33: JimBo 11/17/2020
