@@ -411,14 +411,16 @@ class Controller(Controller):
                             LOGGER.error("No token expire data available, so will have to re-auth...".format(exp_d.total_seconds()))
                             self._reAuth('{} No token expire data available'.format(res_data['error']))
                         else:
-                            if exp_d.total_seconds() > 0:
-                                self.addNotice({'grant_info_2': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
-                                LOGGER.error("But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds()))
-                            else:
-                                self.addNotice({'grant_info_2': "Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds())})
-                                LOGGER.error("Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds()))
-                                # May need to remove the re-auth requirement because we get these and they don't seem to be real?
-                                self._reAuth('{} and Token expired'.format(res_data['error']))
+                            # Only do this check for new authorization which tracks api_key in customData
+                            if 'api_key' in self.polyConfig['customData']:
+                                if exp_d.total_seconds() > 0:
+                                    self.addNotice({'grant_info_2': "But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds())})
+                                    LOGGER.error("But token still has {} seconds to expire, so assuming this is an Ecobee server issue and will try to refresh on next poll...".format(exp_d.total_seconds()))
+                                else:
+                                    self.addNotice({'grant_info_2': "Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds())})
+                                    LOGGER.error("Token expired {} seconds ago, so will have to re-auth...".format(exp_d.total_seconds()))
+                                    # May need to remove the re-auth requirement because we get these and they don't seem to be real?
+                                    self._reAuth('{} and Token expired'.format(res_data['error']))
                     elif res_data['error'] == 'invalid_client':
                         # We will Ignore it because it may correct itself on the next poll?
                         LOGGER.error('Ignoring invalid_client error, will try again later for now, but may need to mark it invalid if we see more than once?  See: https://github.com/Einstein42/udi-ecobee-poly/issues/60')
@@ -869,7 +871,7 @@ class Controller(Controller):
         if lock is None or lock is False:
             rval = True
         else:
-            LOGGER.error("Someone is already refreshing at {}...".format(lock))
+            LOGGER.error("Someone is already refreshing at {} will wait a while to see if it clears or take it...".format(lock))
             # See if it has expired
             ts_now = datetime.now()
             try:
