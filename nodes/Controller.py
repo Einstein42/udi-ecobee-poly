@@ -133,7 +133,8 @@ class Controller(Controller):
             LOGGER.debug("{}:shortPoll: Waiting for user to authorize...".format(self.address))
         else:
             # Must be waiting on our PIN Authorization
-            if self._getTokens():
+            LOGGER.debug("{}:shortPoll: Try to get tokens...".format(self.address))
+            if self._getTokens(self.waiting_on_tokens):
                 self.removeNoticesAll()
                 LOGGER.info("shortPoll: Calling discover now that we have authorization...")
                 self.discover()
@@ -462,16 +463,19 @@ class Controller(Controller):
         if 'error' in res_data:
             LOGGER.error('_getTokens: {} :: {}'.format(res_data['error'], res_data['error_description']))
             self.set_auth_st(False)
-            if res_data['error'] == 'authorization_expired':
+            if res_data['error'] == 'authorization_expired' or res_data['error'] == 'invalid_grant':
                 msg = 'Nodeserver exiting because {}, please restart when you are ready to authorize.'.format(res_data['error'])
                 LOGGER.error('_getTokens: {}'.format(msg))
+                self.waiting_on_tokens = False
                 self.removeNoticesAll()
                 self.addNotice({'getTokens': msg})
                 self.exit()
             return False
         if 'access_token' in res_data:
             self.waiting_on_tokens = False
-            LOGGER.debug('Got first set of tokens sucessfully.')
+            LOGGER.debug('Got tokens sucessfully.')
+            self.removeNoticesAll()
+            self.addNotice({'getTokens': 'Tokens obtained!'})
             self.polyConfig['customData']['api_key'] = self.api_key
             self.polyConfig['customData']['api_code'] = pinData['code']
             self._endRefresh(res_data)
