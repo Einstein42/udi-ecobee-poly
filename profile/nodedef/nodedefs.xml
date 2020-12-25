@@ -56,6 +56,11 @@
       <st id="GV2" editor="BOOL" />
     </sts>
   </nodeDef>
+  <nodeDef id="EcobeeSensorMSD" nodeType="140" nls="140ES" >
+    <sts>
+      <st id="ST" editor="ONOFF" />
+    </sts>
+  </nodeDef>
   <nodeDef id="EcobeeWeatherF" nodeType="140" nls="140EW" >
     <sts>
       <st id="ST" editor="I_TEMP_F" />

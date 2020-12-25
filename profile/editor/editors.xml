@@ -96,6 +96,9 @@
   <editor id="I_TSTAT_RUNTIME2">
     <range uom="10" min="0" max="5000000000" prec="2" />
   </editor>
+  <editor id="ONOFF">
+    <range uom="25" min="0" max="1" prec="0" nls="EN_ONOFF"/>
+  </editor>
 
   <!-- Wind - Editors -->
   <editor id="I_SKY">

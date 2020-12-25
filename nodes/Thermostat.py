@@ -119,15 +119,33 @@ class Thermostat(Node):
 
     def get_sensor_nodedef(self,sensor):
         # Given the ecobee sensor data, figure out the nodedef
-        # 'capability': [{'id': '1', 'type': 'temperature', 'value': '724'}, {'id': '2', 'type': 'humidity', 'value': '41'}, {'id': '3', 'type': 'occupancy', 'value': 'false'}
+        # {'id': 'rs:100', 'name': 'Test Sensor', 'type': 'ecobee3_remote_sensor', 'code': 'VRSP', 'inUse': False, 'capability': [{'id': '1', 'type': 'temperature', 'value': 'unknown'}, {'id': '2', 'type': 'occupancy', 'value': 'false'}]}
+        # {'name': '', 'type': 'monitor_sensor', 'inUse': False, 'id': 'ei:0:1', 'capability': [{'type': 'dryContact', 'value': '0', 'id': ''}]}
         has_hum = False
+        has_temp = False
+        has_dry_contact = False
+        has_occupancy = False
         if 'capability' in sensor:
             for cb in sensor['capability']:
-                if cb['type'] == 'humidity':
+                if cb['type'] == 'temperatiure':
+                    has_temp = True
+                elif cb['type'] == 'humidity':
                     has_hum = True
-        CorF = 'C' if self.useCelsius else 'F'
-        HorN = 'H' if has_hum else ''
-        return 'EcobeeSensor{}{}'.format(HorN,CorF)
+                elif cb['type'] == 'dryContact':
+                    has_dry_contact = True
+                elif cb['type'] == 'occupancy':
+                    has_occupancy = True
+        if sensor['type'] == 'monitor_sensor':
+          if has_dry_contact:
+            if has_hum or has_temp or has_occupancy:
+              LOGGER.error("Currently Unsupported sensor has_dry_contact={} has_temp={} has_hum={} has_occupancy={}".format(has_dry_contact,has_temp,has_hum,has_occupancy))
+              return False
+            else:
+              return 'EcobeeSensorMSD'
+        else:
+          CorF = 'C' if self.useCelsius else 'F'
+          HorN = 'H' if has_hum else ''
+          return 'EcobeeSensor{}{}'.format(HorN,CorF)
 
     def update(self, revData, fullData):
       self.l_debug('update','')
@@ -288,8 +306,12 @@ class Thermostat(Node):
         # Yes, use the thermostat id
         return 's{}'.format(self.tstat['identifier'])
       # No, use the remote sensor code if available
+      # {'id': 'rs:100', 'name': 'Test Sensor', 'type': 'ecobee3_remote_sensor', 'code': 'VRSP', 'inUse': False, 'capability': [{'id': '1', 'type': 'temperature', 'value': 'unknown'}, {'id': '2', 'type': 'occupancy', 'value': 'false'}]}
       if 'code' in sdata:
         return 'rs_{}'.format(sdata['code'].lower())
+      #  {'name': '', 'type': 'monitor_sensor', 'inUse': False, 'id': 'ei:0:1', 'capability': [{'type': 'dryContact', 'value': '0', 'id': ''}]}
+      if 'id' in sdata:
+        return re.sub('\\:', '_', sdata['id']).lower()[:12]
       LOGGER.error("{}:getSensorAddress: Unable to determine sensor address for: {}".format(self.address,sdata))
 
     def query(self, command=None):

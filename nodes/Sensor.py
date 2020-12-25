@@ -31,7 +31,8 @@ class Sensor(Node):
           'temperature': 'ST',
           'humidity': 'CLIHUM',
           'occupancy': 'GV1',
-          'responding': 'GV2'
+          'responding': 'GV2',
+          'dryContact': 'GV3'
       }
       for item in sensor['capability']:
           if item['type'] in xref:

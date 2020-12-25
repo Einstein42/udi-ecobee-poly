@@ -197,3 +197,6 @@ EN_ECOSCH-10 = N/A
 
 EN_ECOSCH_OPT-0 = Permanent
 EN_ECOSCH_OPT-1 = Transition
+
+EN_ONOFF-0 = Off
+EN_ONOFF-1 = On
