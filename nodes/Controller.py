@@ -121,6 +121,12 @@ class Controller(Controller):
         LOGGER.debug('done')
 
     def shortPoll(self):
+        if not self.ready:
+            LOGGER.debug("{}:shortPoll: not run, not ready...".format(self.address))
+            return False
+        if self.in_discover:
+            LOGGER.debug("{}:shortPoll: Skipping since discover is still running".format(self.address))
+            return
         if self.waiting_on_tokens is False:
             return
         elif self.waiting_on_tokens == "PIN":
@@ -140,7 +146,7 @@ class Controller(Controller):
         if not self.ready:
             LOGGER.debug("{}:longPoll: not run, not ready...".format(self.address))
             return False
-        if self.waiting_on_tokens:
+        if self.waiting_on_tokens is not False:
             LOGGER.debug("{}:longPoll: not run, waiting for user to authorize...".format(self.address))
             return False
         if self.in_discover:
@@ -269,7 +275,7 @@ class Controller(Controller):
             msg = 'No existing Authorization found, Please <a target="_blank" href="{}">Authorize acess to your Ecobee Account</a>'.format(url)
             self.addNotice({'oauth': msg})
             LOGGER.warning(msg)
-            self.waiting_on_tokens = True
+            self.waiting_on_tokens = "OAuth"
 
     def oauth(self, oauth):
         LOGGER.info('OAUTH Received: {}'.format(oauth))
