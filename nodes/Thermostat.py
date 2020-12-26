@@ -41,6 +41,7 @@ class Thermostat(Node):
         self.weather = None
         self.forcast = None
         self._gcde = {}
+        self._gcidx = {}
         # We track our driver values because we need the value before it's been pushed.
         self.driver = dict()
         super(Thermostat, self).__init__(controller, primary, address, name)
@@ -280,8 +281,10 @@ class Thermostat(Node):
       if name in climateMap:
           climateIndex = climateMap[name]
       else:
-          LOGGER.error("Unknown climateType='{}'".format(name))
-          climateIndex = climateMap['unknown']
+        if not name in self._gcidx[name]:
+          LOGGER.error("Unknown climateType='{}' which is a known issue https://github.com/Einstein42/udi-ecobee-poly/issues/63".format(name))
+          self._gcidx[name] = True
+        climateIndex = climateMap['unknown']
       return climateIndex
 
     def getCurrentClimateDict(self):
@@ -295,7 +298,7 @@ class Thermostat(Node):
       # Only show the error one time.
       if not cref in self._gcde:
         self._gcde[cref] = True
-        LOGGER.error('{}:getClimateDict: Unknown climateRef name {} See: https://github.com/Einstein42/udi-ecobee-poly/issues/63'.format(self.address,name),exc_info=True)
+        LOGGER.error('{}:getClimateDict: Unknown climateRef name {}'.format(self.address,name),exc_info=True)
       return None
 
     def getSensorAddressOld(self,sdata):
