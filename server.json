@@ -3,7 +3,7 @@
     "docs": "https://github.com/Einstein42/udi-ecobee-poly",
     "type": "python3",
     "executable": "ecobee-poly.py",
-    "__comment_out__install": "install.sh",
+    "install": "install.sh",
     "install_cloud": "install_cloud.sh",
     "description": "Ecobee NodeServer",
     "notice": "Not affiliated with Ecobee",
@@ -11,7 +11,7 @@
     "longPoll": "180",
     "api_key_pin": "2aFymqxQsvp6z7MHQFPqT89NQwC0Bu4K",
     "api_key_old": "19j5o2QheoDIYeuwPGOCWV80hI07lbDC",
-    "testMode": true,
+    "testMode": false,
     "api_key": "eeRigKDRCmR0zaNvLGABRG4eLpEc7r34",
     "credits": [
         {
