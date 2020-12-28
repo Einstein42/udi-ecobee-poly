@@ -140,4 +140,7 @@ driversMap = {
     { 'driver': 'GV8', 'value': 0, 'uom': '25' },
     { 'driver': 'GV9', 'value': 0, 'uom': '25' }
   ],
+  'EcobeeSensorMSD': [
+    { 'driver': 'ST', 'value': 0, 'uom': '17' },
+  ],
 }
