@@ -79,6 +79,7 @@ __IMPORTANT__ Starting with version 2.2.0 users should to re-authorize
     - Also, will only print the error once per run instead of constantly
   - Fix [Crash getting date/time](https://github.com/Einstein42/udi-ecobee-poly/issues/65)
   - Initial support for [Add support for dryContact sensors](https://github.com/Einstein42/udi-ecobee-poly/issues/24)
+  - For [ClimateType - smart14](https://github.com/Einstein42/udi-ecobee-poly/issues/63) Only print error once, actually bug will be fixed in the future.
 - 2.1.34: jimBo 11/19/2020
   - Stop longPoll from running if node start has not completed.  This is a rare case when startup takes a long time due to Polyglot/PBC running very slow
 - 2.1.33: JimBo 11/17/2020
