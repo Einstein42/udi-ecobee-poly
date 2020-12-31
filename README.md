@@ -68,6 +68,9 @@ __IMPORTANT__ Starting with version 2.2.0 users should to re-authorize
   - Polyglot Cloud: Restart
   - After restarting you may get a message in the Polyglot UI saying that the token is invalid, but has not some number of seconds remaining, so you will need to let it expire then you will be asked to re-authorize
 
+- 2.2.2: JimBo 12/31/2020
+  - Different workaround for [Crash getting date/time](https://github.com/Einstein42/udi-ecobee-poly/issues/65)
+    - This is only an issue on Polyglot Cloud
 - 2.2.1: JimBo 12/27/2020
   - Another fix for [Add support for dryContact sensors](https://github.com/Einstein42/udi-ecobee-poly/issues/24)
 - 2.2.0: JimBo 12/22/2020

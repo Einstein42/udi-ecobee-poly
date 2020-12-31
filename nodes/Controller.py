@@ -273,7 +273,7 @@ class Controller(Controller):
         else:
             #LOGGER.error(self.poly.init)
             url = 'https://{}/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(ECOBEE_API_URL,self.api_key,self.redirect_url,self.poly.init['worker'])
-            msg = 'No existing Authorization found, Please <a target="_blank" href="{}">Authorize acess to your Ecobee Account</a>'.format(url)
+            msg = 'No existing Authorization found, Please <a target="_blank" href="{}">Authorize access to your Ecobee Account</a>'.format(url)
             self.addNotice({'oauth': msg})
             LOGGER.warning(msg)
             self.waiting_on_tokens = "OAuth"
@@ -337,17 +337,20 @@ class Controller(Controller):
                         LOGGER.error("Someone changed the db?")
                         LOGGER.error("{}= {}".format(self._data_tag,self.polyConfig['customData'][self._data_tag]))
                         LOGGER.error("_last_dtns={}".format(self._last_dtns))
-                        l_dt = datetime.fromtimestamp(int(self._last_dtns)).strftime(self._lock_fmt)
-                        c_dt = datetime.fromtimestamp(int(self.polyConfig['customData'][self._data_tag])).strftime(self._lock_fmt)
-                        if c_dt < l_dt:
-                            LOGGER.error("But it is older than what we wrote, so will ignore it...")
-                        else:
-                            LOGGER.error("And it's newer than what we wrote so will use it?")
-                            LOGGER.error(" Mine:    {}".format(self.tokenData))
-                            LOGGER.error(" Current: {}".format(self.polyConfig['customData']['tokenData']))
-                            LOGGER.error("We will use the new tokens...")
-                            self.tokenData = deepcopy(self.polyConfig['customData']['tokenData'])
-                            return False
+                        try:
+                            l_dt = datetime.fromtimestamp(self._last_dtns).strftime(self._lock_fmt)
+                            c_dt = datetime.fromtimestamp(self.polyConfig['customData'][self._data_tag]).strftime(self._lock_fmt)
+                            if c_dt < l_dt:
+                                LOGGER.error("But it is older than what we wrote, so will ignore it...")
+                            else:
+                                LOGGER.error("And it's newer than what we wrote so will use it?")
+                                LOGGER.error(" Mine:    {}".format(self.tokenData))
+                                LOGGER.error(" Current: {}".format(self.polyConfig['customData']['tokenData']))
+                                LOGGER.error("We will use the new tokens...")
+                                self.tokenData = deepcopy(self.polyConfig['customData']['tokenData'])
+                                return False
+                        except:
+                            LOGGER.error("Failed determing age of last db write by someone else, will ignore it.",exc_info=True)
         rval = self.lockCustomData()
         if (rval):
             self.refreshingTokens = True
