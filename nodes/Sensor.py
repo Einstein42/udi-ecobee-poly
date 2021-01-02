@@ -7,6 +7,7 @@ except ImportError:
 
 from copy import deepcopy
 from const import driversMap
+from node_funcs import *
 
 class Sensor(Node):
     def __init__(self, controller, primary, address, name, id, parent):

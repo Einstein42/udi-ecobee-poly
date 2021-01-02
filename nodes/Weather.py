@@ -7,6 +7,7 @@ except ImportError:
     
 from copy import deepcopy
 from const import driversMap,windMap
+from node_funcs import *
 
 class Weather(Node):
     def __init__(self, controller, primary, address, name, useCelsius, forecast):
