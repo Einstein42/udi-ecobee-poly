@@ -68,6 +68,8 @@ __IMPORTANT__ Starting with version 2.2.0 users should to re-authorize
   - Polyglot Cloud: Restart
   - After restarting you may get a message in the Polyglot UI saying that the token is invalid, but has not some number of seconds remaining, so you will need to let it expire then you will be asked to re-authorize
 
+- 2.3.0: JimBo 01/14/2022
+  - Pull in PR from @firstone: Adding set (de)humidity point commands
 - 2.2.3: JimBo 01/01/2021
   - Fix for Celcius
 - 2.2.2: JimBo 12/31/2020

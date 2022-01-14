@@ -83,7 +83,7 @@
       <st id="CLISMD" editor="I_TSTAT_PROG_MODE2" />
       <st id="GV4" editor="I_TSTAT_FANONTIME" />
       <st id="GV3" editor="CTA_tstatid" />
-      <st id="GV5" editor="I_HUMIDITY" />
+      <st id="GV5" editor="I_TSTAT_HUM_SET" />
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="BOOL" />
@@ -103,6 +103,9 @@
         <cmd id="CLISMD">
           <p id="" editor="I_TSTAT_PROG_MODE2" init="CLISMD" />
         </cmd>
+        <cmd id="GV1">
+          <p id="" editor="I_TSTAT_HUM_SET" init="GV1" />
+        </cmd>
         <cmd id="GV3">
           <p id="" editor="CT_tstatid" init="GV3" />
           <p id="HoldType" editor="I_TSTAT_ECO_SCHED_OPT" init="0" optional="T" />
@@ -113,6 +116,9 @@
         </cmd>
         <cmd id="GV4">
           <p id="" editor="I_TSTAT_FANONTIME" init="GV4" />
+        </cmd>
+        <cmd id="GV5">
+          <p id="" editor="I_TSTAT_HUM_SET" init="GV5" />
         </cmd>
         <cmd id="GV6">
           <p id="" editor="I_ENABLED" init="GV6" />
