@@ -132,7 +132,7 @@ class Thermostat(Node):
         has_occupancy = False
         if 'capability' in sensor:
             for cb in sensor['capability']:
-                if cb['type'] == 'temperatiure':
+                if cb['type'] == 'temperature':
                     has_temp = True
                 elif cb['type'] == 'humidity':
                     has_hum = True
@@ -445,7 +445,7 @@ class Thermostat(Node):
           if val in transitionMap:
             val = transitionMap[val]
           else:
-            logger.ERROR("{}:setScheduleMode: Unknown transitionMap name {}".format(self.address,val))
+            LOGGER.error("{}:setScheduleMode: Unknown transitionMap name {}".format(self.address,val))
             return False
       self.set_driver('CLISMD',int(val))
       self.clismd = int(val)
@@ -511,7 +511,7 @@ class Thermostat(Node):
           if val in fanMap:
             dval = fanMap[val]
           else:
-            logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
+            LOGGER.error("{}:Fan: Unknown fanMap name {}".format(self.address,val))
             return False
       LOGGER.debug('{}:setFanMode: {}={}'.format(self.address,val,dval))
       self.set_driver('CLIFS',dval)
@@ -524,7 +524,7 @@ class Thermostat(Node):
           if val in fanMap:
             dval = fanMap[val]
           else:
-            logger.ERROR("{}:Fan: Unknown fanMap name {}".format(self.address,val))
+            LOGGER.error("{}:Fan: Unknown fanMap name {}".format(self.address,val))
             return False
       LOGGER.debug('{}:setFanState: {}={}'.format(self.address,val,dval))
       self.set_driver('CLIFRS',dval)
@@ -677,6 +677,38 @@ class Thermostat(Node):
         self.set_driver(driver, newTemp)
         self.set_driver('CLISMD',transitionMap[self.getHoldType()])
 
+    def cmdSetHumidity(self, cmd):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
+        LOGGER.debug(f"cmdSetHumidity: {cmd['cmd']} already set to {cmd['value']}")
+        return
+
+      command = {
+        'thermostat': {
+          'settings': {
+            'humidity': cmd["value"]
+          }
+        }
+      }
+
+      if self.ecobeePost(command):
+        self.set_driver(cmd['cmd'], cmd['value'])
+
+    def cmdSetDehumidity(self, cmd):
+      if int(self.get_driver(cmd['cmd'])) == int(cmd['value']):
+        LOGGER.debug(f"cmdSetDehumidity: {cmd['cmd']} already set to {cmd['value']}")
+        return 
+
+      command = {
+        'thermostat': {
+          'settings': {
+            'dehumidifierLevel': cmd['value']
+          }
+        }
+      }
+      
+      if self.ecobeePost(command):
+        self.set_driver(cmd['cmd'], cmd['value'])
+
     def l_info(self, name, string):
         LOGGER.info("%s:%s:%s: %s" %  (self.id,self.name,name,string))
 
@@ -696,8 +728,10 @@ class Thermostat(Node):
                 'CLIFS': cmdSetPF,
                 'CLIMD': cmdSetMode,
                 'CLISMD': cmdSetScheduleMode,
+                'GV1': cmdSetHumidity,
                 'GV3': cmdSetClimateType,
                 'GV4': cmdSetFanOnTime,
+                'GV5': cmdSetDehumidity,
                 'GV6': cmdSmartHome,
                 'GV7': cmdFollowMe,
                 'BRT': setPoint,
