@@ -62,12 +62,13 @@ If you already have it installed and want the update before it's in the store.
 
 ## Release Notes
 
-__IMPORTANT__ Starting with version 2.2.0 users should to re-authorize 
+- __IMPORTANT__ Starting with version 2.2.0 users should to re-authorize.  Only do this if you are on a release older than 2.2.0
   - Go to ecobee.com -> My Apps -> Remove App for the current UDI
   - Local: Update in the store and restart
   - Polyglot Cloud: Restart
   - After restarting you may get a message in the Polyglot UI saying that the token is invalid, but has not some number of seconds remaining, so you will need to let it expire then you will be asked to re-authorize
 
+History
 - 2.3.0: JimBo 01/14/2022
   - Pull in PR from @firstone: Adding set (de)humidity point commands
 - 2.2.3: JimBo 01/01/2021
